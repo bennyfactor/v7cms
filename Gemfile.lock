@@ -1,0 +1,13 @@
+GEM
+  remote: https://gem.coop/
+  specs:
+    fcgi (0.9.2.2)
+
+PLATFORMS
+  x86_64-linux
+
+DEPENDENCIES
+  fcgi
+
+BUNDLED WITH
+   2.3.5
