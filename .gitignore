@@ -1,3 +1,6 @@
+# dreamhost diagnostics
+.dh-diag
+
 *.gem
 *.rbc
 /.config

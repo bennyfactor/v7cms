@@ -1,0 +1,6 @@
+RewriteEngine on
+
+RewriteRule ^$ /index.fcgi [L]
+
+DirectoryIndex index.fcgi index.html
+
