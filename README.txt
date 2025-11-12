@@ -123,25 +123,75 @@ bundle exec rackup -p 9292
 
 ## OAuth Configuration
 
+You must configure OAuth credentials for at least one provider (Google or GitHub) to enable admin access.
+
 ### Google OAuth Setup
 
 1. Visit the Google Cloud Console: https://console.cloud.google.com/
 2. Create a new project or select an existing one
-3. Enable the Google+ API
-4. Navigate to Credentials and create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:9292/auth/google_oauth2/callback`
-6. Copy the Client ID and Client Secret to your `.env` file
+3. Enable the Google+ API (or Google Identity Services)
+4. Navigate to: APIs & Services > Credentials
+5. Click "Create Credentials" > "OAuth client ID"
+6. Visit https://console.cloud.google.com/auth/clients/create to create the client:
 
-For production, add your production domain's callback URL.
+   **Application type:** Web application
+
+   **Name:** Choose a descriptive name (e.g., "v7cms-production")
+
+   **Authorized JavaScript origins:**
+   - For development: http://localhost:9292
+   - For production: https://yourdomain.com
+
+   **Authorized redirect URIs:**
+   - For development: http://localhost:9292/auth/google_oauth2/callback
+   - For production: https://yourdomain.com/auth/google_oauth2/callback
+
+   Note: You can add multiple URIs to support both development and production
+   with a single OAuth client. Production URIs must use HTTPS.
+
+7. Click "Create" to generate your credentials
+8. Copy the Client ID and Client Secret to your `.env` file:
+   ```
+   GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret-here
+   ```
+
+Important: Changes may take 5 minutes to a few hours to take effect.
 
 ### GitHub OAuth Setup
 
 1. Visit GitHub Developer Settings: https://github.com/settings/developers
-2. Create a new OAuth App
-3. Set the Authorization callback URL: `http://localhost:9292/auth/github/callback`
-4. Copy the Client ID and Client Secret to your `.env` file
+2. Click "New OAuth App"
+3. Fill in the application details:
 
-For production, add your production domain's callback URL.
+   **Application name:** Choose a descriptive name (e.g., "v7cms")
+
+   **Homepage URL:**
+   - For development: http://localhost:9292
+   - For production: https://yourdomain.com
+
+   **Authorization callback URL:**
+   - For development: http://localhost:9292/auth/github/callback
+   - For production: https://yourdomain.com/auth/github/callback
+
+   Note: Unlike Google, GitHub requires separate OAuth apps for development
+   and production environments. Create one for each environment.
+
+4. Click "Register application"
+5. Generate a new client secret by clicking "Generate a new client secret"
+6. Copy the Client ID and Client Secret to your `.env` file:
+   ```
+   GITHUB_CLIENT_ID=your-client-id-here
+   GITHUB_CLIENT_SECRET=your-client-secret-here
+   ```
+
+### Security Notes
+
+- Never commit the `.env` file to version control
+- Use different OAuth credentials for development and production
+- For production, always use HTTPS for OAuth callback URLs
+- Restrict OAuth scopes to minimum required (email and profile only)
+- Regularly rotate client secrets as part of security maintenance
 
 ## Usage
 
