@@ -12,6 +12,7 @@ end
 # Try to activate Bundler (so the Gemfile is honored even without `bundle exec`)
 begin
   require 'bundler/setup'
+  Bundler.require(:default, :production)
 rescue LoadError
   # Bundler not available; we'll fall back to system gems.
   warn "[startup] Bundler not available; using system gem paths only."
