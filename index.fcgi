@@ -62,7 +62,7 @@ def handle_request(cgi, app)
     'SERVER_PROTOCOL'   => cgi.env_table['SERVER_PROTOCOL'] || 'HTTP/1.1',
     'rack.version'      => Rack::VERSION,
     'rack.url_scheme'   => (cgi.env_table['HTTPS'] == 'on' ? 'https' : 'http'),
-    'rack.input'        => cgi.in,
+    'rack.input'        => cgi.stdinput,
     'rack.errors'       => $stderr,
     'rack.multithread'  => false,
     'rack.multiprocess' => true,
