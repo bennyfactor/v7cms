@@ -52,6 +52,10 @@ end
 
 def handle_request(cgi, app)
   # Build Rack environment from FastCGI CGI object
+  # Use StringIO for rack.input since cgi.stdinput is private
+  require 'stringio'
+  input = StringIO.new(cgi.read || '')
+
   env = {
     'REQUEST_METHOD'    => cgi.env_table['REQUEST_METHOD'] || 'GET',
     'SCRIPT_NAME'       => '',
@@ -62,7 +66,7 @@ def handle_request(cgi, app)
     'SERVER_PROTOCOL'   => cgi.env_table['SERVER_PROTOCOL'] || 'HTTP/1.1',
     'rack.version'      => Rack::VERSION,
     'rack.url_scheme'   => (cgi.env_table['HTTPS'] == 'on' ? 'https' : 'http'),
-    'rack.input'        => cgi.stdinput,
+    'rack.input'        => input,
     'rack.errors'       => $stderr,
     'rack.multithread'  => false,
     'rack.multiprocess' => true,
