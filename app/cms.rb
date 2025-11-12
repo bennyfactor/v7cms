@@ -29,9 +29,13 @@ class CMS < Sinatra::Base
   set :static, true
 
   # CSRF protection for OmniAuth (disabled in test)
-  use Rack::Protection::AuthenticityToken unless ENV['RACK_ENV'] == 'test'
+  # Exclude /auth routes from CSRF protection to allow OAuth flows
+  use Rack::Protection, except: [:session_hijacking, :remote_token] unless ENV['RACK_ENV'] == 'test'
+  use Rack::Protection::AuthenticityToken, except: ->(env) { env['PATH_INFO'].start_with?('/auth') } unless ENV['RACK_ENV'] == 'test'
 
   # OmniAuth configuration
+  OmniAuth.config.allowed_request_methods = [:get, :post]
+
   use OmniAuth::Builder do
     # Google OAuth
     provider :google_oauth2,
