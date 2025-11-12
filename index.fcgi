@@ -28,6 +28,15 @@ end
 # Set production environment by default for FastCGI
 ENV['RACK_ENV'] ||= 'production'
 
+# Load FCGI gem first
+begin
+  require 'fcgi'
+rescue LoadError => e
+  warn "[startup] Could not load 'fcgi' gem: #{e.class}: #{e.message}"
+  warn "[startup] Ensure you have `gem 'fcgi'` in your Gemfile and ran `bundle install`"
+  exit 1
+end
+
 # Load the Rack application from config.ru
 begin
   require 'rack'
