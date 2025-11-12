@@ -8,8 +8,11 @@ gem 'sinatra-activerecord', '~> 2.0'
 gem 'sqlite3', '~> 2.1'
 gem 'rake', '~> 13.0'
 
-# Only needed for production FastCGI deployment
-# gem 'fcgi', '~> 0.9'
+# Only needed for production FastCGI deployment (Linux only)
+# Won't install in development/test (Docker) due to group exclusion
+group :production do
+  gem 'fcgi', '~> 0.9', install_if: -> { RbConfig::CONFIG['host_os'] =~ /linux/ }
+end
 
 # Authentication (OAuth)
 gem 'omniauth', '~> 2.1'
