@@ -34,9 +34,28 @@ function add_error($message) {
 // Step 1: Detect Ruby path
 add_output('Detecting Ruby path...', 'info');
 
+// Detect the home directory - script may run as Apache user, not file owner
+$home_dir = null;
+$script_dir = __DIR__;
+
+// Try to extract username from path like /home/username/...
+if (preg_match('#^/home/([^/]+)/#', $script_dir, $matches)) {
+    $username = $matches[1];
+    $home_dir = "/home/$username";
+    add_output("Detected user from path: $username", 'info');
+    add_output("Using home directory: $home_dir", 'info');
+} else {
+    // Fallback to HOME environment variable
+    $home_dir = getenv('HOME');
+    if ($home_dir) {
+        add_output("Using HOME environment variable: $home_dir", 'info');
+    } else {
+        add_output("Could not detect home directory", 'error');
+    }
+}
+
 // Try to find rbenv Ruby first
 $ruby_path = null;
-$home_dir = getenv('HOME');
 $desired_version = null;
 $found_version = null;
 
