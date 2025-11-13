@@ -29,9 +29,8 @@ class CMS < Sinatra::Base
   set :static, true
 
   # CSRF protection (disabled in test)
-  # Exclude /auth and /api routes - /auth for OAuth flows, /api uses session auth
-  use Rack::Protection, except: [:session_hijacking, :remote_token] unless ENV['RACK_ENV'] == 'test'
-  use Rack::Protection::AuthenticityToken, except: ->(env) { env['PATH_INFO'].start_with?('/auth', '/api') } unless ENV['RACK_ENV'] == 'test'
+  # Disable AuthenticityToken entirely - using session-based auth instead
+  use Rack::Protection, except: [:session_hijacking, :remote_token, :authenticity_token] unless ENV['RACK_ENV'] == 'test'
 
   # OmniAuth configuration - allow GET requests (required for OAuth links)
   OmniAuth.config.allowed_request_methods = [:get, :post]
