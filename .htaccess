@@ -127,10 +127,14 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
     Header set Expires "0"
 </FilesMatch>
 
-# Disable caching for API routes
-<LocationMatch "^/api/">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-</LocationMatch>
+# Disable caching for API routes (using SetEnvIf instead of LocationMatch)
+# Mark API requests with an environment variable
+SetEnvIf Request_URI "^/api/" is_api_route
+
+# Apply no-cache headers to API routes
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_api_route
+Header always set Pragma "no-cache" env=is_api_route
+Header always set Expires "0" env=is_api_route
 
 # ============================================================================
 # APPLICATION ROUTING: FastCGI handler
