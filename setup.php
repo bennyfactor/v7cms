@@ -37,6 +37,8 @@ add_output('Detecting Ruby path...', 'info');
 // Try to find rbenv Ruby first
 $ruby_path = null;
 $home_dir = getenv('HOME');
+$desired_version = null;
+$found_version = null;
 
 // Check for .ruby-version file
 $ruby_version_file = '.ruby-version';
@@ -44,12 +46,48 @@ if (file_exists($ruby_version_file)) {
     $desired_version = trim(file_get_contents($ruby_version_file));
     add_output("Found .ruby-version: $desired_version", 'info');
 
-    // Try rbenv path
-    if ($home_dir) {
+    if ($home_dir && is_dir("$home_dir/.rbenv/versions")) {
+        // Try exact version match first
         $rbenv_ruby = "$home_dir/.rbenv/versions/$desired_version/bin/ruby";
         if (file_exists($rbenv_ruby)) {
             $ruby_path = $rbenv_ruby;
-            add_output("Found rbenv Ruby: $ruby_path", 'success');
+            $found_version = $desired_version;
+            add_output("Found exact version match: $ruby_path", 'success');
+        } else {
+            // Try to find compatible version (same major.minor)
+            $desired_parts = explode('.', $desired_version);
+            $desired_major_minor = isset($desired_parts[0], $desired_parts[1])
+                ? $desired_parts[0] . '.' . $desired_parts[1]
+                : null;
+
+            if ($desired_major_minor) {
+                add_output("Exact version not found, looking for compatible $desired_major_minor.x versions...", 'info');
+
+                $versions = scandir("$home_dir/.rbenv/versions");
+                $compatible_versions = [];
+
+                foreach ($versions as $version) {
+                    if ($version === '.' || $version === '..') continue;
+                    if (strpos($version, $desired_major_minor) === 0) {
+                        $test_ruby = "$home_dir/.rbenv/versions/$version/bin/ruby";
+                        if (file_exists($test_ruby)) {
+                            $compatible_versions[] = $version;
+                        }
+                    }
+                }
+
+                if (!empty($compatible_versions)) {
+                    // Sort versions and pick the latest compatible one
+                    usort($compatible_versions, 'version_compare');
+                    $found_version = end($compatible_versions);
+                    $ruby_path = "$home_dir/.rbenv/versions/$found_version/bin/ruby";
+                    add_output("Found compatible version: $found_version", 'success');
+
+                    if ($found_version !== $desired_version) {
+                        add_output("Using $found_version instead of $desired_version", 'info');
+                    }
+                }
+            }
         }
     }
 }
@@ -68,13 +106,13 @@ if (!$ruby_path && $home_dir) {
     }
 }
 
-// Fallback: Use which ruby (but warn if it's system Ruby)
+// Last resort: Use which ruby (but warn if it's system Ruby)
 if (!$ruby_path) {
     $ruby_path = trim(shell_exec('which ruby 2>/dev/null'));
     if ($ruby_path && file_exists($ruby_path)) {
         if (strpos($ruby_path, '.rbenv') === false) {
             add_output("WARNING: Using system Ruby at $ruby_path (not rbenv)", 'error');
-            add_output("This may not be the Ruby version you intended", 'error');
+            add_output("This may not be the correct Ruby version", 'error');
         } else {
             add_output("Found Ruby at: $ruby_path", 'success');
         }
@@ -83,6 +121,12 @@ if (!$ruby_path) {
 
 if (empty($ruby_path) || !file_exists($ruby_path)) {
     add_error('Could not find Ruby. Please ensure Ruby is installed and accessible.');
+
+    if ($desired_version) {
+        add_error("To install Ruby $desired_version with rbenv, run:");
+        add_error("  rbenv install $desired_version");
+        add_error("  rbenv rehash");
+    }
 } else {
     // Verify it's an rbenv Ruby
     if (strpos($ruby_path, '.rbenv') !== false) {
