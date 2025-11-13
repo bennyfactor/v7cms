@@ -32,14 +32,19 @@ RSpec.describe 'Authentication Routes' do
           get '/auth/google_oauth2/callback'
         }.to change(User, :count).by(1)
 
-        expect(last_response).to be_ok
-        data = JSON.parse(last_response.body)
-        expect(data['success']).to be true
-        expect(data['user']['email']).to eq('user@example.com')
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to include('/admin/')
+
+        # Verify user was created with correct data
+        user = User.last
+        expect(user.email).to eq('user@example.com')
+        expect(user.name).to eq('Test User')
+        expect(user.provider).to eq('google_oauth2')
+        expect(user.uid).to eq('123456')
       end
 
       it 'finds existing user' do
-        existing_user = User.create!(
+        User.create!(
           email: 'user@example.com',
           name: 'Test User',
           provider: 'google_oauth2',
@@ -50,22 +55,32 @@ RSpec.describe 'Authentication Routes' do
           get '/auth/google_oauth2/callback'
         }.not_to change(User, :count)
 
-        expect(last_response).to be_ok
-        data = JSON.parse(last_response.body)
-        expect(data['user']['id']).to eq(existing_user.id)
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to include('/admin/')
       end
 
       it 'sets session user_id' do
         get '/auth/google_oauth2/callback'
 
-        expect(last_response).to be_ok
-        # Verify the user was created and data returned
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to include('/admin/')
+
+        # Verify the user was created and session would be set
         user = User.last
         expect(user.email).to eq('user@example.com')
+      end
+    end
 
+    context 'when user creation fails' do
+      it 'returns 401 error' do
+        # Mock User.from_omniauth to return nil (simulating failure)
+        allow(User).to receive(:from_omniauth).and_return(nil)
+
+        get '/auth/google_oauth2/callback'
+
+        expect(last_response.status).to eq(401)
         data = JSON.parse(last_response.body)
-        expect(data['success']).to be true
-        expect(data['user']['id']).to eq(user.id)
+        expect(data['error']).to eq('Authentication failed')
       end
     end
   end
