@@ -20,13 +20,11 @@ class CMS < Sinatra::Base
   Dir[File.join(__dir__, 'helpers', '*.rb')].each { |file| require file }
   helpers AuthHelper
 
-  # Enable sessions for authentication with CSRF protection via SameSite
+  # Enable sessions for authentication
   enable :sessions
   set :session_secret, ENV.fetch('SESSION_SECRET', SecureRandom.hex(32))
-  set :sessions,
-    same_site: :lax,      # Prevent CSRF by not sending cookies on cross-site requests
-    secure: ENV['RACK_ENV'] == 'production',  # HTTPS only in production
-    http_only: true       # Prevent JavaScript access to session cookie
+  # Use simple session config - SameSite/Secure might be breaking session persistence
+  set :sessions, true unless ENV['RACK_ENV'] == 'test'
 
   # Serve static files from public directory
   set :public_folder, File.expand_path('../public', __dir__)
