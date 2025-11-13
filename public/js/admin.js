@@ -118,7 +118,8 @@ function cmsApp() {
                 const response = await fetch(url, {
                     method: method,
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
                         title: this.currentPost.title,
@@ -158,7 +159,10 @@ function cmsApp() {
 
             try {
                 const response = await fetch(`/api/posts/${post.id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
 
                 if (response.ok || response.status === 204) {

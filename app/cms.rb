@@ -20,9 +20,13 @@ class CMS < Sinatra::Base
   Dir[File.join(__dir__, 'helpers', '*.rb')].each { |file| require file }
   helpers AuthHelper
 
-  # Enable sessions for authentication
+  # Enable sessions for authentication with CSRF protection via SameSite
   enable :sessions
   set :session_secret, ENV.fetch('SESSION_SECRET', SecureRandom.hex(32))
+  set :sessions,
+    same_site: :lax,      # Prevent CSRF by not sending cookies on cross-site requests
+    secure: ENV['RACK_ENV'] == 'production',  # HTTPS only in production
+    http_only: true       # Prevent JavaScript access to session cookie
 
   # Serve static files from public directory
   set :public_folder, File.expand_path('../public', __dir__)
@@ -186,6 +190,7 @@ class CMS < Sinatra::Base
 
   # POST /api/posts - Create a new post
   post '/api/posts' do
+    require_ajax_header
     require_login
 
     begin
@@ -211,6 +216,7 @@ class CMS < Sinatra::Base
 
   # PUT /api/posts/:id - Update a post
   put '/api/posts/:id' do
+    require_ajax_header
     require_login
 
     post = Post.find_by(id: params[:id])
@@ -240,6 +246,7 @@ class CMS < Sinatra::Base
 
   # DELETE /api/posts/:id - Delete a post
   delete '/api/posts/:id' do
+    require_ajax_header
     require_login
 
     post = Post.find_by(id: params[:id])
