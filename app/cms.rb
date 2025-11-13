@@ -108,14 +108,18 @@ class CMS < Sinatra::Base
     logger.info "OAuth callback received: provider=#{params[:provider]}, path=#{request.path_info}"
 
     auth = request.env['omniauth.auth']
+    logger.info "OmniAuth data: #{auth.inspect}"
 
     user = User.from_omniauth(auth)
+    logger.info "User created/found: #{user.inspect}"
 
     if user
       session[:user_id] = user.id
+      logger.info "Session set: user_id=#{session[:user_id]}"
       # Redirect back to admin page after successful login
       redirect '/admin/'
     else
+      logger.error "User creation failed"
       halt 401, json({ error: 'Authentication failed' })
     end
   end
