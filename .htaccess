@@ -117,6 +117,22 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 </FilesMatch>
 
 # ============================================================================
+# CACHE CONTROL
+# ============================================================================
+
+# Disable caching for admin interface and API
+<FilesMatch "\.(html|js)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Disable caching for API routes
+<LocationMatch "^/api/">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</LocationMatch>
+
+# ============================================================================
 # APPLICATION ROUTING: FastCGI handler
 # ============================================================================
 
