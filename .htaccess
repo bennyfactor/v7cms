@@ -132,6 +132,7 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 SetEnvIf Request_URI "^/api/" is_dynamic_route
 SetEnvIf Request_URI "^/auth/" is_dynamic_route
 SetEnvIf Request_URI "^/posts/" is_dynamic_route
+SetEnvIf Request_URI "^/admin/" is_dynamic_route
 SetEnvIf Request_URI "^/$" is_dynamic_route
 
 # Apply no-cache headers to all dynamic routes
