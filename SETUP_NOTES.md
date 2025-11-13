@@ -17,7 +17,6 @@ After deploying to production for the first time:
    # Download Tailwind CLI (Linux x64)
    curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
    chmod +x tailwindcss-linux-x64
-   mkdir -p bin
    mv tailwindcss-linux-x64 bin/tailwindcss
 
    # Build the CSS
@@ -47,7 +46,6 @@ chmod +x index.fcgi
 # 4. Download and build Tailwind CSS
 curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
 chmod +x tailwindcss-linux-x64
-mkdir -p bin
 mv tailwindcss-linux-x64 bin/tailwindcss
 ./bin/tailwindcss -i public/css/input.css -o public/css/output.css --minify
 
@@ -80,7 +78,6 @@ cannot find rbenv's Ruby. The shebang needs the absolute path to work.
 **bin/tailwindcss not found:**
 - Download it: `curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64`
 - Make executable: `chmod +x tailwindcss-linux-x64`
-- Create bin dir: `mkdir -p bin`
 - Move to bin: `mv tailwindcss-linux-x64 bin/tailwindcss`
 
 ## Security Note
