@@ -113,17 +113,8 @@ class CMS < Sinatra::Base
 
     if user
       session[:user_id] = user.id
-
-      json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatar_url: user.avatar_url,
-          provider: user.provider
-        }
-      })
+      # Redirect back to admin page after successful login
+      redirect '/admin/'
     else
       halt 401, json({ error: 'Authentication failed' })
     end
