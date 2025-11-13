@@ -14,7 +14,8 @@ RewriteEngine On
 RedirectMatch 404 /\.
 
 # Block access to any potential secrets/credential files by name pattern
-RedirectMatch 404 /(secret|credential|password|auth|token|key)[s]?\.(txt|json|yml|yaml|xml|ini|conf)
+# This matches files like secrets.txt, credentials.json but NOT /auth/ paths
+RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|xml|ini|conf)$
 
 # Block Ruby source files - return 404 for .rb, .ru, .rake files
 RedirectMatch 404 \.(rb|ru|rake)$
