@@ -158,6 +158,16 @@ RSpec.describe 'Posts API Routes' do
         data = JSON.parse(last_response.body)
         expect(data['errors']).to be_present
       end
+
+      it 'returns 422 for malformed JSON' do
+        post '/api/posts',
+          'this is not valid JSON',
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Invalid JSON')
+      end
     end
   end
 
@@ -213,6 +223,16 @@ RSpec.describe 'Posts API Routes' do
         expect(last_response.status).to eq(422)
         data = JSON.parse(last_response.body)
         expect(data['errors']).to be_present
+      end
+
+      it 'returns 422 for malformed JSON' do
+        put "/api/posts/#{post.id}",
+          'invalid json content',
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Invalid JSON')
       end
     end
   end

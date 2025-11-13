@@ -29,5 +29,17 @@ RSpec.describe 'Basic Routes' do
       data = JSON.parse(last_response.body)
       expect(data['status']).to eq('ok')
     end
+
+    it 'returns error status when database connection fails' do
+      # Mock the database connection to raise an error
+      allow(ActiveRecord::Base).to receive(:connection).and_raise(StandardError.new('Connection failed'))
+
+      get '/health'
+      expect(last_response).to be_ok
+
+      data = JSON.parse(last_response.body)
+      expect(data['status']).to eq('ok')
+      expect(data['database']).to eq('error')
+    end
   end
 end
