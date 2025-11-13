@@ -33,8 +33,9 @@ class CMS < Sinatra::Base
   use Rack::Protection, except: [:session_hijacking, :remote_token] unless ENV['RACK_ENV'] == 'test'
   use Rack::Protection::AuthenticityToken, except: ->(env) { env['PATH_INFO'].start_with?('/auth') } unless ENV['RACK_ENV'] == 'test'
 
-  # OmniAuth configuration
+  # OmniAuth configuration - allow GET requests (required for OAuth links)
   OmniAuth.config.allowed_request_methods = [:get, :post]
+  OmniAuth.config.silence_get_warning = true
 
   use OmniAuth::Builder do
     # Google OAuth
@@ -45,7 +46,8 @@ class CMS < Sinatra::Base
         scope: 'email,profile',
         prompt: 'select_account',
         image_aspect_ratio: 'square',
-        image_size: 256
+        image_size: 256,
+        provider_ignores_state: true  # Disable CSRF state parameter check
       }
 
     # GitHub OAuth
