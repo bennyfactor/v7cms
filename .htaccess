@@ -7,6 +7,11 @@ RewriteEngine On
 # ============================================================================
 # ALLOW OAuth routes before security rules
 # ============================================================================
+# Disable ModSecurity for OAuth callbacks (false positive on 'profile' scope)
+<LocationMatch "^/index\.fcgi/auth/">
+    SecRuleEngine Off
+</LocationMatch>
+
 # Allow all /auth/ paths to pass through to the application
 RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
 RewriteRule .* - [L]
