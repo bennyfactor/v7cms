@@ -5,6 +5,13 @@ Options -Indexes
 RewriteEngine On
 
 # ============================================================================
+# ALLOW OAuth routes before security rules
+# ============================================================================
+# Allow all /auth/ paths to pass through to the application
+RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
+RewriteRule .* - [L]
+
+# ============================================================================
 # SECURITY: Block access to sensitive files and directories
 # Returns 404 to hide existence rather than 403 which reveals the file exists
 # ============================================================================
