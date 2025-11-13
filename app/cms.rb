@@ -38,15 +38,13 @@ class CMS < Sinatra::Base
   OmniAuth.config.silence_get_warning = true
 
   use OmniAuth::Builder do
-    # Google OAuth - use full URLs for scopes to avoid ModSecurity false positives
+    # Google OAuth - only request email to avoid ModSecurity blocking 'profile' keyword
     provider :google_oauth2,
       ENV['GOOGLE_CLIENT_ID'],
       ENV['GOOGLE_CLIENT_SECRET'],
       {
-        scope: 'https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/userinfo.profile',
+        scope: 'email',
         prompt: 'select_account',
-        image_aspect_ratio: 'square',
-        image_size: 256,
         provider_ignores_state: true  # Disable CSRF state parameter check
       }
 
