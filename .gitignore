@@ -71,5 +71,6 @@ bin/tailwindcss
 # Docker
 .dockerignore
 
-# Don't commit markdown notes
+# Don't commit markdown notes (but allow README.md)
 *.md
+!README.md
