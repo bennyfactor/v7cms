@@ -33,13 +33,57 @@ function add_error($message) {
 
 // Step 1: Detect Ruby path
 add_output('Detecting Ruby path...', 'info');
-$ruby_path = trim(shell_exec('which ruby 2>/dev/null'));
+
+// Try to find rbenv Ruby first
+$ruby_path = null;
+$home_dir = getenv('HOME');
+
+// Check for .ruby-version file
+$ruby_version_file = '.ruby-version';
+if (file_exists($ruby_version_file)) {
+    $desired_version = trim(file_get_contents($ruby_version_file));
+    add_output("Found .ruby-version: $desired_version", 'info');
+
+    // Try rbenv path
+    if ($home_dir) {
+        $rbenv_ruby = "$home_dir/.rbenv/versions/$desired_version/bin/ruby";
+        if (file_exists($rbenv_ruby)) {
+            $ruby_path = $rbenv_ruby;
+            add_output("Found rbenv Ruby: $ruby_path", 'success');
+        }
+    }
+}
+
+// Fallback: Try rbenv shims
+if (!$ruby_path && $home_dir) {
+    $rbenv_shim = "$home_dir/.rbenv/shims/ruby";
+    if (file_exists($rbenv_shim)) {
+        // Resolve the actual Ruby path from the shim
+        $ruby_path = trim(shell_exec("$rbenv_shim -e 'puts RbConfig.ruby' 2>/dev/null"));
+        if ($ruby_path && file_exists($ruby_path)) {
+            add_output("Found Ruby via rbenv shim: $ruby_path", 'success');
+        } else {
+            $ruby_path = null;
+        }
+    }
+}
+
+// Fallback: Use which ruby (but warn if it's system Ruby)
+if (!$ruby_path) {
+    $ruby_path = trim(shell_exec('which ruby 2>/dev/null'));
+    if ($ruby_path && file_exists($ruby_path)) {
+        if (strpos($ruby_path, '.rbenv') === false) {
+            add_output("WARNING: Using system Ruby at $ruby_path (not rbenv)", 'error');
+            add_output("This may not be the Ruby version you intended", 'error');
+        } else {
+            add_output("Found Ruby at: $ruby_path", 'success');
+        }
+    }
+}
 
 if (empty($ruby_path) || !file_exists($ruby_path)) {
-    add_error('Could not find Ruby in PATH. Please ensure Ruby is installed and accessible.');
+    add_error('Could not find Ruby. Please ensure Ruby is installed and accessible.');
 } else {
-    add_output("Found Ruby at: $ruby_path", 'success');
-
     // Verify it's an rbenv Ruby
     if (strpos($ruby_path, '.rbenv') !== false) {
         add_output('Detected rbenv-managed Ruby ✓', 'success');
