@@ -28,22 +28,6 @@ class CMS < Sinatra::Base
   set :public_folder, File.expand_path('../public', __dir__)
   set :static, true
 
-  # Fix SCRIPT_NAME for FastCGI - remove /index.fcgi from URLs
-  # This middleware strips /index.fcgi from SCRIPT_NAME so OAuth callbacks work correctly
-  use(Class.new do
-    def initialize(app)
-      @app = app
-    end
-
-    def call(env)
-      # Remove /index.fcgi from SCRIPT_NAME if present
-      if env['SCRIPT_NAME'] == '/index.fcgi'
-        env['SCRIPT_NAME'] = ''
-      end
-      @app.call(env)
-    end
-  end)
-
   # CSRF protection for OmniAuth (disabled in test)
   # Exclude /auth routes from CSRF protection to allow OAuth flows
   use Rack::Protection, except: [:session_hijacking, :remote_token] unless ENV['RACK_ENV'] == 'test'
