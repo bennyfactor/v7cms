@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# Script to manually add an admin user to the database
+# Usage: ./bin/add_admin email@example.com "Display Name"
+
+require_relative '../config.ru'
+
+if ARGV.length < 1
+  puts "Usage: ./bin/add_admin EMAIL [NAME]"
+  puts "Example: ./bin/add_admin ben@example.com \"Ben Factor\""
+  exit 1
+end
+
+email = ARGV[0]
+name = ARGV[1] || email.split('@').first.capitalize
+
+# Check if user already exists
+existing_user = User.find_by(email: email)
+
+if existing_user
+  puts "✓ User already exists:"
+  puts "  ID: #{existing_user.id}"
+  puts "  Email: #{existing_user.email}"
+  puts "  Name: #{existing_user.name}"
+  puts "  Provider: #{existing_user.provider || 'none'}"
+  exit 0
+end
+
+# Create new user
+user = User.create!(
+  email: email,
+  name: name,
+  provider: 'manual',
+  uid: SecureRandom.hex(16)
+)
+
+puts "✓ Created admin user:"
+puts "  ID: #{user.id}"
+puts "  Email: #{user.email}"
+puts "  Name: #{user.name}"
+puts ""
+puts "This user can now log in via OAuth with this email address."
