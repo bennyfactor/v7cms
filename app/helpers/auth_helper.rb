@@ -12,4 +12,11 @@ module AuthHelper
       halt 401, { error: 'Unauthorized' }.to_json
     end
   end
+
+  # Check for custom header to prevent CSRF on API requests
+  def require_ajax_header
+    unless request.env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+      halt 403, { error: 'Forbidden - AJAX header required' }.to_json
+    end
+  end
 end
