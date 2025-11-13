@@ -112,13 +112,12 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # APPLICATION ROUTING: FastCGI handler
 # ============================================================================
 
-# Set index.fcgi as the FastCGI handler for all requests
-DirectoryIndex index.fcgi
+# Set directory index files - try index.html first, then index.fcgi
+DirectoryIndex index.html index.fcgi
 
 # Don't rewrite requests for existing files (CSS, JS, HTML, images, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f
 # Don't rewrite requests for existing directories
 RewriteCond %{REQUEST_FILENAME} !-d
-# Route everything else through index.fcgi without adding it to the path
-# The rewritten URL goes to index.fcgi, but PATH_INFO contains the original request
-RewriteRule ^(.*)$ index.fcgi [QSA,L]
+# Route everything else through index.fcgi
+RewriteRule ^(.*)$ /index.fcgi/$1 [QSA,L]
