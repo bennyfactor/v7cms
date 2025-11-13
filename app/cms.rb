@@ -103,6 +103,9 @@ class CMS < Sinatra::Base
 
   # OAuth callback (Google, GitHub, etc. all use this)
   get '/auth/:provider/callback' do
+    # Debug logging
+    logger.info "OAuth callback received: provider=#{params[:provider]}, path=#{request.path_info}"
+
     auth = request.env['omniauth.auth']
 
     user = User.from_omniauth(auth)
