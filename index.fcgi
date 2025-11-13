@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+#
+# PRODUCTION SETUP: If you get 500 errors, the shebang may need to be updated
+# to the absolute path to Ruby (e.g., #!/home/user/.rbenv/versions/3.2.3/bin/ruby)
+# Visit /setup.php in your browser to auto-configure, or update manually via SSH.
 
 # Ensure we run with the script's directory as the working directory
 APP_ROOT = File.expand_path(__dir__)
