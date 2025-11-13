@@ -120,21 +120,30 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # CACHE CONTROL
 # ============================================================================
 
-# Disable caching for admin interface and API
-<FilesMatch "\.(html|js)$">
+# Disable caching for ALL HTML, JavaScript, and CSS files
+<FilesMatch "\.(html|js|css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
     Header set Pragma "no-cache"
     Header set Expires "0"
 </FilesMatch>
 
-# Disable caching for API routes (using SetEnvIf instead of LocationMatch)
+# Disable caching for all dynamic content (API routes and application routes)
 # Mark API requests with an environment variable
-SetEnvIf Request_URI "^/api/" is_api_route
+SetEnvIf Request_URI "^/api/" is_dynamic_route
+SetEnvIf Request_URI "^/auth/" is_dynamic_route
+SetEnvIf Request_URI "^/posts/" is_dynamic_route
+SetEnvIf Request_URI "^/$" is_dynamic_route
 
-# Apply no-cache headers to API routes
-Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_api_route
-Header always set Pragma "no-cache" env=is_api_route
-Header always set Expires "0" env=is_api_route
+# Apply no-cache headers to all dynamic routes
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_dynamic_route
+Header always set Pragma "no-cache" env=is_dynamic_route
+Header always set Expires "0" env=is_dynamic_route
+
+# Apply no-cache headers to all responses processed through FastCGI
+SetEnvIf Request_URI "\.fcgi" is_fcgi_request
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_fcgi_request
+Header always set Pragma "no-cache" env=is_fcgi_request
+Header always set Expires "0" env=is_fcgi_request
 
 # ============================================================================
 # APPLICATION ROUTING: FastCGI handler
