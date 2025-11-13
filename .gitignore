@@ -70,3 +70,6 @@ bin/tailwindcss
 
 # Docker
 .dockerignore
+
+# Don't commit markdown notes
+*.md
