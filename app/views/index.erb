@@ -1,7 +1,10 @@
+<% @settings ||= Setting.instance %>
 <div class="space-y-8">
     <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to v7cms</h1>
-        <p class="text-xl text-gray-600">A minimal, modern content management system</p>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @settings.welcome_title %></h1>
+        <% if @settings.welcome_subtitle.present? %>
+        <p class="text-xl text-gray-600"><%= @settings.welcome_subtitle %></p>
+        <% end %>
     </div>
 
     <% if @posts.empty? %>
@@ -27,7 +30,7 @@
                         </h2>
                         <div class="text-sm text-gray-500 mb-4">
                             <time datetime="<%= post.created_at.iso8601 %>">
-                                <%= post.created_at.strftime('%B %d, %Y') %>
+                                <%= post.created_at.strftime(@settings.date_format) %>
                             </time>
                         </div>
                         <div class="prose max-w-none text-gray-700 line-clamp-3">

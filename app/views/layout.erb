@@ -1,18 +1,37 @@
+<% @settings ||= Setting.instance %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= @title || 'v7cms' %></title>
+    <title><%= @title ? "#{@title} - #{@settings.site_title}" : @settings.site_title %></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <meta name="description" content="<%= @description || 'A minimal content management system' %>">
+
+    <% if @description %>
+    <meta name="description" content="<%= @description %>">
+    <% else %>
+    <meta name="description" content="<%= @settings.meta_description %>">
+    <% end %>
+
+    <% if @settings.meta_keywords.present? %>
+    <meta name="keywords" content="<%= @settings.meta_keywords %>">
+    <% end %>
+
+    <% if @settings.site_author.present? %>
+    <meta name="author" content="<%= @settings.site_author %>">
+    <% end %>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Header -->
     <header class="bg-white shadow-sm">
         <div class="max-w-4xl mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
-                <a href="/" class="text-2xl font-bold text-gray-800 hover:text-blue-600 transition">v7cms</a>
+                <div>
+                    <a href="/" class="text-2xl font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
+                    <% if @settings.site_tagline.present? %>
+                    <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
+                    <% end %>
+                </div>
                 <nav class="flex space-x-6">
                     <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
                     <a href="/admin.html" class="text-gray-600 hover:text-gray-900 transition">Admin</a>
@@ -31,7 +50,12 @@
     <!-- Footer -->
     <footer class="bg-white border-t mt-auto">
         <div class="max-w-4xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
-            <p>&copy; <%= Time.now.year %> v7cms. Powered by Ruby & Sinatra.</p>
+            <p>
+                <% if @settings.show_copyright_year %>
+                &copy; <%= Time.now.year %>
+                <% end %>
+                <%= @settings.footer_text %>
+            </p>
         </div>
     </footer>
 </body>

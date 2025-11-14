@@ -1,14 +1,15 @@
+<% @settings ||= Setting.instance %>
 <article class="bg-white rounded-lg shadow-md overflow-hidden">
     <div class="p-8">
         <header class="mb-8 border-b pb-6">
             <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @post.title %></h1>
             <div class="flex items-center text-gray-600 text-sm">
                 <time datetime="<%= @post.created_at.iso8601 %>">
-                    Published on <%= @post.created_at.strftime('%B %d, %Y') %>
+                    Published on <%= @post.created_at.strftime(@settings.date_format) %>
                 </time>
                 <% if @post.updated_at != @post.created_at %>
                     <span class="mx-2">•</span>
-                    <span>Updated <%= @post.updated_at.strftime('%B %d, %Y') %></span>
+                    <span>Updated <%= @post.updated_at.strftime(@settings.date_format) %></span>
                 <% end %>
             </div>
         </header>
