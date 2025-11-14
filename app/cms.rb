@@ -16,6 +16,9 @@ class CMS < Sinatra::Base
   # Load models
   Dir[File.join(__dir__, 'models', '*.rb')].each { |file| require file }
 
+  # Load services
+  Dir[File.join(__dir__, 'services', '*.rb')].each { |file| require file }
+
   # Load helpers
   Dir[File.join(__dir__, 'helpers', '*.rb')].each { |file| require file }
   helpers AuthHelper

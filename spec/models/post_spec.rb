@@ -74,4 +74,102 @@ RSpec.describe Post, type: :model do
       expect(post.published).to be false
     end
   end
+
+  describe 'static file generation' do
+    let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post.html') }
+
+    before do
+      # Ensure settings exist
+      Setting.instance
+    end
+
+    after do
+      # Clean up any generated files
+      FileUtils.rm_rf(PostRenderer::STATIC_DIR) if Dir.exist?(PostRenderer::STATIC_DIR)
+    end
+
+    it 'generates static file when post is published' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Content</p>',
+        published: true
+      )
+
+      expect(File.exist?(static_file_path)).to be true
+    end
+
+    it 'does not generate static file when post is draft' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Content</p>',
+        published: false
+      )
+
+      expect(File.exist?(static_file_path)).to be false
+    end
+
+    it 'regenerates static file when published post is updated' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Original</p>',
+        published: true
+      )
+
+      original_content = File.read(static_file_path)
+
+      post.update!(content: '<p>Updated</p>')
+
+      updated_content = File.read(static_file_path)
+      expect(updated_content).not_to eq(original_content)
+      expect(updated_content).to include('Updated')
+    end
+
+    it 'removes static file when post is unpublished' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Content</p>',
+        published: true
+      )
+
+      expect(File.exist?(static_file_path)).to be true
+
+      post.update!(published: false)
+
+      expect(File.exist?(static_file_path)).to be false
+    end
+
+    it 'removes static file when post is destroyed' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Content</p>',
+        published: true
+      )
+
+      expect(File.exist?(static_file_path)).to be true
+
+      post.destroy
+
+      expect(File.exist?(static_file_path)).to be false
+    end
+
+    it 'generates static file when draft becomes published' do
+      post = Post.create!(
+        title: 'Test Post',
+        slug: 'test-post',
+        content: '<p>Content</p>',
+        published: false
+      )
+
+      expect(File.exist?(static_file_path)).to be false
+
+      post.update!(published: true)
+
+      expect(File.exist?(static_file_path)).to be true
+    end
+  end
 end
