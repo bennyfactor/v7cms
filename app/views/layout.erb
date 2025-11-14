@@ -34,7 +34,9 @@
                 </div>
                 <nav class="flex space-x-6">
                     <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
-                    <a href="/admin.html" class="text-gray-600 hover:text-gray-900 transition">Admin</a>
+                    <% if logged_in? %>
+                    <a href="/admin/" class="text-gray-600 hover:text-gray-900 transition">Admin</a>
+                    <% end %>
                 </nav>
             </div>
         </div>
