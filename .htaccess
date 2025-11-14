@@ -120,7 +120,14 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # CACHE CONTROL
 # ============================================================================
 
-# Disable caching for ALL HTML, JavaScript, and CSS files
+# Cache static post HTML files (served from public/posts/)
+# These are pre-generated and updated when posts change
+<FilesMatch "^posts/.*\.html$">
+    Header set Cache-Control "public, max-age=3600"
+</FilesMatch>
+
+# Disable caching for dynamic HTML, JavaScript, and CSS files
+# Exclude static posts directory from no-cache rule
 <FilesMatch "\.(html|js|css)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
     Header set Pragma "no-cache"
