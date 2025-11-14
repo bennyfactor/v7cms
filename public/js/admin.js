@@ -11,11 +11,28 @@ function cmsApp() {
         editingPost: false,
         currentPost: {},
         saving: false,
+        settings: {
+            site_title: '',
+            site_tagline: '',
+            site_author: '',
+            welcome_title: '',
+            welcome_subtitle: '',
+            footer_text: '',
+            show_copyright_year: true,
+            meta_description: '',
+            meta_keywords: '',
+            contact_email: '',
+            github_url: '',
+            social_url: '',
+            posts_per_page: 10,
+            date_format: '%B %d, %Y'
+        },
+        savingSettings: false,
 
         async init() {
             await this.checkAuth();
             if (this.authenticated) {
-                await this.loadPosts();
+                await Promise.all([this.loadPosts(), this.loadSettings()]);
                 this.loading = false;
             } else {
                 this.loading = false;
@@ -192,6 +209,72 @@ function cmsApp() {
                 month: 'short',
                 day: 'numeric'
             });
+        },
+
+        async loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                this.settings = data.settings;
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                alert('Failed to load settings');
+            }
+        },
+
+        async saveSettings() {
+            if (this.savingSettings) return;
+
+            this.savingSettings = true;
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.settings)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.settings = data.settings;
+                    alert('Settings saved successfully!');
+                } else {
+                    const data = await response.json();
+                    alert('Failed to save settings: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                alert('Failed to save settings');
+            } finally {
+                this.savingSettings = false;
+            }
+        },
+
+        async resetToDefaults() {
+            if (!confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/settings/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.settings = data.settings;
+                    alert('Settings reset to defaults successfully!');
+                } else {
+                    throw new Error('Failed to reset settings');
+                }
+            } catch (error) {
+                console.error('Error resetting settings:', error);
+                alert('Failed to reset settings');
+            }
         }
     };
 }

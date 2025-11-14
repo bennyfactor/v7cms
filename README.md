@@ -15,6 +15,7 @@ The system runs on shared hosting environments via FastCGI or can be containeriz
 - Rich text editing with Quill.js
 - Draft and publish workflow
 - Automatic URL slug generation
+- Site settings management (customize text via admin interface)
 - Responsive design using Tailwind CSS
 - Lightweight JavaScript framework (Alpine.js)
 - Comprehensive test coverage
@@ -197,7 +198,7 @@ Important: Changes may take 5 minutes to a few hours to take effect.
 
 ### Accessing the Admin Interface
 
-1. Navigate to `http://localhost:9292/admin.html`
+1. Navigate to `http://localhost:9292/admin/`
 2. Click "Sign in with Google" or "Sign in with GitHub"
 3. Complete the OAuth flow
 4. You will be redirected to the admin dashboard
@@ -289,6 +290,34 @@ DELETE /api/posts/:id
 ```
 POST /api/auth/logout
 ```
+
+### Settings Endpoints
+
+**Get current settings:**
+```
+GET /api/settings
+```
+Returns all site settings (public access).
+
+**Update settings:**
+```
+PUT /api/settings
+Content-Type: application/json
+
+{
+  "site_title": "My Blog",
+  "welcome_title": "Welcome!",
+  "footer_text": "© 2025 My Blog",
+  "posts_per_page": 15
+}
+```
+Requires authentication. Returns updated settings or validation errors.
+
+**Reset settings to defaults:**
+```
+POST /api/settings/reset
+```
+Requires authentication. Resets all settings to default values.
 
 ## Development
 
@@ -454,6 +483,26 @@ v7cms/
 - `published` - Boolean flag (default: false)
 - `created_at`, `updated_at` - Timestamps
 
+### Settings Table
+- `id` - Primary key
+- `site_title` - Site name (max 100 chars)
+- `site_tagline` - Site tagline (max 200 chars)
+- `site_author` - Author name (max 100 chars)
+- `welcome_title` - Homepage title (max 200 chars)
+- `welcome_subtitle` - Homepage subtitle (max 300 chars)
+- `footer_text` - Footer text (max 300 chars)
+- `show_copyright_year` - Boolean flag for copyright year display
+- `meta_description` - SEO meta description (text)
+- `meta_keywords` - SEO keywords (max 500 chars)
+- `contact_email` - Contact email address
+- `github_url` - GitHub profile URL
+- `social_url` - Social media URL
+- `posts_per_page` - Number of posts per page (1-100)
+- `date_format` - strftime date format string
+- `created_at`, `updated_at` - Timestamps
+
+Note: Only one settings record exists (singleton pattern).
+
 ## Security Considerations
 
 The application implements several security measures:
@@ -519,7 +568,7 @@ Contributions are welcome. Please follow these guidelines:
 
 ## Testing
 
-The project maintains comprehensive test coverage:
+The project maintains comprehensive test coverage with **108 tests**:
 
 - Model tests for validations and business logic
 - Route tests for all endpoints
