@@ -32,11 +32,9 @@
                     <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                     <% end %>
                 </div>
-                <nav class="flex space-x-6">
+                <nav class="flex space-x-6" id="main-nav">
                     <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
-                    <% if logged_in? %>
-                    <a href="/admin/" class="text-gray-600 hover:text-gray-900 transition">Admin</a>
-                    <% end %>
+                    <!-- Admin link injected via JavaScript -->
                 </nav>
             </div>
         </div>
@@ -60,5 +58,40 @@
             </p>
         </div>
     </footer>
+
+    <!-- Auth-based UI injection -->
+    <script>
+        (async function() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+
+                if (data.logged_in) {
+                    // Add admin link to navigation
+                    const nav = document.getElementById('main-nav');
+                    if (nav) {
+                        const adminLink = document.createElement('a');
+                        adminLink.href = '/admin/';
+                        adminLink.className = 'text-gray-600 hover:text-gray-900 transition';
+                        adminLink.textContent = 'Admin';
+                        nav.appendChild(adminLink);
+                    }
+
+                    // Replace empty posts CTA with admin panel link
+                    const emptyCta = document.getElementById('empty-posts-cta');
+                    if (emptyCta) {
+                        emptyCta.innerHTML = `
+                            <p class="text-gray-500 mb-6">Get started by creating your first post in the admin panel.</p>
+                            <a href="/admin/" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow transition">
+                                Go to Admin Panel
+                            </a>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check auth status:', error);
+            }
+        })();
+    </script>
 </body>
 </html>
