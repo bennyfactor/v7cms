@@ -63,6 +63,13 @@
                         </svg>
                         Posts
                     </a>
+                    <a @click.prevent="currentView = 'settings'" href="#" :class="currentView === 'settings' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition">
+                        <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Settings
+                    </a>
                     <button @click="logout" class="w-full text-left px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                         <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -175,6 +182,168 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Settings View -->
+                <div x-show="currentView === 'settings'" class="p-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Site Settings</h2>
+
+                    <form @submit.prevent="saveSettings" class="bg-white rounded-lg shadow p-6 space-y-8">
+
+                        <!-- Site Identity Section -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Site Identity</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Site Title *</label>
+                                    <input type="text" x-model="settings.site_title"
+                                           class="w-full border rounded px-3 py-2" required maxlength="100">
+                                    <p class="text-xs text-gray-600 mt-1">Shown in browser tab and header (max 100 characters)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Site Tagline</label>
+                                    <input type="text" x-model="settings.site_tagline"
+                                           class="w-full border rounded px-3 py-2" maxlength="200">
+                                    <p class="text-xs text-gray-600 mt-1">Short description (max 200 characters)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Site Author</label>
+                                    <input type="text" x-model="settings.site_author"
+                                           class="w-full border rounded px-3 py-2" maxlength="100">
+                                    <p class="text-xs text-gray-600 mt-1">Default author name (max 100 characters)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Homepage Content Section -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Homepage Content</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Welcome Title *</label>
+                                    <input type="text" x-model="settings.welcome_title"
+                                           class="w-full border rounded px-3 py-2" required maxlength="200">
+                                    <p class="text-xs text-gray-600 mt-1">Main heading on homepage (max 200 characters)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Welcome Subtitle</label>
+                                    <textarea x-model="settings.welcome_subtitle"
+                                              class="w-full border rounded px-3 py-2" rows="2" maxlength="300"></textarea>
+                                    <p class="text-xs text-gray-600 mt-1">Supporting text below title (max 300 characters)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Section -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Footer</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Footer Text</label>
+                                    <input type="text" x-model="settings.footer_text"
+                                           class="w-full border rounded px-3 py-2" maxlength="300">
+                                    <p class="text-xs text-gray-600 mt-1">Custom footer message (max 300 characters)</p>
+                                </div>
+
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" x-model="settings.show_copyright_year" class="mr-2">
+                                        <span class="text-sm">Show copyright year (© 2025)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEO / Meta Tags Section -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">SEO & Meta Tags</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Meta Description</label>
+                                    <textarea x-model="settings.meta_description"
+                                              class="w-full border rounded px-3 py-2" rows="3"></textarea>
+                                    <p class="text-xs text-gray-600 mt-1">Search engine description (recommended: 150-160 characters)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Meta Keywords</label>
+                                    <input type="text" x-model="settings.meta_keywords"
+                                           class="w-full border rounded px-3 py-2" maxlength="500">
+                                    <p class="text-xs text-gray-600 mt-1">Comma-separated keywords (max 500 characters)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact & Social Section -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Contact & Social</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Contact Email</label>
+                                    <input type="email" x-model="settings.contact_email"
+                                           class="w-full border rounded px-3 py-2" maxlength="100">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">GitHub URL</label>
+                                    <input type="url" x-model="settings.github_url"
+                                           class="w-full border rounded px-3 py-2" maxlength="200"
+                                           placeholder="https://github.com/username">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Social URL</label>
+                                    <input type="url" x-model="settings.social_url"
+                                           class="w-full border rounded px-3 py-2" maxlength="200"
+                                           placeholder="https://twitter.com/username">
+                                    <p class="text-xs text-gray-600 mt-1">Twitter, LinkedIn, or other social profile</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Display Options Section -->
+                        <div class="pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Display Options</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Posts Per Page</label>
+                                    <input type="number" x-model.number="settings.posts_per_page"
+                                           class="w-full border rounded px-3 py-2" min="1" max="100">
+                                    <p class="text-xs text-gray-600 mt-1">Number of posts to show (1-100)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Date Format</label>
+                                    <select x-model="settings.date_format" class="w-full border rounded px-3 py-2">
+                                        <option value="%B %d, %Y">November 13, 2025</option>
+                                        <option value="%m/%d/%Y">11/13/2025</option>
+                                        <option value="%Y-%m-%d">2025-11-13</option>
+                                        <option value="%d %B %Y">13 November 2025</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2 pt-4 border-t">
+                            <button type="submit"
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold transition">
+                                <span x-show="savingSettings">Saving...</span>
+                                <span x-show="!savingSettings">Save Settings</span>
+                            </button>
+                            <button type="button" @click="loadSettings"
+                                    class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold transition">
+                                Cancel
+                            </button>
+                            <button type="button" @click="resetToDefaults"
+                                    class="bg-red-100 text-red-700 px-6 py-2 rounded-lg hover:bg-red-200 ml-auto font-semibold transition">
+                                Reset to Defaults
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

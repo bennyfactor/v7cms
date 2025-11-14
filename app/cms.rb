@@ -252,6 +252,45 @@ class CMS < Sinatra::Base
     status 204
   end
 
+  # Settings API Routes
+
+  # GET /api/settings - Get current settings (no auth required for public display)
+  get '/api/settings' do
+    settings = Setting.instance
+    json({ settings: settings_json(settings) })
+  end
+
+  # PUT /api/settings - Update settings (auth required)
+  put '/api/settings' do
+    require_ajax_header
+    require_login
+
+    settings = Setting.instance
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    if settings.update(data)
+      json({ settings: settings_json(settings) })
+    else
+      halt 422, json({ errors: settings.errors.full_messages })
+    end
+  end
+
+  # POST /api/settings/reset - Reset to defaults (auth required)
+  post '/api/settings/reset' do
+    require_ajax_header
+    require_login
+
+    settings = Setting.instance
+    settings.reset_to_defaults!
+
+    json({ settings: settings_json(settings) })
+  end
+
   # Helper methods
 
   # JSON helper
@@ -270,6 +309,26 @@ class CMS < Sinatra::Base
       published: post.published,
       created_at: post.created_at,
       updated_at: post.updated_at
+    }
+  end
+
+  # Settings serialization helper
+  def settings_json(setting)
+    {
+      site_title: setting.site_title,
+      site_tagline: setting.site_tagline,
+      site_author: setting.site_author,
+      welcome_title: setting.welcome_title,
+      welcome_subtitle: setting.welcome_subtitle,
+      footer_text: setting.footer_text,
+      show_copyright_year: setting.show_copyright_year,
+      meta_description: setting.meta_description,
+      meta_keywords: setting.meta_keywords,
+      contact_email: setting.contact_email,
+      github_url: setting.github_url,
+      social_url: setting.social_url,
+      posts_per_page: setting.posts_per_page,
+      date_format: setting.date_format
     }
   end
 end
