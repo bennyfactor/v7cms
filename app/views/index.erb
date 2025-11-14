@@ -1,7 +1,10 @@
+<% @settings ||= Setting.instance %>
 <div class="space-y-8">
     <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to v7cms</h1>
-        <p class="text-xl text-gray-600">A minimal, modern content management system</p>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @settings.welcome_title %></h1>
+        <% if @settings.welcome_subtitle.present? %>
+        <p class="text-xl text-gray-600"><%= @settings.welcome_subtitle %></p>
+        <% end %>
     </div>
 
     <% if @posts.empty? %>
@@ -10,10 +13,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <h2 class="text-2xl font-semibold text-gray-700 mb-2">No posts yet</h2>
-            <p class="text-gray-500 mb-6">Get started by creating your first post in the admin panel.</p>
-            <a href="/admin.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow transition">
-                Go to Admin Panel
-            </a>
+            <div id="empty-posts-cta">
+                <p class="text-gray-500">Check back soon for new content!</p>
+            </div>
         </div>
     <% else %>
         <div class="space-y-6">
@@ -27,7 +29,7 @@
                         </h2>
                         <div class="text-sm text-gray-500 mb-4">
                             <time datetime="<%= post.created_at.iso8601 %>">
-                                <%= post.created_at.strftime('%B %d, %Y') %>
+                                <%= post.created_at.strftime(@settings.date_format) %>
                             </time>
                         </div>
                         <div class="prose max-w-none text-gray-700 line-clamp-3">

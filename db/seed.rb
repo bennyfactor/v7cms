@@ -1,6 +1,7 @@
 require 'sinatra/activerecord'
 require 'yaml'
 require_relative '../app/models/post'
+require_relative '../app/models/setting'
 
 db_config = YAML.load_file('config/database.yml')['development']
 ActiveRecord::Base.establish_connection(db_config)
@@ -22,3 +23,7 @@ Post.create!(
 
 puts 'Created 2 sample posts!'
 Post.all.each { |p| puts "  - #{p.title} (#{p.slug})" }
+
+# Ensure settings exist with defaults
+Setting.instance
+puts 'Settings initialized with default values'
