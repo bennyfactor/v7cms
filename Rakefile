@@ -12,6 +12,14 @@ set :database_file, 'config/database.yml'
 # Load sinatra-activerecord rake tasks
 require 'sinatra/activerecord/rake'
 
+# Define environment task for loading the application
+task :environment do
+  require_relative 'app/cms'
+end
+
+# Load custom rake tasks
+Dir.glob('lib/tasks/*.rake').each { |r| load r }
+
 # Default task
 task default: :spec
 
