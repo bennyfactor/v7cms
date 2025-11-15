@@ -99,17 +99,9 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
     </IfModule>
 </FilesMatch>
 
-# Block XML files EXCEPT feed.xml and atom.xml
-# Negative lookahead: match .xml files that are NOT feed.xml or atom.xml
-<FilesMatch "^(?!(feed|atom)\.xml$).*\.xml$">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Deny from all
-    </IfModule>
-</FilesMatch>
+# Note: XML file blocking removed because feeds are served dynamically through
+# the application, not as static files. Config XML files in subdirectories
+# are still blocked by RedirectMatch rules above.
 
 # Protect documentation and source files
 <FilesMatch "\.(md|markdown|txt|rst)$">
