@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  apache:
+    build:
+      context: .
+      dockerfile: Dockerfile.apache
+    ports:
+      - "8080:80"
+    volumes:
+      - ./.htaccess:/var/www/v7cms/.htaccess
+      - ./public:/var/www/v7cms/public
+    environment:
+      - RACK_ENV=production
+      - SESSION_SECRET=test_secret_for_apache_container_testing_only

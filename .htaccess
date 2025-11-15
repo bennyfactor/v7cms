@@ -27,11 +27,12 @@ RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|
 # Block Ruby source files - return 404 for .rb, .ru, .rake files
 RedirectMatch 404 \.(rb|ru|rake)$
 
-# Block configuration files - YAML, JSON, XML, INI, CONF
+# Block configuration files - YAML, JSON, INI, CONF
 # BUT allow feed.xml and atom.xml (RSS/Atom feeds)
-RedirectMatch 404 \.(yml|yaml|ini|conf|config)$
-RedirectMatch 404 ^(?!/(feed|atom)\.xml$).+\.json$
-RedirectMatch 404 ^(?!/(feed|atom)\.xml$).+\.xml$
+RedirectMatch 404 \.(yml|yaml|json|ini|conf|config)$
+# Block XML files in subdirectories or with specific names (but not feed.xml/atom.xml in root)
+RedirectMatch 404 /.+/.+\.xml$
+RedirectMatch 404 ^/(config|database|settings|credentials|secret).*\.xml$
 
 # Block database files - SQLite and related files
 RedirectMatch 404 \.(db|sqlite|sqlite3|db-shm|db-wal|sql)$
@@ -98,24 +99,15 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
     </IfModule>
 </FilesMatch>
 
-# Block XML files except feed.xml and atom.xml
-<FilesMatch "\.xml$">
+# Block XML files EXCEPT feed.xml and atom.xml
+# Negative lookahead: match .xml files that are NOT feed.xml or atom.xml
+<FilesMatch "^(?!(feed|atom)\.xml$).*\.xml$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
     <IfModule !mod_authz_core.c>
         Order allow,deny
         Deny from all
-    </IfModule>
-</FilesMatch>
-
-<FilesMatch "^(feed|atom)\.xml$">
-    <IfModule mod_authz_core.c>
-        Require all granted
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Allow from all
     </IfModule>
 </FilesMatch>
 
@@ -184,6 +176,10 @@ Header always set Expires "0" env=is_fcgi_request
 
 # Set directory index files - try index.html first, then index.fcgi
 DirectoryIndex index.html index.fcgi
+
+# Force feed.xml and atom.xml through the application (not static files)
+# This bypasses .htaccess security rules by routing through Sinatra
+RewriteRule ^(feed|atom)\.xml$ /index.fcgi/$1.xml [QSA,L]
 
 # Don't rewrite requests for existing files (CSS, JS, HTML, images, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f
