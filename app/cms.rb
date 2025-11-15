@@ -89,7 +89,8 @@ class CMS < Sinatra::Base
   end
 
   # RSS Feed - generate dynamically
-  get '/feed.xml' do
+  # Using regex pattern to ensure .xml extension is matched
+  get %r{^/feed\.xml$} do
     content_type 'application/rss+xml', charset: 'utf-8'
 
     begin
@@ -101,7 +102,8 @@ class CMS < Sinatra::Base
   end
 
   # Atom Feed - generate dynamically
-  get '/atom.xml' do
+  # Using regex pattern to ensure .xml extension is matched
+  get %r{^/atom\.xml$} do
     content_type 'application/atom+xml', charset: 'utf-8'
 
     begin
