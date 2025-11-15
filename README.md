@@ -17,6 +17,7 @@ The system runs on shared hosting environments via FastCGI or can be containeriz
 - Automatic URL slug generation
 - Site settings management (customize text via admin interface)
 - **Static HTML generation** (posts pre-rendered for maximum performance)
+- **RSS and Atom feeds** (dynamically generated at `/feed/rss` and `/feed/atom`)
 - Responsive design using Tailwind CSS
 - Lightweight JavaScript framework (Alpine.js)
 - Comprehensive test coverage
@@ -225,6 +226,14 @@ Important: Changes may take 5 minutes to a few hours to take effect.
 Navigate to `http://localhost:9292/` to see the public site with all published posts.
 
 Individual posts are accessible at `http://localhost:9292/posts/<slug>`.
+
+### RSS and Atom Feeds
+
+The system automatically generates RSS and Atom feeds:
+- RSS Feed: `http://localhost:9292/feed/rss`
+- Atom Feed: `http://localhost:9292/feed/atom`
+
+Feeds are dynamically generated and include the 20 most recent published posts. Feed discovery links are automatically included in the page `<head>` for feed readers.
 
 ## API Documentation
 
