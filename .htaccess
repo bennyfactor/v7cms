@@ -5,10 +5,14 @@ Options -Indexes
 RewriteEngine On
 
 # ============================================================================
-# ALLOW OAuth routes before security rules
+# ALLOW OAuth routes and feeds before security rules
 # ============================================================================
 # Allow all /auth/ paths to pass through to the application
 RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
+RewriteRule .* - [L]
+
+# Allow RSS and Atom feeds
+RewriteCond %{REQUEST_URI} ^/(feed|atom)\.xml$
 RewriteRule .* - [L]
 
 # ============================================================================
@@ -28,8 +32,7 @@ RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|
 RedirectMatch 404 \.(rb|ru|rake)$
 
 # Block configuration files - YAML, JSON, XML, INI, CONF
-# Exception: Allow feed.xml and atom.xml
-RedirectMatch 404 (?!^/(feed|atom)\.xml$)\.(yml|yaml|json|xml|ini|conf|config)$
+RedirectMatch 404 \.(yml|yaml|json|xml|ini|conf|config)$
 
 # Block database files - SQLite and related files
 RedirectMatch 404 \.(db|sqlite|sqlite3|db-shm|db-wal|sql)$
