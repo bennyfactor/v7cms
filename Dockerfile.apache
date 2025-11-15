@@ -1,0 +1,64 @@
+FROM ruby:3.2-slim
+
+# Install Apache, FastCGI, and dependencies
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    libapache2-mod-fcgid \
+    build-essential \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable Apache modules
+RUN a2enmod rewrite fcgid headers
+
+# Install bundler
+RUN gem install bundler
+
+# Set working directory
+WORKDIR /var/www/v7cms
+
+# Copy application files
+COPY . /var/www/v7cms/
+
+# Install gems
+RUN bundle install
+
+# Copy .htaccess to Apache config directory
+COPY .htaccess /var/www/v7cms/.htaccess
+
+# Configure Apache
+RUN echo '<VirtualHost *:80>\n\
+    ServerName localhost\n\
+    DocumentRoot /var/www/v7cms/public\n\
+    \n\
+    <Directory /var/www/v7cms/public>\n\
+        Options -Indexes +FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    \n\
+    # FastCGI configuration\n\
+    FcgidMaxRequestLen 1073741824\n\
+    AddHandler fcgid-script .fcgi\n\
+    \n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/v7cms.conf
+
+# Enable the site
+RUN a2ensite v7cms.conf
+RUN a2dissite 000-default.conf
+
+# Set up database
+RUN bundle exec rake db:migrate RACK_ENV=production
+
+# Generate feeds
+RUN bundle exec rake feeds:regenerate RACK_ENV=production
+
+# Ensure proper permissions
+RUN chown -R www-data:www-data /var/www/v7cms
+RUN chmod +x /var/www/v7cms/index.fcgi
+
+EXPOSE 80
+
+CMD ["apache2ctl", "-D", "FOREGROUND"]

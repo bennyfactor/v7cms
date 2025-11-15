@@ -177,6 +177,10 @@ Header always set Expires "0" env=is_fcgi_request
 # Set directory index files - try index.html first, then index.fcgi
 DirectoryIndex index.html index.fcgi
 
+# Force feed.xml and atom.xml through the application (not static files)
+# This bypasses .htaccess security rules by routing through Sinatra
+RewriteRule ^(feed|atom)\.xml$ /index.fcgi/$1.xml [QSA,L]
+
 # Don't rewrite requests for existing files (CSS, JS, HTML, images, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f
 # Don't rewrite requests for existing directories

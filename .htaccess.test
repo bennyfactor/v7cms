@@ -1,0 +1,13 @@
+# Test .htaccess for SetEnv support
+
+# Try to set a custom environment variable
+SetEnv CUSTOM_TEST_VAR "SetEnv is working!"
+
+# Try to modify PATH (this is what we really want to test)
+SetEnv PATH "/home/bennyfactor/.rbenv/shims:/home/bennyfactor/.rbenv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Allow access to test script
+<Files "test-env.fcgi">
+    SetHandler fcgid-script
+    Options +ExecCGI
+</Files>
