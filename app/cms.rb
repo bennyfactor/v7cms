@@ -88,30 +88,16 @@ class CMS < Sinatra::Base
     erb :post
   end
 
-  # RSS Feed
+  # RSS Feed - generate dynamically
   get '/feed.xml' do
     content_type 'application/rss+xml', charset: 'utf-8'
-
-    feed_file = File.join(settings.public_folder, 'feed.xml')
-    if File.exist?(feed_file)
-      send_file feed_file
-    else
-      status 404
-      'Feed not found'
-    end
+    FeedGenerator.new.generate_rss
   end
 
-  # Atom Feed
+  # Atom Feed - generate dynamically
   get '/atom.xml' do
     content_type 'application/atom+xml', charset: 'utf-8'
-
-    feed_file = File.join(settings.public_folder, 'atom.xml')
-    if File.exist?(feed_file)
-      send_file feed_file
-    else
-      status 404
-      'Feed not found'
-    end
+    FeedGenerator.new.generate_atom
   end
 
   # API route for backward compatibility
