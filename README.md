@@ -16,6 +16,7 @@ The system runs on shared hosting environments via FastCGI or can be containeriz
 - Draft and publish workflow
 - Automatic URL slug generation
 - Site settings management (customize text via admin interface)
+- **Static HTML generation** (posts pre-rendered for maximum performance)
 - Responsive design using Tailwind CSS
 - Lightweight JavaScript framework (Alpine.js)
 - Comprehensive test coverage
@@ -376,6 +377,25 @@ Watch for changes during development:
 ./bin/tailwindcss -i public/css/input.css -o public/css/output.css --watch
 ```
 
+### Managing Static HTML Files
+
+The CMS automatically generates static HTML files for all published posts. These are served directly by Apache for maximum performance.
+
+Regenerate all static files:
+```bash
+bundle exec rake posts:regenerate_all
+```
+
+Verify all published posts have static files:
+```bash
+bundle exec rake posts:verify
+```
+
+Clean up orphaned static files:
+```bash
+bundle exec rake posts:clean_orphans
+```
+
 ## Deployment
 
 ### Docker Production Deployment
@@ -568,11 +588,12 @@ Contributions are welcome. Please follow these guidelines:
 
 ## Testing
 
-The project maintains comprehensive test coverage with **108 tests**:
+The project maintains comprehensive test coverage with **136 tests**:
 
 - Model tests for validations and business logic
 - Route tests for all endpoints
 - Helper tests for authentication logic
+- Service tests for static HTML generation
 - Integration tests for complete workflows
 
 Run the test suite before submitting changes.

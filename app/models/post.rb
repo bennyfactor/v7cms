@@ -9,6 +9,9 @@ class Post < ActiveRecord::Base
   after_commit :remove_static_file, if: :should_remove_static_file?
   after_destroy :remove_static_file
 
+  # Feed regeneration callback
+  after_commit :regenerate_feeds
+
   scope :published, -> { where(published: true) }
   scope :recent, -> { order(created_at: :desc) }
 
@@ -39,5 +42,9 @@ class Post < ActiveRecord::Base
 
   def remove_static_file
     PostRenderer.delete_static_file(self)
+  end
+
+  def regenerate_feeds
+    FeedGenerator.write_feeds
   end
 end
