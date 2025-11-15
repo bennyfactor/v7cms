@@ -33,6 +33,9 @@ class Setting < ActiveRecord::Base
 
   validates :date_format, presence: true
 
+  # Feed regeneration callback
+  after_commit :regenerate_feeds
+
   # Singleton instance method
   def self.instance
     first_or_create!
@@ -61,5 +64,11 @@ class Setting < ActiveRecord::Base
       posts_per_page: 10,
       date_format: '%B %d, %Y'
     )
+  end
+
+  private
+
+  def regenerate_feeds
+    FeedGenerator.write_feeds
   end
 end

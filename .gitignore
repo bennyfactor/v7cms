@@ -68,6 +68,14 @@ db/schema.rb
 public/css/output.css
 bin/tailwindcss
 
+# Generated feeds (auto-regenerated)
+public/feed.xml
+public/atom.xml
+
+# Static HTML files (auto-generated)
+public/posts/*.html
+!public/posts/.gitkeep
+
 # Docker
 .dockerignore
 
