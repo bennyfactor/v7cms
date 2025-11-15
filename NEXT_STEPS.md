@@ -114,57 +114,47 @@ This document outlines future development tasks organized by priority. The curre
 
 ## Priority 3: RSS Feed Generation
 
-**Goal**: Provide RSS 2.0 and Atom feeds, statically generated and updated when content changes.
+**Status**: ✅ **COMPLETED** (2025-11-15)
 
-### Implementation Tasks:
-- [ ] Create `FeedGenerator` service class (`app/services/feed_generator.rb`)
-  - Method: `generate_rss` - returns RSS 2.0 XML string
-  - Method: `generate_atom` - returns Atom XML string
-  - Method: `write_feeds` - writes to `public/feed.xml` and `public/atom.xml`
-- [ ] RSS feed structure:
-  - Channel: title, description, link, language, pubDate, lastBuildDate
-  - Items: last 20 published posts (configurable)
-  - Item fields: title, link, description (excerpt or full content?), pubDate, guid
-- [ ] Atom feed structure:
-  - Feed: title, subtitle, link, updated, author
-  - Entries: last 20 published posts
-  - Entry fields: title, link, summary/content, published, updated, id
-- [ ] Trigger feed regeneration:
-  - After post created/updated/destroyed
-  - After settings updated (site title, description)
-  - Manual trigger via rake task
-- [ ] Add to Post model callbacks:
-  ```ruby
-  after_commit :regenerate_feeds
-  ```
-- [ ] Add to Settings model callbacks (when implemented):
-  ```ruby
-  after_commit :regenerate_feeds
-  ```
-- [ ] Add `<link rel="alternate">` tags to `layout.erb` header:
-  ```html
-  <link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml">
-  <link rel="alternate" type="application/atom+xml" title="Atom" href="/atom.xml">
-  ```
-- [ ] Add rake task: `rake feeds:regenerate`
-- [ ] Validate feeds: https://validator.w3.org/feed/
-- [ ] Write tests for feed generation
+**Goal**: Provide RSS 2.0 and Atom feeds, dynamically generated and updated when content changes.
 
-### Files to Create/Modify:
-- `app/services/feed_generator.rb` (new)
-- `app/models/post.rb` - add feed regeneration callback
-- `app/views/layout.erb` - add feed link tags
-- `lib/tasks/feeds.rake` (new)
-- `spec/services/feed_generator_spec.rb` (new)
-- `public/feed.xml` (generated, gitignored)
-- `public/atom.xml` (generated, gitignored)
+### Implementation Summary:
+- ✅ Created FeedGenerator service (111 lines)
+- ✅ RSS 2.0 feed at `/feed/rss` with proper XML structure
+- ✅ Atom feed at `/feed/atom` with proper XML structure
+- ✅ Includes 20 most recent published posts (configurable via FEED_LIMIT)
+- ✅ Automatic regeneration via ActiveRecord callbacks on Post and Setting models
+- ✅ Feed discovery links in layout.erb `<head>` section
+- ✅ Rake task: `feeds:regenerate` for manual generation
+- ✅ 41 comprehensive tests (feed structure, metadata, filtering, file operations)
+- ✅ Uses Builder gem for clean XML generation
+- ✅ Full post content in feeds (not excerpts)
+- ✅ Proper date formatting (RFC 822 for RSS, ISO 8601 for Atom)
 
-### Technical Considerations:
-- **Content vs Excerpt**: Full post content or truncated summary in feeds?
-- **Media enclosures**: Support for podcasting or images?
-- **GUID stability**: Use post ID or slug-based URL as GUID
-- **Date formats**: RFC 822 for RSS, ISO 8601 for Atom
-- **Escaping**: Properly escape HTML content in XML
+### Files Created/Modified:
+- `app/services/feed_generator.rb` (111 lines) - NEW
+- `app/models/post.rb` (+7 lines for feed regeneration callback)
+- `app/models/setting.rb` (+9 lines for feed regeneration callback)
+- `app/views/layout.erb` (+4 lines for feed discovery links)
+- `app/cms.rb` (+20 lines for feed routes at /feed/rss and /feed/atom)
+- `lib/tasks/feeds.rake` (14 lines) - NEW
+- `spec/services/feed_generator_spec.rb` (368 lines) - NEW
+- `spec/routes/feeds_spec.rb` (87 lines) - NEW
+- `Gemfile` (+2 lines for builder and nokogiri gems)
+- `.gitignore` (+4 lines to exclude generated feeds)
+
+### Technical Decisions Made:
+- **Dynamic generation**: Feeds generated on-demand via Sinatra routes (not static files)
+- **URL structure**: `/feed/rss` and `/feed/atom` (avoiding .xml extension routing issues)
+- **Full content**: Complete post HTML included in feeds
+- **GUID**: Post URL used as stable identifier
+- **SITE_URL**: Configurable via ENV var for correct URLs in production
+
+### Results:
+- **Deployed**: Working on production at https://dev.iaatb.net/feed/rss and /feed/atom
+- **Performance**: Lightweight dynamic generation (Builder gem is fast)
+- **Standards compliant**: RSS 2.0 and Atom 1.0 specifications
+- **Auto-updating**: Feeds refresh whenever posts or settings change
 
 ---
 

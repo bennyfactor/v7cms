@@ -1,6 +1,6 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-14
+**Last Updated**: 2025-11-15
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
@@ -21,7 +21,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The a
 - **API**: RESTful JSON API for posts and settings CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS)
 - **Public Site**: ERB templates for homepage and individual post pages
-- **Testing**: 136 RSpec tests (models, routes, helpers, services)
+- **Testing**: 177 RSpec tests (models, routes, helpers, services)
 - **Deployment**: FastCGI on shared hosting with Apache .htaccess routing
 - **Security**:
   - .htaccess rules blocking sensitive files (.rb, .db, .env, config/, etc.)
@@ -44,6 +44,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The a
   - Rake tasks for bulk regeneration, verification, cleanup
   - 1-hour browser cache for static files
   - 28 new tests (22 service + 6 model callback tests)
+- **RSS and Atom Feeds** (2025-11-15):
+  - FeedGenerator service creates RSS 2.0 and Atom feeds
+  - Dynamically generated at /feed/rss and /feed/atom
+  - Includes 20 most recent published posts
+  - Feed discovery links in HTML head
+  - Automatic updates via ActiveRecord callbacks on Post and Setting
+  - Rake task for manual regeneration
+  - 41 new tests for feed generation service
 
 ### ✅ Production Deployment Features
 - OAuth callback working in production
@@ -236,19 +244,7 @@ bin/
 
 ## 🎯 Immediate Next Steps (Recommended)
 
-### Step 1: RSS Feed Generation ⬅️ **NEXT**
-**File**: `NEXT_STEPS.md` → Priority 3
-
-Generate RSS and Atom feeds, updated automatically when posts change.
-
-**Why this first?**
-- Quick win after static generation is working
-- Standard blog feature
-- Reuses static generation patterns
-
-**Estimated effort**: 2-3 hours
-
-### Step 2: Pages & Hierarchical Content
+### Step 1: Pages & Hierarchical Content ⬅️ **NEXT**
 **File**: `NEXT_STEPS.md` → Priority 4
 
 Support static pages (About, Contact, etc.) with parent-child relationships, separate from blog posts.
@@ -260,7 +256,7 @@ Support static pages (About, Contact, etc.) with parent-child relationships, sep
 
 **Estimated effort**: 4-6 hours
 
-### Step 3: Commenting System
+### Step 2: Commenting System
 **File**: `NEXT_STEPS.md` → Priority 5
 
 Enable user engagement through comments (needs decision: self-hosted vs third-party).
@@ -326,7 +322,7 @@ Enable user engagement through comments (needs decision: self-hosted vs third-pa
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 136 tests
+- Current count: 177 tests
 - Test coverage: models, routes, helpers, services
 - Always write tests for new features
 
