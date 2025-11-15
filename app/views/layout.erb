@@ -20,6 +20,10 @@
     <% if @settings.site_author.present? %>
     <meta name="author" content="<%= @settings.site_author %>">
     <% end %>
+
+    <!-- RSS/Atom Feed Links -->
+    <link rel="alternate" type="application/rss+xml" title="<%= @settings.site_title %> RSS Feed" href="/feed.xml">
+    <link rel="alternate" type="application/atom+xml" title="<%= @settings.site_title %> Atom Feed" href="/atom.xml">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Header -->
