@@ -5,14 +5,10 @@ Options -Indexes
 RewriteEngine On
 
 # ============================================================================
-# ALLOW OAuth routes and feeds before security rules
+# ALLOW OAuth routes before security rules
 # ============================================================================
 # Allow all /auth/ paths to pass through to the application
 RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
-RewriteRule .* - [L]
-
-# Allow RSS and Atom feeds
-RewriteCond %{REQUEST_URI} ^/(feed|atom)\.xml$
 RewriteRule .* - [L]
 
 # ============================================================================
@@ -32,7 +28,10 @@ RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|
 RedirectMatch 404 \.(rb|ru|rake)$
 
 # Block configuration files - YAML, JSON, XML, INI, CONF
-RedirectMatch 404 \.(yml|yaml|json|xml|ini|conf|config)$
+# BUT allow feed.xml and atom.xml (RSS/Atom feeds)
+RedirectMatch 404 \.(yml|yaml|ini|conf|config)$
+RedirectMatch 404 ^(?!/(feed|atom)\.xml$).+\.json$
+RedirectMatch 404 ^(?!/(feed|atom)\.xml$).+\.xml$
 
 # Block database files - SQLite and related files
 RedirectMatch 404 \.(db|sqlite|sqlite3|db-shm|db-wal|sql)$
@@ -88,13 +87,35 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 </FilesMatch>
 
 # Protect configuration files (double protection)
-<FilesMatch "\.(yml|yaml|json|xml|ini|conf|config)$">
+# BUT allow feed.xml and atom.xml (RSS/Atom feeds)
+<FilesMatch "\.(yml|yaml|json|ini|conf|config)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
     <IfModule !mod_authz_core.c>
         Order allow,deny
         Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block XML files except feed.xml and atom.xml
+<FilesMatch "\.xml$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "^(feed|atom)\.xml$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
     </IfModule>
 </FilesMatch>
 
