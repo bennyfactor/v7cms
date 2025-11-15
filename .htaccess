@@ -28,7 +28,8 @@ RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|
 RedirectMatch 404 \.(rb|ru|rake)$
 
 # Block configuration files - YAML, JSON, XML, INI, CONF
-RedirectMatch 404 \.(yml|yaml|json|xml|ini|conf|config)$
+# Exception: Allow feed.xml and atom.xml
+RedirectMatch 404 (?!^/(feed|atom)\.xml$)\.(yml|yaml|json|xml|ini|conf|config)$
 
 # Block database files - SQLite and related files
 RedirectMatch 404 \.(db|sqlite|sqlite3|db-shm|db-wal|sql)$
