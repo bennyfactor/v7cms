@@ -88,16 +88,26 @@ class CMS < Sinatra::Base
     erb :post
   end
 
-  # RSS Feed - generate dynamically
-  get '/feed.xml' do
+  # RSS Feed - generate dynamically at /feed/rss
+  get '/feed/rss' do
     content_type 'application/rss+xml', charset: 'utf-8'
     FeedGenerator.new.generate_rss
   end
 
-  # Atom Feed - generate dynamically
-  get '/atom.xml' do
+  # Atom Feed - generate dynamically at /feed/atom
+  get '/feed/atom' do
     content_type 'application/atom+xml', charset: 'utf-8'
     FeedGenerator.new.generate_atom
+  end
+
+  # Legacy feed.xml redirect (keeping for compatibility)
+  get '/feed.xml' do
+    redirect '/feed/rss', 301
+  end
+
+  # Legacy atom.xml redirect (keeping for compatibility)
+  get '/atom.xml' do
+    redirect '/feed/atom', 301
   end
 
   # API route for backward compatibility
