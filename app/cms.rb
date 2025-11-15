@@ -91,13 +91,25 @@ class CMS < Sinatra::Base
   # RSS Feed - generate dynamically
   get '/feed.xml' do
     content_type 'application/rss+xml', charset: 'utf-8'
-    FeedGenerator.new.generate_rss
+
+    begin
+      FeedGenerator.new.generate_rss
+    rescue => e
+      status 500
+      "Error generating RSS feed: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+    end
   end
 
   # Atom Feed - generate dynamically
   get '/atom.xml' do
     content_type 'application/atom+xml', charset: 'utf-8'
-    FeedGenerator.new.generate_atom
+
+    begin
+      FeedGenerator.new.generate_atom
+    rescue => e
+      status 500
+      "Error generating Atom feed: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+    end
   end
 
   # API route for backward compatibility
