@@ -26,6 +26,10 @@ gem 'dotenv', '~> 2.8'
 # JSON handling
 gem 'json', '~> 2.6'
 
+# XML generation for feeds
+gem 'builder', '~> 3.2'
+gem 'nokogiri', '~> 1.15'
+
 group :development, :test do
   gem 'pry', '~> 0.14'
   gem 'rspec', '~> 3.12'
