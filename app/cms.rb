@@ -88,30 +88,26 @@ class CMS < Sinatra::Base
     erb :post
   end
 
-  # RSS Feed - generate dynamically
-  # Using regex pattern without anchors (Sinatra adds them automatically)
-  get %r{/feed\.xml} do
+  # RSS Feed - generate dynamically at /feed/rss
+  get '/feed/rss' do
     content_type 'application/rss+xml', charset: 'utf-8'
-
-    begin
-      FeedGenerator.new.generate_rss
-    rescue => e
-      status 500
-      "Error generating RSS feed: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
-    end
+    FeedGenerator.new.generate_rss
   end
 
-  # Atom Feed - generate dynamically
-  # Using regex pattern without anchors (Sinatra adds them automatically)
-  get %r{/atom\.xml} do
+  # Atom Feed - generate dynamically at /feed/atom
+  get '/feed/atom' do
     content_type 'application/atom+xml', charset: 'utf-8'
+    FeedGenerator.new.generate_atom
+  end
 
-    begin
-      FeedGenerator.new.generate_atom
-    rescue => e
-      status 500
-      "Error generating Atom feed: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
-    end
+  # Legacy feed.xml redirect
+  get '/feed.xml' do
+    redirect '/feed/rss', 301
+  end
+
+  # Legacy atom.xml redirect
+  get '/atom.xml' do
+    redirect '/feed/atom', 301
   end
 
   # API route for backward compatibility
