@@ -316,6 +316,116 @@ class CMS < Sinatra::Base
     json({ settings: settings_json(settings) })
   end
 
+  # Pages API Routes
+
+  # GET /api/pages - List pages
+  get '/api/pages' do
+    pages = if logged_in? && params[:include_drafts] == 'true'
+      Page.ordered
+    else
+      Page.published.ordered
+    end
+
+    # Support parent filtering
+    pages = pages.where(parent_id: params[:parent_id]) if params[:parent_id]
+    pages = pages.top_level if params[:top_level] == 'true'
+
+    json({ pages: pages.map { |p| page_json(p) } })
+  end
+
+  # GET /api/pages/:id - Get a single page by ID or slug
+  get '/api/pages/:id' do
+    page = Page.find_by(id: params[:id]) || Page.find_by(slug: params[:id])
+
+    if page.nil?
+      halt 404, json({ error: 'Page not found' })
+    end
+
+    # Only allow viewing unpublished pages if logged in
+    if !page.published && !logged_in?
+      halt 404, json({ error: 'Page not found' })
+    end
+
+    json({ page: page_json(page, include_relations: true) })
+  end
+
+  # POST /api/pages - Create a new page
+  post '/api/pages' do
+    require_ajax_header
+    require_login
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    page = Page.new(
+      title: data['title'],
+      slug: data['slug'],
+      content: data['content'],
+      published: data['published'] || false,
+      parent_id: data['parent_id'],
+      position: data['position'] || 0,
+      page_type: data['page_type'] || 'standard'
+    )
+
+    if page.save
+      status 201
+      json({ page: page_json(page, include_relations: true) })
+    else
+      halt 422, json({ errors: page.errors.full_messages })
+    end
+  end
+
+  # PUT /api/pages/:id - Update a page
+  put '/api/pages/:id' do
+    require_ajax_header
+    require_login
+
+    page = Page.find_by(id: params[:id])
+
+    if page.nil?
+      halt 404, json({ error: 'Page not found' })
+    end
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    # Update only provided fields
+    page.title = data['title'] if data.key?('title')
+    page.slug = data['slug'] if data.key?('slug')
+    page.content = data['content'] if data.key?('content')
+    page.published = data['published'] if data.key?('published')
+    page.parent_id = data['parent_id'] if data.key?('parent_id')
+    page.position = data['position'] if data.key?('position')
+    page.page_type = data['page_type'] if data.key?('page_type')
+
+    if page.save
+      json({ page: page_json(page, include_relations: true) })
+    else
+      halt 422, json({ errors: page.errors.full_messages })
+    end
+  end
+
+  # DELETE /api/pages/:id - Delete a page
+  delete '/api/pages/:id' do
+    require_ajax_header
+    require_login
+
+    page = Page.find_by(id: params[:id])
+
+    if page.nil?
+      halt 404, json({ error: 'Page not found' })
+    end
+
+    page.destroy
+    status 204
+  end
+
   # Helper methods
 
   # JSON helper
@@ -355,5 +465,31 @@ class CMS < Sinatra::Base
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format
     }
+  end
+
+  # Page serialization helper
+  def page_json(page, include_relations: false)
+    result = {
+      id: page.id,
+      title: page.title,
+      slug: page.slug,
+      content: page.content,
+      published: page.published,
+      parent_id: page.parent_id,
+      position: page.position,
+      page_type: page.page_type,
+      created_at: page.created_at,
+      updated_at: page.updated_at
+    }
+
+    if include_relations
+      result[:depth] = page.depth
+      result[:has_children] = page.has_children?
+      result[:parent] = page.parent ? { id: page.parent.id, title: page.parent.title, slug: page.parent.slug } : nil
+      result[:children] = page.children.ordered.map { |c| { id: c.id, title: c.title, slug: c.slug, published: c.published } }
+      result[:breadcrumb_trail] = page.breadcrumb_trail.map { |p| { id: p.id, title: p.title, slug: p.slug } }
+    end
+
+    result
   end
 end
