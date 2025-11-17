@@ -1,0 +1,65 @@
+<% @settings ||= Setting.instance %>
+<article class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="p-8">
+        <% if @page.breadcrumb_trail.length > 1 %>
+        <nav class="mb-6">
+            <ol class="flex items-center text-sm text-gray-600">
+                <% @page.breadcrumb_trail[0..-2].each_with_index do |parent, index| %>
+                    <li class="flex items-center">
+                        <% if index > 0 %>
+                            <span class="mx-2">/</span>
+                        <% end %>
+                        <a href="/pages/<%= parent.slug %>" class="text-blue-600 hover:text-blue-800 transition">
+                            <%= parent.title %>
+                        </a>
+                    </li>
+                <% end %>
+            </ol>
+        </nav>
+        <% end %>
+
+        <header class="mb-8 border-b pb-6">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @page.title %></h1>
+            <div class="flex items-center text-gray-600 text-sm">
+                <time datetime="<%= @page.created_at.iso8601 %>">
+                    Published on <%= @page.created_at.strftime(@settings.date_format) %>
+                </time>
+                <% if @page.updated_at != @page.created_at %>
+                    <span class="mx-2">•</span>
+                    <span>Updated <%= @page.updated_at.strftime(@settings.date_format) %></span>
+                <% end %>
+            </div>
+        </header>
+
+        <div class="prose prose-lg max-w-none">
+            <%= @page.content %>
+        </div>
+
+        <% if @page.has_children? %>
+        <section class="mt-12 pt-6 border-t">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Subpages</h2>
+            <ul class="space-y-2">
+                <% @page.children.published.ordered.each do |child| %>
+                    <li>
+                        <a href="/pages/<%= child.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                            <%= child.title %>
+                        </a>
+                    </li>
+                <% end %>
+            </ul>
+        </section>
+        <% end %>
+
+        <footer class="mt-12 pt-6 border-t">
+            <% if @page.parent %>
+                <a href="/pages/<%= @page.parent.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                    ← Back to <%= @page.parent.title %>
+                </a>
+            <% else %>
+                <a href="/" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                    ← Back to home
+                </a>
+            <% end %>
+        </footer>
+    </div>
+</article>
