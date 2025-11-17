@@ -88,6 +88,30 @@ class CMS < Sinatra::Base
     erb :post
   end
 
+  # View a page by slug (supports hierarchical paths like /parent/child)
+  get '/pages/*' do
+    slug_path = params[:splat].first
+
+    # Try to find page by exact slug match first
+    @page = Page.published.find_by(slug: slug_path)
+
+    # If not found, try matching the last segment (for hierarchical URLs)
+    if @page.nil?
+      slug = slug_path.split('/').last
+      @page = Page.published.find_by(slug: slug)
+    end
+
+    if @page.nil?
+      status 404
+      @title = '404 - Page Not Found'
+      return erb :'404'
+    end
+
+    @title = @page.title
+    @description = @page.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+    erb :page
+  end
+
   # RSS Feed - generate dynamically at /feed/rss
   get '/feed/rss' do
     content_type 'application/rss+xml', charset: 'utf-8'
