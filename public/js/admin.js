@@ -1,5 +1,6 @@
 // Alpine.js app for v7cms admin
 let quill = null;
+let pageQuill = null;
 
 function cmsApp() {
     return {
@@ -11,6 +12,10 @@ function cmsApp() {
         editingPost: false,
         currentPost: {},
         saving: false,
+        pages: [],
+        editingPage: false,
+        currentPage: {},
+        savingPage: false,
         settings: {
             site_title: '',
             site_tagline: '',
@@ -32,7 +37,7 @@ function cmsApp() {
         async init() {
             await this.checkAuth();
             if (this.authenticated) {
-                await Promise.all([this.loadPosts(), this.loadSettings()]);
+                await Promise.all([this.loadPosts(), this.loadPages(), this.loadSettings()]);
                 this.loading = false;
             } else {
                 this.loading = false;
@@ -275,6 +280,156 @@ function cmsApp() {
                 console.error('Error resetting settings:', error);
                 alert('Failed to reset settings');
             }
+        },
+
+        // Pages Management
+
+        async loadPages() {
+            try {
+                const response = await fetch('/api/pages?include_drafts=true');
+                const data = await response.json();
+                this.pages = data.pages;
+            } catch (error) {
+                console.error('Failed to load pages:', error);
+                alert('Failed to load pages');
+            }
+        },
+
+        createNewPage() {
+            this.currentPage = {
+                title: '',
+                slug: '',
+                content: '',
+                parent_id: '',
+                position: 0,
+                page_type: 'standard',
+                published: false
+            };
+            this.editingPage = true;
+
+            // Initialize Quill editor for pages
+            this.$nextTick(() => {
+                this.initPageQuill();
+            });
+        },
+
+        editPage(page) {
+            this.currentPage = { ...page };
+            this.editingPage = true;
+
+            // Initialize Quill editor with content
+            this.$nextTick(() => {
+                this.initPageQuill(page.content);
+            });
+        },
+
+        initPageQuill(content = '') {
+            if (pageQuill) {
+                pageQuill = null;
+            }
+
+            pageQuill = new Quill('#page-editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'script': 'sub'}, { 'script': 'super' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+
+            if (content) {
+                pageQuill.root.innerHTML = content;
+            }
+        },
+
+        async savePage() {
+            this.savingPage = true;
+
+            // Get content from Quill
+            if (pageQuill) {
+                this.currentPage.content = pageQuill.root.innerHTML;
+            }
+
+            try {
+                const method = this.currentPage.id ? 'PUT' : 'POST';
+                const url = this.currentPage.id
+                    ? `/api/pages/${this.currentPage.id}`
+                    : '/api/pages';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        title: this.currentPage.title,
+                        slug: this.currentPage.slug || undefined,
+                        content: this.currentPage.content,
+                        parent_id: this.currentPage.parent_id || null,
+                        position: this.currentPage.position,
+                        page_type: this.currentPage.page_type,
+                        published: this.currentPage.published
+                    })
+                });
+
+                if (response.ok) {
+                    await this.loadPages();
+                    this.editingPage = false;
+                    this.currentPage = {};
+                    pageQuill = null;
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.errors ? error.errors.join(', ') : error.error));
+                }
+            } catch (error) {
+                console.error('Failed to save page:', error);
+                alert('Failed to save page');
+            } finally {
+                this.savingPage = false;
+            }
+        },
+
+        cancelPageEdit() {
+            this.editingPage = false;
+            this.currentPage = {};
+            pageQuill = null;
+        },
+
+        async deletePage(page) {
+            if (!confirm(`Are you sure you want to delete "${page.title}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/pages/${page.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok || response.status === 204) {
+                    await this.loadPages();
+                } else {
+                    alert('Failed to delete page');
+                }
+            } catch (error) {
+                console.error('Failed to delete page:', error);
+                alert('Failed to delete page');
+            }
+        },
+
+        getPageTitle(pageId) {
+            const page = this.pages.find(p => p.id === pageId);
+            return page ? page.title : '';
         }
     };
 }
