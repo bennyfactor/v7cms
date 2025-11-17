@@ -1,14 +1,14 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-15
+**Last Updated**: 2025-11-16
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
 ---
 
-## 🎯 Current Status: **Production-Ready Base Implementation**
+## 🎯 Current Status: **Hierarchical Pages Feature Complete (Pending Deployment)**
 
-The v7cms core is **complete and deployed** on shared hosting (DreamHost). The application is fully functional with OAuth authentication, blog post management, and a working admin interface.
+The v7cms core is **complete and deployed** on shared hosting (DreamHost). A new hierarchical Pages feature has been implemented in PR #15 and is ready for deployment testing.
 
 ---
 
@@ -52,6 +52,16 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The a
   - Automatic updates via ActiveRecord callbacks on Post and Setting
   - Rake task for manual regeneration
   - 41 new tests for feed generation service
+- **Hierarchical Pages Feature** (2025-11-16) - PR #15:
+  - Page model with self-referential associations (parent/children)
+  - Hierarchical helper methods: ancestors, descendants, breadcrumb_trail, depth
+  - Pages API endpoints (CRUD with hierarchical support)
+  - Admin UI for creating/editing pages with parent selection
+  - Public routes at /pages/* with hierarchical URL support
+  - PageRenderer service for automatic static HTML generation
+  - Page view template with breadcrumbs and child page listings
+  - 37 Page model tests (all passing)
+  - Auto-update .ruby-version in setup.php for compatible patch versions
 
 ### ✅ Production Deployment Features
 - OAuth callback working in production
@@ -244,17 +254,21 @@ bin/
 
 ## 🎯 Immediate Next Steps (Recommended)
 
-### Step 1: Pages & Hierarchical Content ⬅️ **NEXT**
-**File**: `NEXT_STEPS.md` → Priority 4
+### Step 1: Deploy & Test Hierarchical Pages ⬅️ **NEXT**
+**Branch**: `feature/pages-hierarchical-content`
+**PR**: #15
 
-Support static pages (About, Contact, etc.) with parent-child relationships, separate from blog posts.
+Deploy the hierarchical Pages feature to dev.iaatb.net for testing:
 
-**Why this second?**
-- Builds on static generation patterns
-- Common CMS feature
-- Enables full site management
+1. Deploy branch to production
+2. Run migration: `bundle exec rake db:migrate`
+3. Restart server
+4. Test admin UI (create/edit/delete pages)
+5. Test public routes (/pages/page-slug)
+6. Verify static HTML generation
+7. Merge PR #15 to main if all tests pass
 
-**Estimated effort**: 4-6 hours
+**Estimated effort**: 1-2 hours testing
 
 ### Step 2: Commenting System
 **File**: `NEXT_STEPS.md` → Priority 5
