@@ -157,6 +157,27 @@ if (empty($ruby_path) || !file_exists($ruby_path)) {
     add_output("Ruby version: $ruby_version", 'info');
 }
 
+// Step 1.5: Update .ruby-version if using compatible patch version
+if (!empty($found_version) && !empty($desired_version) && $found_version !== $desired_version) {
+    // Verify they only differ in patch version
+    $found_parts = explode('.', $found_version);
+    $desired_parts = explode('.', $desired_version);
+
+    $same_major = isset($found_parts[0], $desired_parts[0]) && $found_parts[0] === $desired_parts[0];
+    $same_minor = isset($found_parts[1], $desired_parts[1]) && $found_parts[1] === $desired_parts[1];
+
+    if ($same_major && $same_minor) {
+        // Only patch version differs - safe to update .ruby-version
+        add_output("Updating .ruby-version to match available Ruby...", 'info');
+
+        if (file_put_contents($ruby_version_file, $found_version . "\n") !== false) {
+            add_output("Updated .ruby-version from $desired_version to $found_version", 'success');
+        } else {
+            add_output("Could not update .ruby-version (non-critical)", 'error');
+        }
+    }
+}
+
 // Step 2: Update index.fcgi shebang
 if (empty($errors) && file_exists('index.fcgi')) {
     add_output('Updating index.fcgi shebang...', 'info');

@@ -160,73 +160,62 @@ This document outlines future development tasks organized by priority. The curre
 
 ## Priority 4: Pages & Hierarchical Content
 
+**Status**: ✅ **COMPLETED** (2025-11-16) - **PR #15 (Pending Deployment)**
+
 **Goal**: Support static pages (About, Contact, etc.) with parent-child relationships, separate from blog posts.
 
+### Implementation Summary:
+- ✅ Created pages table with hierarchical support (parent_id, position, page_type)
+- ✅ Page model with self-referential associations and helper methods
+- ✅ Pages API endpoints (GET, POST, PUT, DELETE with hierarchical support)
+- ✅ Admin UI for creating/editing pages with parent selection
+- ✅ Public routes at /pages/* with hierarchical URL support
+- ✅ PageRenderer service for automatic static HTML generation
+- ✅ Page view template with breadcrumbs and child page listings
+- ✅ 37 Page model tests (all passing)
+- ✅ Auto-update .ruby-version in setup.php for compatible patch versions
+
+### Files Created:
+- `db/migrate/20251116021317_create_pages.rb` - Database schema
+- `app/models/page.rb` - Page model with hierarchical methods (84 lines)
+- `app/services/page_renderer.rb` - Static HTML generator (205 lines)
+- `app/views/page.erb` - Public page view template
+- `spec/models/page_spec.rb` - Page model tests (37 tests)
+
+### Files Modified:
+- `app/cms.rb` - Added Pages API endpoints and public routes
+- `admin/index.html` - Added Pages admin UI section
+- `public/js/admin.js` - Added Pages JavaScript functionality
+- `setup.php` - Auto-update .ruby-version for compatible patch versions
+
+### Design Decisions Made:
+- **URL structure**: All pages at `/pages/*` (simpler, no conflicts with posts)
+- **Hierarchical URLs**: Supports both `/pages/parent/child` and `/pages/child`
+- **Slug conflicts**: Separate namespace prevents conflicts with posts
+- **Static generation**: Automatic via ActiveRecord callbacks
+
+### Deployment Requirements:
+1. Deploy feature branch to production
+2. Run migration: `bundle exec rake db:migrate`
+3. Restart application server
+4. Test admin UI and public routes
+5. Verify static HTML generation in public/pages/
+6. Merge PR #15 to main
+
 ### Implementation Tasks:
-- [ ] Create `pages` table migration:
-  ```ruby
-  t.string :title, null: false
-  t.string :slug, null: false, index: true
-  t.text :content
-  t.integer :parent_id, index: true
-  t.integer :position, default: 0
-  t.string :page_type, default: 'standard'
-  t.boolean :published, default: false
-  t.timestamps
-  ```
-- [ ] Create Page model with:
-  - Self-referential association: `belongs_to :parent, class_name: 'Page', optional: true`
-  - `has_many :children, class_name: 'Page', foreign_key: 'parent_id', dependent: :destroy`
-  - Validations: title, slug uniqueness
-  - Slug auto-generation (like Post model)
-  - Scopes: `published`, `top_level` (parent_id nil), `ordered` (by position)
-  - Methods: `ancestors`, `descendants`, `breadcrumb_trail`
-- [ ] Define page types (enum or simple string):
-  - `standard` - basic content page
-  - `landing` - full-width landing page
-  - `contact` - contact form
-  - (extensible for future types)
-- [ ] Add Pages API endpoints:
-  - `GET /api/pages` - list all pages (tree structure?)
-  - `GET /api/pages/:id` - get single page
-  - `POST /api/pages` - create page (auth required)
-  - `PUT /api/pages/:id` - update page (auth required)
-  - `DELETE /api/pages/:id` - delete page (auth required)
-  - `PUT /api/pages/:id/move` - change parent or reorder (auth required)
-- [ ] Create pages management UI in admin:
-  - Tree/hierarchical view (indent child pages)
-  - Drag-and-drop reordering (optional - can be manual position field)
-  - Parent page selector (dropdown)
-  - Page type selector
-  - Same Quill editor for content
-- [ ] Add public routes:
-  - `GET /pages/:slug` or `GET /:slug` for top-level pages
-  - `GET /:parent/:child` for nested pages (if hierarchical URLs desired)
-- [ ] Generate static HTML for pages (similar to posts)
-- [ ] Optional: Add navigation menu builder
-  - Which pages appear in nav
-  - Custom menu order
-  - Dropdown for child pages
-- [ ] Write tests for page hierarchy and CRUD operations
+- [x] Create `pages` table migration
+- [x] Create Page model with self-referential associations
+- [x] Define page types (standard, landing, contact)
+- [x] Add Pages API endpoints (GET, POST, PUT, DELETE)
+- [x] Create pages management UI in admin
+- [x] Add public routes (/pages/*)
+- [x] Generate static HTML for pages
+- [x] Write tests for page hierarchy and CRUD operations
 
-### Files to Create/Modify:
-- `db/migrate/XXXXXX_create_pages.rb` (new)
-- `app/models/page.rb` (new)
-- `app/services/page_renderer.rb` (new, similar to PostRenderer)
-- `app/cms.rb` - add pages routes
-- `app/views/page.erb` (new)
-- `admin/index.html` - add pages management section
-- `public/js/admin.js` - add pages management logic
-- `spec/models/page_spec.rb` (new)
-- `spec/routes/pages_spec.rb` (new)
-
-### Design Decisions:
-- **URL structure**:
-  - Option A: All pages at `/pages/:slug` (simpler, no conflicts)
-  - Option B: Top-level at `/:slug`, nested at `/:parent/:child` (cleaner URLs)
-  - **Recommendation**: Start with `/pages/:slug`, add custom URLs later
-- **Slug conflicts**: Pages and posts need separate namespaces or conflict detection
-- **Homepage**: Special page or hardcoded route? (recommend hardcoded for now)
+### Future Enhancements (Optional):
+- [ ] Navigation menu builder (which pages appear in nav)
+- [ ] Drag-and-drop page reordering in admin
+- [ ] Custom URL paths for top-level pages (/:slug instead of /pages/:slug)
 
 ---
 
