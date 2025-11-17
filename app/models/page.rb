@@ -12,6 +12,11 @@ class Page < ActiveRecord::Base
   # Callbacks
   before_validation :generate_slug, if: -> { slug.blank? && title.present? }
 
+  # Static file generation callbacks
+  after_commit :generate_static_file, if: :should_generate_static_file?
+  after_commit :remove_static_file, if: :should_remove_static_file?
+  after_destroy :remove_static_file
+
   # Scopes
   scope :published, -> { where(published: true) }
   scope :top_level, -> { where(parent_id: nil) }
@@ -57,5 +62,23 @@ class Page < ActiveRecord::Base
   # Get depth level (0 for top-level pages)
   def depth
     ancestors.count
+  end
+
+  private
+
+  def should_generate_static_file?
+    published? && !destroyed?
+  end
+
+  def should_remove_static_file?
+    !destroyed? && saved_change_to_published? && !published?
+  end
+
+  def generate_static_file
+    PageRenderer.write_static_file(self)
+  end
+
+  def remove_static_file
+    PageRenderer.delete_static_file(self)
   end
 end
