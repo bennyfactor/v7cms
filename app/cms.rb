@@ -25,10 +25,9 @@ class CMS < Sinatra::Base
 
   # Enable sessions for authentication
   enable :sessions
-  # Generate a proper 32-byte session secret
-  # In test mode, use a fixed secret; in dev/prod, generate random bytes
-  # TODO: Support hex-encoded SESSION_SECRET from env var
-  set :session_secret, ENV['RACK_ENV'] == 'test' ? ('a' * 32) : SecureRandom.random_bytes(32)
+  set :session_secret, ENV.fetch('SESSION_SECRET', SecureRandom.hex(32))
+  # Use simple session config - SameSite/Secure might be breaking session persistence
+  set :sessions, true unless ENV['RACK_ENV'] == 'test'
 
   # Serve static files from public directory
   set :public_folder, File.expand_path('../public', __dir__)
