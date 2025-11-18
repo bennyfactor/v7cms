@@ -124,16 +124,6 @@ class CMS < Sinatra::Base
     FeedGenerator.new.generate_atom
   end
 
-  # Legacy feed.xml redirect
-  get '/feed.xml' do
-    redirect '/feed/rss', 301
-  end
-
-  # Legacy atom.xml redirect
-  get '/atom.xml' do
-    redirect '/feed/atom', 301
-  end
-
   # API route for backward compatibility
   get '/api' do
     json message: 'v7cms API - Coming soon'
