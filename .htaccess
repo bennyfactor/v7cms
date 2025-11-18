@@ -5,10 +5,14 @@ Options -Indexes
 RewriteEngine On
 
 # ============================================================================
-# ALLOW OAuth routes before security rules
+# ALLOW OAuth routes and feed routes before security rules
 # ============================================================================
 # Allow all /auth/ paths to pass through to the application
 RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
+RewriteRule .* - [L]
+
+# Allow legacy feed XML files to pass through to application for redirect handling
+RewriteCond %{REQUEST_URI} ^/(feed|atom)\.xml$
 RewriteRule .* - [L]
 
 # ============================================================================
