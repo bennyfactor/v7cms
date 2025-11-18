@@ -265,4 +265,33 @@ RSpec.describe Page, type: :model do
       expect(page.page_type).to eq('standard')
     end
   end
+
+  describe 'foreign key constraint' do
+    it 'cascades delete to children when parent is deleted (due to dependent: :destroy)' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      expect {
+        parent.destroy
+      }.to change(Page, :count).by(-2)  # Parent and child both deleted
+
+      expect(Page.exists?(child.id)).to be false
+    end
+
+    it 'prevents invalid parent_id references' do
+      expect {
+        Page.create!(title: 'Orphan', slug: 'orphan', parent_id: 99999, published: true)
+      }.to raise_error(ActiveRecord::InvalidForeignKey)
+    end
+
+    it 'prevents manual deletion of parent when children exist (without using destroy)' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      # Direct SQL delete bypasses dependent: :destroy and triggers foreign key constraint
+      expect {
+        ActiveRecord::Base.connection.execute("DELETE FROM pages WHERE id = #{parent.id}")
+      }.to raise_error(ActiveRecord::InvalidForeignKey)
+    end
+  end
 end
