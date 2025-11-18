@@ -65,6 +65,35 @@ RSpec.describe Page, type: :model do
     end
   end
 
+  describe 'circular reference prevention' do
+    it 'prevents a page from being its own parent' do
+      page = Page.create!(title: 'Page', slug: 'page', published: true)
+      page.parent_id = page.id
+
+      expect(page.valid?).to be false
+      expect(page.errors[:parent_id]).to include('cannot be a circular reference')
+    end
+
+    it 'prevents a page from being a child of its own descendant' do
+      grandparent = Page.create!(title: 'Grandparent', slug: 'grandparent', published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent', parent: grandparent, published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      # Try to make grandparent a child of child (creates circular reference)
+      grandparent.parent_id = child.id
+
+      expect(grandparent.valid?).to be false
+      expect(grandparent.errors[:parent_id]).to include('cannot be a circular reference')
+    end
+
+    it 'allows valid parent-child relationships' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      expect(child.valid?).to be true
+    end
+  end
+
   describe 'slug generation' do
     it 'automatically generates slug from title' do
       page = Page.new(title: 'About Our Company')

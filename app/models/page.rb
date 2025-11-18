@@ -8,6 +8,7 @@ class Page < ActiveRecord::Base
   validates :slug, presence: true, uniqueness: true, format: { with: /\A[a-z0-9-]+\z/, message: 'only allows lowercase letters, numbers, and hyphens' }
   validates :page_type, inclusion: { in: %w[standard landing contact], message: '%{value} is not a valid page type' }
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validate :prevent_circular_reference
 
   # Callbacks
   before_validation :generate_slug, if: -> { slug.blank? && title.present? }
@@ -65,6 +66,22 @@ class Page < ActiveRecord::Base
   end
 
   private
+
+  def prevent_circular_reference
+    return if parent_id.nil?
+
+    # Check if parent_id is self
+    if parent_id == id
+      errors.add(:parent_id, 'cannot be a circular reference')
+      return
+    end
+
+    # Check if parent_id is one of our descendants
+    descendant_ids = descendants.map(&:id)
+    if descendant_ids.include?(parent_id)
+      errors.add(:parent_id, 'cannot be a circular reference')
+    end
+  end
 
   def should_generate_static_file?
     published? && !destroyed?
