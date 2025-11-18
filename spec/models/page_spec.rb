@@ -323,4 +323,32 @@ RSpec.describe Page, type: :model do
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end
+
+  describe 'query optimization' do
+    it 'ancestors method executes only one query regardless of depth' do
+      # Create 5-level hierarchy
+      level1 = Page.create!(title: 'L1', slug: 'l1', published: true)
+      level2 = Page.create!(title: 'L2', slug: 'l2', parent: level1, published: true)
+      level3 = Page.create!(title: 'L3', slug: 'l3', parent: level2, published: true)
+      level4 = Page.create!(title: 'L4', slug: 'l4', parent: level3, published: true)
+      level5 = Page.create!(title: 'L5', slug: 'l5', parent: level4, published: true)
+
+      # Reload to clear any associations
+      level5.reload
+
+      # Count SELECT queries when calling ancestors
+      query_count = 0
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+        query_count += 1 if payload[:sql] =~ /SELECT.*FROM.*pages/i && payload[:name] != 'SCHEMA'
+      end
+
+      result = level5.ancestors
+
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+
+      # Should execute only 1 query (not N queries where N is depth)
+      expect(query_count).to eq(1)
+      expect(result.length).to eq(4)  # L1, L2, L3, L4
+    end
+  end
 end
