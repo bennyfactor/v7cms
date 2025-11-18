@@ -32,13 +32,28 @@ class Page < ActiveRecord::Base
   def ancestors
     return [] unless parent_id
 
-    result = []
-    current = parent
-    while current
-      result << current
-      current = current.parent
-    end
-    result.reverse
+    # Use recursive SQL query (Common Table Expression) for single-query performance
+    sql = <<-SQL
+      WITH RECURSIVE ancestors_cte(id, parent_id, level) AS (
+        SELECT id, parent_id, 1 as level
+        FROM pages
+        WHERE id = #{Page.connection.quote(parent_id)}
+
+        UNION ALL
+
+        SELECT p.id, p.parent_id, ancestors_cte.level + 1
+        FROM pages p
+        INNER JOIN ancestors_cte ON p.id = ancestors_cte.parent_id
+      )
+      SELECT id FROM ancestors_cte WHERE id != #{Page.connection.quote(id)} ORDER BY level DESC
+    SQL
+
+    ancestor_ids = Page.connection.select_values(sql)
+    return [] if ancestor_ids.empty?
+
+    # Load all ancestors in one query and maintain hierarchical order
+    ancestors_hash = Page.where(id: ancestor_ids).index_by(&:id)
+    ancestor_ids.map { |aid| ancestors_hash[aid] }.compact
   end
 
   # Get all descendants (children, grandchildren, etc.)
