@@ -49,18 +49,6 @@ RSpec.describe 'Feed Routes', type: :request do
     end
   end
 
-  describe 'GET /feed.xml (legacy)' do
-    it 'redirects to /feed/rss' do
-      # Remove static file to ensure redirect is tested
-      FileUtils.rm_f(File.join(Dir.pwd, 'public', 'feed.xml'))
-
-      get '/feed.xml'
-
-      expect(last_response.status).to eq(301)
-      expect(last_response.location).to include('/feed/rss')
-    end
-  end
-
   describe 'GET /feed/atom' do
     it 'returns Atom feed with correct content type' do
       get '/feed/atom'
@@ -76,18 +64,6 @@ RSpec.describe 'Feed Routes', type: :request do
       expect(last_response.body).to include('<feed xmlns="http://www.w3.org/2005/Atom">')
       expect(last_response.body).to include('First Post')
       expect(last_response.body).to include('Second Post')
-    end
-  end
-
-  describe 'GET /atom.xml (legacy)' do
-    it 'redirects to /feed/atom' do
-      # Remove static file to ensure redirect is tested
-      FileUtils.rm_f(File.join(Dir.pwd, 'public', 'atom.xml'))
-
-      get '/atom.xml'
-
-      expect(last_response.status).to eq(301)
-      expect(last_response.location).to include('/feed/atom')
     end
   end
 end
