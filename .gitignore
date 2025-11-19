@@ -75,10 +75,13 @@ public/atom.xml
 # Static HTML files (auto-generated)
 public/posts/*.html
 !public/posts/.gitkeep
+public/pages/*.html
+!public/pages/.gitkeep
 
 # Docker
 .dockerignore
 
-# Don't commit markdown notes (but allow README.md)
+# Don't commit markdown notes (but allow specific project docs)
 *.md
 !README.md
+!docs/CHANGELOG.md
