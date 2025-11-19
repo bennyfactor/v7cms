@@ -16,9 +16,10 @@ class FeedGenerator
     new.write_feeds
   end
 
-  def initialize
+  def initialize(base_url: nil)
     @settings = Setting.instance
     @posts = Post.published.recent.limit(FEED_LIMIT)
+    @base_url = base_url
   end
 
   def generate_rss
@@ -32,7 +33,7 @@ class FeedGenerator
         xml.link site_url
         xml.language 'en-us'
         xml.lastBuildDate Time.now.rfc822
-        xml.tag! 'atom:link', href: "#{site_url}/feed.xml", rel: 'self', type: 'application/rss+xml'
+        xml.tag! 'atom:link', href: "#{site_url}/feed/rss", rel: 'self', type: 'application/rss+xml'
 
         @posts.each do |post|
           xml.item do
@@ -55,7 +56,7 @@ class FeedGenerator
       xml.title @settings.site_title
       xml.subtitle @settings.meta_description
       xml.link href: site_url
-      xml.link href: "#{site_url}/atom.xml", rel: 'self'
+      xml.link href: "#{site_url}/feed/atom", rel: 'self'
       xml.id site_url
       xml.updated(@posts.first&.updated_at&.iso8601 || Time.now.iso8601)
 
@@ -87,9 +88,7 @@ class FeedGenerator
   private
 
   def site_url
-    # In production, this should come from settings or environment
-    # For now, use a sensible default
-    ENV.fetch('SITE_URL', 'http://localhost:9292')
+    @base_url || ENV.fetch('SITE_URL', 'http://localhost:9292')
   end
 
   def post_url(post)
