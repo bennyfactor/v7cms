@@ -65,6 +65,35 @@ RSpec.describe Page, type: :model do
     end
   end
 
+  describe 'circular reference prevention' do
+    it 'prevents a page from being its own parent' do
+      page = Page.create!(title: 'Page', slug: 'page', published: true)
+      page.parent_id = page.id
+
+      expect(page.valid?).to be false
+      expect(page.errors[:parent_id]).to include('cannot be a circular reference')
+    end
+
+    it 'prevents a page from being a child of its own descendant' do
+      grandparent = Page.create!(title: 'Grandparent', slug: 'grandparent', published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent', parent: grandparent, published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      # Try to make grandparent a child of child (creates circular reference)
+      grandparent.parent_id = child.id
+
+      expect(grandparent.valid?).to be false
+      expect(grandparent.errors[:parent_id]).to include('cannot be a circular reference')
+    end
+
+    it 'allows valid parent-child relationships' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      expect(child.valid?).to be true
+    end
+  end
+
   describe 'slug generation' do
     it 'automatically generates slug from title' do
       page = Page.new(title: 'About Our Company')
@@ -263,6 +292,63 @@ RSpec.describe Page, type: :model do
     it 'defaults page_type to standard' do
       page = Page.new(title: 'Test', slug: 'test')
       expect(page.page_type).to eq('standard')
+    end
+  end
+
+  describe 'foreign key constraint' do
+    it 'cascades delete to children when parent is deleted (due to dependent: :destroy)' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      expect {
+        parent.destroy
+      }.to change(Page, :count).by(-2)  # Parent and child both deleted
+
+      expect(Page.exists?(child.id)).to be false
+    end
+
+    it 'prevents invalid parent_id references' do
+      expect {
+        Page.create!(title: 'Orphan', slug: 'orphan', parent_id: 99999, published: true)
+      }.to raise_error(ActiveRecord::InvalidForeignKey)
+    end
+
+    it 'prevents manual deletion of parent when children exist (without using destroy)' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      # Direct SQL delete bypasses dependent: :destroy and triggers foreign key constraint
+      expect {
+        ActiveRecord::Base.connection.execute("DELETE FROM pages WHERE id = #{parent.id}")
+      }.to raise_error(ActiveRecord::InvalidForeignKey)
+    end
+  end
+
+  describe 'query optimization' do
+    it 'ancestors method executes only one query regardless of depth' do
+      # Create 5-level hierarchy
+      level1 = Page.create!(title: 'L1', slug: 'l1', published: true)
+      level2 = Page.create!(title: 'L2', slug: 'l2', parent: level1, published: true)
+      level3 = Page.create!(title: 'L3', slug: 'l3', parent: level2, published: true)
+      level4 = Page.create!(title: 'L4', slug: 'l4', parent: level3, published: true)
+      level5 = Page.create!(title: 'L5', slug: 'l5', parent: level4, published: true)
+
+      # Reload to clear any associations
+      level5.reload
+
+      # Count SELECT queries when calling ancestors
+      query_count = 0
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+        query_count += 1 if payload[:sql] =~ /SELECT.*FROM.*pages/i && payload[:name] != 'SCHEMA'
+      end
+
+      result = level5.ancestors
+
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+
+      # Should execute only 1 query (not N queries where N is depth)
+      expect(query_count).to eq(1)
+      expect(result.length).to eq(4)  # L1, L2, L3, L4
     end
   end
 end
