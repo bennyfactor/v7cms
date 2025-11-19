@@ -211,7 +211,7 @@ RSpec.describe FeedGenerator do
       atom = FeedGenerator.generate_atom
       doc = Nokogiri::XML(atom)
       self_link = doc.at_xpath('//xmlns:feed/xmlns:link[@rel="self"]', 'xmlns' => 'http://www.w3.org/2005/Atom')
-      expect(self_link['href']).to include('/atom.xml')
+      expect(self_link['href']).to include('/feed/atom')
     end
 
     it 'includes feed id' do
