@@ -85,4 +85,3 @@ public/pages/*.html
 *.md
 !README.md
 !docs/CHANGELOG.md
-!docs/plans/*.md
