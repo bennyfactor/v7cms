@@ -355,17 +355,38 @@ class CMS < Sinatra::Base
 
   # GET /api/pages - List pages
   get '/api/pages' do
-    pages = if logged_in? && params[:include_drafts] == 'true'
+    # Apply filters
+    pages_scope = if logged_in? && params[:include_drafts] == 'true'
       Page.ordered
     else
       Page.published.ordered
     end
 
-    # Support parent filtering
-    pages = pages.where(parent_id: params[:parent_id]) if params[:parent_id]
-    pages = pages.top_level if params[:top_level] == 'true'
+    # Apply top_level filter if requested
+    pages_scope = pages_scope.top_level if params[:top_level] == 'true'
 
-    json({ pages: pages.map { |p| page_json(p) } })
+    # Support parent filtering
+    pages_scope = pages_scope.where(parent_id: params[:parent_id]) if params[:parent_id]
+
+    # Get pagination params
+    page_params = pagination_params
+
+    # Get total before pagination
+    total = pages_scope.count
+
+    # Apply pagination
+    pages = pages_scope.limit(page_params[:limit]).offset(page_params[:offset])
+
+    # Build response with metadata
+    json({
+      pages: pages.map { |page| page_json(page) },
+      pagination: pagination_metadata(
+        total: total,
+        limit: page_params[:limit],
+        offset: page_params[:offset],
+        count: pages.length
+      )
+    })
   end
 
   # GET /api/pages/:id - Get a single page by ID or slug
