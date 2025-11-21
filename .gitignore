@@ -81,6 +81,9 @@ public/pages/*.html
 # Docker
 .dockerignore
 
+# Git worktrees (isolated development workspaces)
+.worktrees/
+
 # Don't commit markdown notes (but allow specific project docs)
 *.md
 !README.md
