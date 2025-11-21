@@ -1,14 +1,14 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-16
+**Last Updated**: 2025-11-21
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
 ---
 
-## 🎯 Current Status: **Hierarchical Pages Feature Complete (Pending Deployment)**
+## 🎯 Current Status: **Hierarchical Pages Complete + API Pagination Implemented**
 
-The v7cms core is **complete and deployed** on shared hosting (DreamHost). A new hierarchical Pages feature has been implemented in PR #15 and is ready for deployment testing.
+The v7cms core is **complete and deployed** on shared hosting (DreamHost). The hierarchical Pages feature (Priority 4) has been merged to main. API pagination has been added to both Posts and Pages endpoints.
 
 ---
 
@@ -21,7 +21,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). A new
 - **API**: RESTful JSON API for posts and settings CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS)
 - **Public Site**: ERB templates for homepage and individual post pages
-- **Testing**: 177 RSpec tests (models, routes, helpers, services)
+- **Testing**: 264 RSpec tests (models, routes, helpers, services)
 - **Deployment**: FastCGI on shared hosting with Apache .htaccess routing
 - **Security**:
   - .htaccess rules blocking sensitive files (.rb, .db, .env, config/, etc.)
@@ -52,7 +52,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). A new
   - Automatic updates via ActiveRecord callbacks on Post and Setting
   - Rake task for manual regeneration
   - 41 new tests for feed generation service
-- **Hierarchical Pages Feature** (2025-11-16) - PR #15:
+- **Hierarchical Pages Feature** (2025-11-16) - MERGED:
   - Page model with self-referential associations (parent/children)
   - Hierarchical helper methods: ancestors, descendants, breadcrumb_trail, depth
   - Pages API endpoints (CRUD with hierarchical support)
@@ -60,8 +60,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). A new
   - Public routes at /pages/* with hierarchical URL support
   - PageRenderer service for automatic static HTML generation
   - Page view template with breadcrumbs and child page listings
-  - 37 Page model tests (all passing)
+  - Comprehensive Page model tests
   - Auto-update .ruby-version in setup.php for compatible patch versions
+- **API Pagination** (2025-11-21):
+  - Pagination support for GET /api/posts and GET /api/pages
+  - Query parameters: limit (default 20, max 100), offset (default 0)
+  - Pagination metadata in responses (total, limit, offset, count)
+  - Helper methods: pagination_params, pagination_metadata
+  - Works with filters (include_drafts, top_level, parent_id)
 
 ### ✅ Production Deployment Features
 - OAuth callback working in production
@@ -254,28 +260,25 @@ bin/
 
 ## 🎯 Immediate Next Steps (Recommended)
 
-### Step 1: Deploy & Test Hierarchical Pages ⬅️ **NEXT**
-**Branch**: `feature/pages-hierarchical-content`
-**PR**: #15
-
-Deploy the hierarchical Pages feature to dev.iaatb.net for testing:
-
-1. Deploy branch to production
-2. Run migration: `bundle exec rake db:migrate`
-3. Restart server
-4. Test admin UI (create/edit/delete pages)
-5. Test public routes (/pages/page-slug)
-6. Verify static HTML generation
-7. Merge PR #15 to main if all tests pass
-
-**Estimated effort**: 1-2 hours testing
-
-### Step 2: Commenting System
+### Step 1: Commenting System ⬅️ **NEXT**
 **File**: `NEXT_STEPS.md` → Priority 5
 
-Enable user engagement through comments (needs decision: self-hosted vs third-party).
+Enable user engagement through comments on posts.
 
-**Estimated effort**: 1-8 hours (depending on approach)
+**Decision needed**: Self-hosted vs third-party service
+- Self-hosted: Full control, requires spam prevention implementation
+- Third-party: utterances, giscus (GitHub-based), Disqus, or others
+
+**Estimated effort**: 2-8 hours (depending on approach)
+
+### Step 2: Theme Customization
+**File**: `NEXT_STEPS.md` → Priority 6
+
+Allow visual customization (colors, fonts, layout) via admin interface.
+
+**Decision needed**: Granular controls vs pre-built themes
+
+**Estimated effort**: 4-12 hours
 
 ---
 
@@ -336,7 +339,7 @@ Enable user engagement through comments (needs decision: self-hosted vs third-pa
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 177 tests
+- Current count: 264 tests
 - Test coverage: models, routes, helpers, services
 - Always write tests for new features
 
