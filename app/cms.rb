@@ -548,4 +548,31 @@ class CMS < Sinatra::Base
 
     result
   end
+
+  # Pagination helper - extract and validate pagination parameters
+  def pagination_params
+    limit = params[:limit].to_i
+    offset = params[:offset].to_i
+
+    # Default limit to 20 if not provided or invalid
+    limit = 20 if limit <= 0
+
+    # Clamp limit to maximum of 100
+    limit = 100 if limit > 100
+
+    # Default offset to 0 if invalid
+    offset = 0 if offset < 0
+
+    { limit: limit, offset: offset }
+  end
+
+  # Pagination metadata helper - build pagination response object
+  def pagination_metadata(total:, limit:, offset:, count:)
+    {
+      total: total,
+      limit: limit,
+      offset: offset,
+      count: count
+    }
+  end
 end
