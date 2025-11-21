@@ -197,13 +197,32 @@ class CMS < Sinatra::Base
 
   # GET /api/posts - List posts
   get '/api/posts' do
-    posts = if logged_in? && params[:include_drafts] == 'true'
+    # Apply filters
+    posts_scope = if logged_in? && params[:include_drafts] == 'true'
       Post.recent
     else
       Post.published.recent
     end
 
-    json({ posts: posts.map { |p| post_json(p) } })
+    # Get pagination params
+    page_params = pagination_params
+
+    # Get total before pagination
+    total = posts_scope.count
+
+    # Apply pagination
+    posts = posts_scope.limit(page_params[:limit]).offset(page_params[:offset])
+
+    # Build response with metadata
+    json({
+      posts: posts.map { |p| post_json(p) },
+      pagination: pagination_metadata(
+        total: total,
+        limit: page_params[:limit],
+        offset: page_params[:offset],
+        count: posts.length
+      )
+    })
   end
 
   # GET /api/posts/:id - Get a single post by ID or slug
