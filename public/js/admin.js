@@ -68,11 +68,10 @@ function cmsApp() {
                 const data = await response.json();
 
                 this.posts = data.posts;
-                this.pagination = data.pagination;
 
                 // If there are more posts, load them recursively
-                if (this.pagination.offset + this.pagination.count < this.pagination.total) {
-                    await this.loadMorePosts(this.pagination.offset + this.pagination.limit);
+                if (data.pagination.offset + data.pagination.count < data.pagination.total) {
+                    await this.loadMorePosts(data.pagination.offset + data.pagination.limit);
                 }
             } catch (error) {
                 console.error('Error loading posts:', error);
