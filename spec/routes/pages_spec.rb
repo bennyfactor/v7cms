@@ -65,6 +65,71 @@ RSpec.describe 'Pages API', type: :request do
       expect(data['pages'].length).to eq(3)
       expect(data['pages'].map { |p| p['slug'] }).to match_array(['about', 'contact', 'services'])
     end
+
+    describe 'pagination' do
+      before do
+        # Create 25 pages to test pagination
+        25.times do |i|
+          Page.create!(
+            title: "Page #{i}",
+            slug: "page-#{i}",
+            content: 'Content',
+            published: true
+          )
+        end
+      end
+
+      it 'returns first 20 pages by default' do
+        get '/api/pages'
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+
+        expect(data['pages'].length).to eq(20)
+        expect(data['pagination']).to include(
+          'total' => 29,  # 4 from outer before + 25 from this before
+          'limit' => 20,
+          'offset' => 0,
+          'count' => 20
+        )
+      end
+
+      it 'respects custom limit parameter' do
+        get '/api/pages?limit=5'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pages'].length).to eq(5)
+        expect(data['pagination']['limit']).to eq(5)
+      end
+
+      it 'respects offset parameter' do
+        get '/api/pages?limit=5&offset=10'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pages'].length).to eq(5)
+        expect(data['pagination']['offset']).to eq(10)
+      end
+
+      it 'works with top_level filter' do
+        parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+        Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+        get '/api/pages?top_level=true&limit=10'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['total']).to eq(29)  # 4 top-level from outer + 25 from this before (child not counted)
+      end
+
+      it 'works with include_drafts filter' do
+        Page.create!(title: 'Draft Page', slug: 'draft-page', content: 'Content', published: false)
+
+        login_as(user)
+        get '/api/pages?include_drafts=true&limit=10'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['total']).to eq(31)  # 29 published + 1 draft from outer + 1 from this test
+      end
+    end
   end
 
   describe 'GET /api/pages/:id' do
