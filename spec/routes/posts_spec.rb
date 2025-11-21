@@ -3,6 +3,10 @@ require 'spec_helper'
 RSpec.describe 'Posts API Routes' do
   let(:user) { User.create!(email: 'author@example.com', provider: 'google_oauth2', uid: '12345', name: 'Author') }
 
+  def login_as_user
+    { 'rack.session' => { user_id: user.id } }
+  end
+
   describe 'GET /api/posts' do
     context 'when posts exist' do
       before do
@@ -51,6 +55,92 @@ RSpec.describe 'Posts API Routes' do
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)
         expect(data['posts']).to eq([])
+      end
+    end
+
+    describe 'pagination' do
+      before do
+        # Create 25 posts to test pagination
+        25.times do |i|
+          Post.create!(
+            title: "Post #{i}",
+            slug: "post-#{i}",
+            content: 'Content',
+            published: true
+          )
+        end
+      end
+
+      it 'returns first 20 posts by default' do
+        get '/api/posts'
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+
+        expect(data['posts'].length).to eq(20)
+        expect(data['pagination']).to include(
+          'total' => 25,
+          'limit' => 20,
+          'offset' => 0,
+          'count' => 20
+        )
+      end
+
+      it 'respects custom limit parameter' do
+        get '/api/posts?limit=5'
+
+        data = JSON.parse(last_response.body)
+        expect(data['posts'].length).to eq(5)
+        expect(data['pagination']['limit']).to eq(5)
+      end
+
+      it 'respects offset parameter' do
+        get '/api/posts?limit=5&offset=10'
+
+        data = JSON.parse(last_response.body)
+        expect(data['posts'].length).to eq(5)
+        expect(data['pagination']['offset']).to eq(10)
+      end
+
+      it 'clamps limit to maximum of 100' do
+        get '/api/posts?limit=500'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['limit']).to eq(100)
+      end
+
+      it 'handles offset beyond total' do
+        get '/api/posts?offset=999'
+
+        data = JSON.parse(last_response.body)
+        expect(data['posts']).to be_empty
+        expect(data['pagination']).to include(
+          'total' => 25,
+          'count' => 0
+        )
+      end
+
+      it 'treats invalid limit as default' do
+        get '/api/posts?limit=-5'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['limit']).to eq(20)
+      end
+
+      it 'treats invalid offset as zero' do
+        get '/api/posts?offset=-10'
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['offset']).to eq(0)
+      end
+
+      it 'works with include_drafts filter' do
+        Post.create!(title: 'Draft', slug: 'draft', content: 'Content', published: false)
+
+        get '/api/posts?include_drafts=true&limit=10', {}, login_as_user
+
+        data = JSON.parse(last_response.body)
+        expect(data['pagination']['total']).to eq(26)  # 25 + 1 draft
       end
     end
   end
