@@ -314,3 +314,61 @@ The application is Docker-ready. Use `docker-compose.yml` for deployment with vo
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - Admin interface requires JavaScript
 - Public site works without JavaScript (progressive enhancement)
+
+## Design Documents and Planning
+
+**IMPORTANT**: Never commit files in `docs/plans/` directory. Design documents created during brainstorming sessions should be preserved in this CLAUDE.md file for future reference, not committed as separate planning documents.
+
+### Theme Customization Feature Design (Priority 6)
+
+**Status**: Design Complete - Ready for Implementation
+**Date**: 2025-11-21
+**Estimated Effort**: 8-12 hours
+
+**Overview**: Add comprehensive theme customization with 19 configurable fields (colors, typography, layout, spacing) via admin interface with live split-view preview.
+
+**Key Decisions**:
+- Separate Theme model (not extending Settings)
+- Granular controls approach (not pre-built themes)
+- Hybrid CSS generation (static theme.css + inline preview)
+- Professional split-view UI (form 40%, preview iframe 60%)
+
+**Database Schema** - New `themes` table (singleton pattern):
+- 8 color fields (primary, secondary, background, text, heading, link, link_hover, border)
+- 4 typography fields (font_heading, font_body, font_size_base, line_height)
+- 4 layout fields (layout_width, layout_style, spacing_scale, border_radius)
+- 3 advanced fields (custom_css, header_style, footer_style)
+
+**Services**:
+- ThemeGenerator (`app/services/theme_generator.rb`) - Generates CSS with custom properties, writes to `public/css/theme.css`
+
+**API Endpoints**:
+- GET /api/theme - Retrieve current theme (public)
+- PUT /api/theme - Update theme (auth required, regenerates CSS and static files)
+- POST /api/theme/reset - Reset to defaults (auth required)
+- GET /api/theme/preview - Preview endpoint for iframe with query params (public, temporary)
+
+**Admin UI**:
+- Left panel (40%): Tabbed form (Colors, Typography, Layout, Advanced) with save/reset/export buttons
+- Right panel (60%): Live preview iframe with page selector (home/post/page)
+- Debounced updates (500ms) to prevent excessive iframe reloads
+- Alpine.js reactive data binding
+
+**Integration**:
+- Theme model callbacks regenerate theme.css and all static HTML files on save
+- Layout.erb includes theme.css after Tailwind
+- Conditional Google Fonts loading when custom fonts selected
+- PostRenderer and PageRenderer automatically pick up theme changes
+
+**Implementation Phases**:
+1. Backend (2-3h): Migration, Theme model, ThemeGenerator service, tests
+2. API Endpoints (2-3h): 4 routes, validation, tests
+3. Static Integration (1-2h): Update layout.erb, callbacks, verify regeneration
+4. Admin UI Form (2-3h): Split-view layout, tabbed form, save/reset logic
+5. Live Preview (1-2h): Iframe integration, debounced watching, page selector
+
+**Testing**: 75+ new tests (40 model, 15 service, 20 route)
+
+**Files to Create**: Migration, theme.rb, theme_generator.rb, 3 test files, public/css/theme.css (gitignored)
+
+**Files to Modify**: cms.rb (+80 lines routes), layout.erb (+8 lines), admin/index.html (+200 lines), admin.js (+250 lines), .gitignore, seed.rb
