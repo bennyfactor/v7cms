@@ -160,7 +160,7 @@ This document outlines future development tasks organized by priority. The curre
 
 ## Priority 4: Pages & Hierarchical Content
 
-**Status**: ✅ **COMPLETED** (2025-11-16) - **PR #15 (Pending Deployment)**
+**Status**: ✅ **COMPLETED** (2025-11-16) - **MERGED TO MAIN**
 
 **Goal**: Support static pages (About, Contact, etc.) with parent-child relationships, separate from blog posts.
 
@@ -194,13 +194,11 @@ This document outlines future development tasks organized by priority. The curre
 - **Slug conflicts**: Separate namespace prevents conflicts with posts
 - **Static generation**: Automatic via ActiveRecord callbacks
 
-### Deployment Requirements:
-1. Deploy feature branch to production
-2. Run migration: `bundle exec rake db:migrate`
-3. Restart application server
-4. Test admin UI and public routes
-5. Verify static HTML generation in public/pages/
-6. Merge PR #15 to main
+### Deployment Status:
+- ✅ Merged to main branch (2025-11-16)
+- ✅ All tests passing (264 total tests)
+- ✅ Migration included in codebase
+- Production deployment: Ready for deployment when desired
 
 ### Implementation Tasks:
 - [x] Create `pages` table migration
@@ -216,6 +214,36 @@ This document outlines future development tasks organized by priority. The curre
 - [ ] Navigation menu builder (which pages appear in nav)
 - [ ] Drag-and-drop page reordering in admin
 - [ ] Custom URL paths for top-level pages (/:slug instead of /pages/:slug)
+
+---
+
+## API Pagination Enhancement
+
+**Status**: ✅ **COMPLETED** (2025-11-21)
+
+**Goal**: Add pagination support to Posts and Pages API endpoints to handle large content collections efficiently.
+
+### Implementation Summary:
+- ✅ Added pagination to GET /api/posts endpoint
+- ✅ Added pagination to GET /api/pages endpoint
+- ✅ Query parameters: limit (default 20, max 100), offset (default 0)
+- ✅ Pagination metadata in responses: total, limit, offset, count
+- ✅ Helper methods: pagination_params (validation), pagination_metadata (response)
+- ✅ Compatible with existing filters (include_drafts, top_level, parent_id)
+- ✅ Admin UI updated to handle paginated responses
+- ✅ All pagination tests passing
+
+### Files Modified:
+- `app/cms.rb` - Added pagination_params and pagination_metadata helper methods
+- `public/js/admin.js` - Updated loadPosts and loadPages to handle pagination
+- Previous commits added pagination to API endpoints
+
+### Technical Details:
+- Default limit: 20 items per page
+- Maximum limit: 100 items per page
+- Minimum offset: 0
+- Invalid values default to safe defaults (20/0)
+- Pagination works seamlessly with all existing filters
 
 ---
 
@@ -558,10 +586,12 @@ For each feature:
 
 🎯 **Next Recommended Steps**:
 1. ✅ ~~Implement **Settings Management** (Priority 1)~~ - COMPLETED 2025-11-14
-2. Implement **Static HTML Generation** (Priority 2)
-3. Implement **RSS Feeds** (Priority 3)
-4. Plan **Pages & Hierarchy** (Priority 4)
-5. Investigate **Commenting System** options (Priority 5)
+2. ✅ ~~Implement **Static HTML Generation** (Priority 2)~~ - COMPLETED 2025-11-14
+3. ✅ ~~Implement **RSS Feeds** (Priority 3)~~ - COMPLETED 2025-11-15
+4. ✅ ~~Implement **Pages & Hierarchy** (Priority 4)~~ - COMPLETED 2025-11-16
+5. ✅ ~~Implement **API Pagination**~~ - COMPLETED 2025-11-21
+6. Investigate **Commenting System** options (Priority 5)
+7. Plan **Theme Customization** approach (Priority 6)
 
 ---
 
@@ -598,4 +628,4 @@ For each feature:
 
 ---
 
-*Last updated: 2025-11-14*
+*Last updated: 2025-11-21*
