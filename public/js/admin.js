@@ -63,12 +63,37 @@ function cmsApp() {
 
         async loadPosts() {
             try {
-                const response = await fetch('/api/posts?include_drafts=true');
+                const url = `/api/posts?include_drafts=true&limit=100`;
+                const response = await fetch(url);
                 const data = await response.json();
+
                 this.posts = data.posts;
+                this.pagination = data.pagination;
+
+                // If there are more posts, load them recursively
+                if (this.pagination.offset + this.pagination.count < this.pagination.total) {
+                    await this.loadMorePosts(this.pagination.offset + this.pagination.limit);
+                }
             } catch (error) {
-                console.error('Failed to load posts:', error);
+                console.error('Error loading posts:', error);
                 alert('Failed to load posts');
+            }
+        },
+
+        async loadMorePosts(offset) {
+            try {
+                const url = `/api/posts?include_drafts=true&limit=100&offset=${offset}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                this.posts = [...this.posts, ...data.posts];
+
+                // If there are more, keep loading
+                if (offset + data.pagination.count < data.pagination.total) {
+                    await this.loadMorePosts(offset + data.pagination.limit);
+                }
+            } catch (error) {
+                console.error('Error loading more posts:', error);
             }
         },
 
@@ -286,12 +311,36 @@ function cmsApp() {
 
         async loadPages() {
             try {
-                const response = await fetch('/api/pages?include_drafts=true');
+                const url = `/api/pages?include_drafts=true&limit=100`;
+                const response = await fetch(url);
                 const data = await response.json();
+
                 this.pages = data.pages;
+
+                // If there are more pages, load them recursively
+                if (data.pagination.offset + data.pagination.count < data.pagination.total) {
+                    await this.loadMorePages(data.pagination.offset + data.pagination.limit);
+                }
             } catch (error) {
-                console.error('Failed to load pages:', error);
+                console.error('Error loading pages:', error);
                 alert('Failed to load pages');
+            }
+        },
+
+        async loadMorePages(offset) {
+            try {
+                const url = `/api/pages?include_drafts=true&limit=100&offset=${offset}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                this.pages = [...this.pages, ...data.pages];
+
+                // If there are more, keep loading
+                if (offset + data.pagination.count < data.pagination.total) {
+                    await this.loadMorePages(offset + data.pagination.limit);
+                }
+            } catch (error) {
+                console.error('Error loading more pages:', error);
             }
         },
 
