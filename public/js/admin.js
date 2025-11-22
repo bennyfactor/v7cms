@@ -110,6 +110,8 @@ function cmsApp() {
             Object.keys(this.theme).forEach(key => {
                 if (key !== 'id' && this.theme[key] != null) params.set(key, this.theme[key]);
             });
+            // Add timestamp to force iframe reload
+            params.set('_t', Date.now());
             this.previewUrl = `${this.previewPage}?theme_preview=1&${params.toString()}`;
         },
 
