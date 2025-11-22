@@ -594,28 +594,14 @@ class CMS < Sinatra::Base
 
   # Theme serialization helper
   def theme_json(theme)
-    {
-      id: theme.id,
-      primary_color: theme.primary_color,
-      secondary_color: theme.secondary_color,
-      background_color: theme.background_color,
-      text_color: theme.text_color,
-      heading_color: theme.heading_color,
-      link_color: theme.link_color,
-      link_hover_color: theme.link_hover_color,
-      border_color: theme.border_color,
-      font_heading: theme.font_heading,
-      font_body: theme.font_body,
-      font_size_base: theme.font_size_base,
-      line_height: theme.line_height,
-      layout_width: theme.layout_width,
-      layout_style: theme.layout_style,
-      spacing_scale: theme.spacing_scale,
-      border_radius: theme.border_radius,
-      custom_css: theme.custom_css,
-      header_style: theme.header_style,
-      footer_style: theme.footer_style
-    }
+    # Build hash from all fields defined in ThemeConfig
+    result = { id: theme.id }
+
+    ThemeConfig.field_names.each do |field|
+      result[field] = theme.send(field) if theme.respond_to?(field)
+    end
+
+    result
   end
 
   # Page serialization helper
