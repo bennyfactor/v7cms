@@ -671,24 +671,51 @@ class CMS < Sinatra::Base
     }
   end
 
-  # Theme preview helper methods
-  def container_width_value(width)
-    case width
-    when 'full' then '100%'
-    when 'wide' then '1400px'
-    when 'standard' then '1200px'
-    when 'narrow' then '900px'
-    else '1200px'
+  # Theme CSS generation helper using Tailwind v4 @theme directive
+  def generate_theme_css(theme = @theme, params_override = params)
+    require_relative 'config/theme_fields'
+
+    # Build theme values hash from either params (preview) or model (normal)
+    theme_values = if params_override[:theme_preview]
+      extract_theme_from_params(params_override, theme)
+    else
+      extract_theme_from_model(theme)
+    end
+
+    # Generate CSS custom properties
+    css_lines = ThemeConfig::FIELDS.map do |field, config|
+      value = theme_values[field]
+      next if value.nil?
+
+      formatted_value = ThemeConfig.format_value(field, value)
+      "  #{config[:css_var]}: #{formatted_value};"
+    end.compact
+
+    css_lines.join("\n")
+  end
+
+  private
+
+  def extract_theme_from_model(theme)
+    ThemeConfig::FIELDS.transform_keys { |k| k }.transform_values do |config|
+      theme.send(config[:css_var].gsub('--', '').gsub('-', '_'))  rescue nil
+    end.compact.transform_keys do |field|
+      field
+    end.tap do |hash|
+      ThemeConfig::FIELDS.each_key do |field|
+        hash[field] = theme.send(field) if theme.respond_to?(field)
+      end
     end
   end
 
-  def border_radius_value(radius)
-    case radius
-    when 'none' then '0'
-    when 'subtle' then '4px'
-    when 'medium' then '8px'
-    when 'large' then '16px'
-    else '8px'
+  def extract_theme_from_params(params_override, fallback_theme)
+    ThemeConfig::FIELDS.transform_keys { |k| k }.transform_values do |config|
+      param_key = config[:css_var].gsub('--color-', '').gsub('--', '').gsub('-', '_')
+      params_override[param_key] || params_override[param_key.to_sym] || fallback_theme.send(param_key) rescue nil
+    end.compact.tap do |hash|
+      ThemeConfig::FIELDS.each_key do |field|
+        hash[field] = params_override[field] || params_override[field.to_s] || fallback_theme.send(field) rescue fallback_theme.send(field)
+      end
     end
   end
 end
