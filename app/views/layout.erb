@@ -35,27 +35,37 @@
           --border-radius: <%= border_radius_value(preview_params['border_radius'] || @theme.border_radius) %>;
         }
         body {
-          font-family: var(--font-body);
-          font-size: var(--font-size-base);
-          line-height: var(--line-height);
-          color: var(--color-text);
-          background: var(--color-background);
+          font-family: var(--font-body) !important;
+          font-size: var(--font-size-base) !important;
+          line-height: var(--line-height) !important;
+          color: var(--color-text) !important;
+          background: var(--color-background) !important;
         }
         h1, h2, h3, h4, h5, h6 {
-          font-family: var(--font-heading);
-          color: var(--color-heading);
+          font-family: var(--font-heading) !important;
+          color: var(--color-heading) !important;
         }
         a {
-          color: var(--color-link);
+          color: var(--color-link) !important;
         }
         a:hover {
-          color: var(--color-link-hover);
+          color: var(--color-link-hover) !important;
         }
         .container {
           max-width: var(--container-width);
         }
         .border, hr {
-          border-color: var(--color-border);
+          border-color: var(--color-border) !important;
+        }
+        /* Override Tailwind utility classes for theme preview */
+        header.bg-white {
+          background-color: var(--color-background) !important;
+        }
+        footer.bg-white {
+          background-color: var(--color-background) !important;
+        }
+        article.bg-white {
+          background-color: var(--color-background) !important;
         }
         <%= preview_params['custom_css'] %>
     </style>
