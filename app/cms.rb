@@ -670,4 +670,25 @@ class CMS < Sinatra::Base
       count: count
     }
   end
+
+  # Theme preview helper methods
+  def container_width_value(width)
+    case width
+    when 'full' then '100%'
+    when 'wide' then '1400px'
+    when 'standard' then '1200px'
+    when 'narrow' then '900px'
+    else '1200px'
+    end
+  end
+
+  def border_radius_value(radius)
+    case radius
+    when 'none' then '0'
+    when 'subtle' then '4px'
+    when 'medium' then '8px'
+    when 'large' then '16px'
+    else '8px'
+    end
+  end
 end
