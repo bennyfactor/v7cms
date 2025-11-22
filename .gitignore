@@ -68,6 +68,9 @@ db/schema.rb
 public/css/output.css
 bin/tailwindcss
 
+# Theme CSS (auto-generated from theme settings)
+public/css/theme.css
+
 # Generated feeds (auto-regenerated)
 public/feed.xml
 public/atom.xml
