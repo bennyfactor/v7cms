@@ -1,4 +1,5 @@
 <% @settings ||= Setting.instance %>
+<% @theme ||= Theme.instance %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +7,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= @title ? "#{@title} - #{@settings.site_title}" : @settings.site_title %></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <% if params[:theme_preview] %>
+    <!-- Theme Preview Mode - Generate inline CSS from URL parameters -->
+    <style id="preview-theme">
+        <%
+        # Extract theme parameters from query string
+        preview_params = {}
+        %w[primary_color secondary_color background_color text_color heading_color link_color link_hover_color border_color font_heading font_body font_size_base line_height layout_width spacing_scale border_radius custom_css].each do |param|
+          preview_params[param] = params[param] if params[param]
+        end
+
+        # Generate CSS custom properties
+        def container_width_value(width)
+          case width
+          when 'full' then '100%'
+          when 'wide' then '1400px'
+          when 'standard' then '1200px'
+          when 'narrow' then '900px'
+          else '1200px'
+          end
+        end
+
+        def border_radius_value(radius)
+          case radius
+          when 'none' then '0'
+          when 'subtle' then '4px'
+          when 'medium' then '8px'
+          when 'large' then '16px'
+          else '8px'
+          end
+        end
+        %>
+        :root {
+          --color-primary: <%= preview_params['primary_color'] || @theme.primary_color %>;
+          --color-secondary: <%= preview_params['secondary_color'] || @theme.secondary_color %>;
+          --color-background: <%= preview_params['background_color'] || @theme.background_color %>;
+          --color-text: <%= preview_params['text_color'] || @theme.text_color %>;
+          --color-heading: <%= preview_params['heading_color'] || @theme.heading_color %>;
+          --color-link: <%= preview_params['link_color'] || @theme.link_color %>;
+          --color-link-hover: <%= preview_params['link_hover_color'] || @theme.link_hover_color %>;
+          --color-border: <%= preview_params['border_color'] || @theme.border_color %>;
+          --font-heading: <%= preview_params['font_heading'] || @theme.font_heading %>;
+          --font-body: <%= preview_params['font_body'] || @theme.font_body %>;
+          --font-size-base: <%= preview_params['font_size_base'] || @theme.font_size_base %>px;
+          --line-height: <%= preview_params['line_height'] || @theme.line_height %>;
+          --container-width: <%= container_width_value(preview_params['layout_width'] || @theme.layout_width) %>;
+          --spacing-unit: <%= preview_params['spacing_scale'] || @theme.spacing_scale %>rem;
+          --border-radius: <%= border_radius_value(preview_params['border_radius'] || @theme.border_radius) %>;
+        }
+        body {
+          font-family: var(--font-body);
+          font-size: var(--font-size-base);
+          line-height: var(--line-height);
+          color: var(--color-text);
+          background: var(--color-background);
+        }
+        h1, h2, h3, h4, h5, h6 {
+          font-family: var(--font-heading);
+          color: var(--color-heading);
+        }
+        a {
+          color: var(--color-link);
+        }
+        a:hover {
+          color: var(--color-link-hover);
+        }
+        .container {
+          max-width: var(--container-width);
+        }
+        .border, hr {
+          border-color: var(--color-border);
+        }
+        <%= preview_params['custom_css'] %>
+    </style>
+    <% else %>
+    <link rel="stylesheet" href="/css/theme.css">
+    <% end %>
 
     <% if @description %>
     <meta name="description" content="<%= @description %>">
