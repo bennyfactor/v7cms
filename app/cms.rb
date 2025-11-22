@@ -64,6 +64,15 @@ class CMS < Sinatra::Base
     OmniAuth::FailureEndpoint.new(env).redirect_to_failure
   end
 
+  # Initialize theme CSS on startup if it doesn't exist
+  configure do
+    theme_css_path = File.join(settings.public_folder, 'css', 'theme.css')
+    unless File.exist?(theme_css_path)
+      theme = Theme.instance rescue nil
+      ThemeGenerator.generate_and_write(theme) if theme
+    end
+  end
+
   # Public site routes
 
   # Homepage - list all published posts
@@ -351,6 +360,66 @@ class CMS < Sinatra::Base
     json({ settings: settings_json(settings) })
   end
 
+  # Theme API Routes
+
+  # GET /api/theme - Get current theme (no auth required for public display)
+  get '/api/theme' do
+    theme = Theme.instance
+    json({ theme: theme_json(theme) })
+  end
+
+  # PUT /api/theme - Update theme (auth required)
+  put '/api/theme' do
+    require_ajax_header
+    require_login
+
+    theme = Theme.instance
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    if theme.update(data)
+      json({ theme: theme_json(theme) })
+    else
+      halt 422, json({ errors: theme.errors.full_messages })
+    end
+  end
+
+  # POST /api/theme/reset - Reset to defaults (auth required)
+  post '/api/theme/reset' do
+    require_ajax_header
+    require_login
+
+    theme = Theme.instance
+    theme.reset_to_defaults!
+
+    json({ theme: theme_json(theme) })
+  end
+
+  # GET /api/theme/preview - Preview theme with temporary parameters (no auth, public)
+  get '/api/theme/preview' do
+    # Get current theme as base
+    theme = Theme.instance
+
+    # Create a new theme object with preview parameters (don't save to DB)
+    preview_theme = Theme.new(theme.attributes.except('id', 'created_at', 'updated_at'))
+
+    # Override with query parameters if provided
+    params.each do |key, value|
+      next if ['splat', 'captures'].include?(key)
+      preview_theme.send("#{key}=", value) if preview_theme.respond_to?("#{key}=")
+    end
+
+    # Generate CSS without saving
+    css = ThemeGenerator.new(preview_theme).generate_css
+
+    content_type 'text/css'
+    css
+  end
+
   # Pages API Routes
 
   # GET /api/pages - List pages
@@ -523,6 +592,18 @@ class CMS < Sinatra::Base
     }
   end
 
+  # Theme serialization helper
+  def theme_json(theme)
+    # Build hash from all fields defined in ThemeConfig
+    result = { id: theme.id }
+
+    ThemeConfig.field_names.each do |field|
+      result[field] = theme.send(field) if theme.respond_to?(field)
+    end
+
+    result
+  end
+
   # Page serialization helper
   def page_json(page, include_relations: false)
     result = {
@@ -574,5 +655,58 @@ class CMS < Sinatra::Base
       offset: offset,
       count: count
     }
+  end
+
+  # Theme CSS generation helper using Tailwind v4 @theme directive
+  def generate_theme_css(theme = @theme, params_override = params)
+    require_relative 'config/theme_fields'
+
+    # Build theme values hash from either params (preview) or model (normal)
+    theme_values = if params_override[:theme_preview]
+      extract_theme_from_params(params_override, theme)
+    else
+      extract_theme_from_model(theme)
+    end
+
+    # Generate CSS custom properties
+    css_lines = ThemeConfig::FIELDS.map do |field, config|
+      value = theme_values[field]
+      next if value.nil?
+
+      formatted_value = ThemeConfig.format_value(field, value)
+      "  #{config[:css_var]}: #{formatted_value};"
+    end.compact
+
+    css_lines.join("\n")
+  end
+
+  private
+
+  def extract_theme_from_model(theme)
+    # Simple: just get each field value directly from the theme model
+    ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
+      if theme.respond_to?(field)
+        hash[field] = theme.send(field)
+      else
+        # Use default if field doesn't exist yet (pre-migration)
+        hash[field] = config[:default]
+      end
+    end
+  end
+
+  def extract_theme_from_params(params_override, fallback_theme)
+    # Get values from params if present, otherwise fall back to theme model
+    ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
+      # Try param as string, then symbol, then fall back to theme (with default if field missing)
+      param_value = params_override[field.to_s] || params_override[field]
+      if param_value
+        hash[field] = param_value
+      elsif fallback_theme.respond_to?(field)
+        hash[field] = fallback_theme.send(field)
+      else
+        # Use default if field doesn't exist yet (pre-migration)
+        hash[field] = config[:default]
+      end
+    end
   end
 end
