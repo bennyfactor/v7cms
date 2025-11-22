@@ -697,25 +697,17 @@ class CMS < Sinatra::Base
   private
 
   def extract_theme_from_model(theme)
-    ThemeConfig::FIELDS.transform_keys { |k| k }.transform_values do |config|
-      theme.send(config[:css_var].gsub('--', '').gsub('-', '_'))  rescue nil
-    end.compact.transform_keys do |field|
-      field
-    end.tap do |hash|
-      ThemeConfig::FIELDS.each_key do |field|
-        hash[field] = theme.send(field) if theme.respond_to?(field)
-      end
+    # Simple: just get each field value directly from the theme model
+    ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
+      hash[field] = theme.send(field) if theme.respond_to?(field)
     end
   end
 
   def extract_theme_from_params(params_override, fallback_theme)
-    ThemeConfig::FIELDS.transform_keys { |k| k }.transform_values do |config|
-      param_key = config[:css_var].gsub('--color-', '').gsub('--', '').gsub('-', '_')
-      params_override[param_key] || params_override[param_key.to_sym] || fallback_theme.send(param_key) rescue nil
-    end.compact.tap do |hash|
-      ThemeConfig::FIELDS.each_key do |field|
-        hash[field] = params_override[field] || params_override[field.to_s] || fallback_theme.send(field) rescue fallback_theme.send(field)
-      end
+    # Get values from params if present, otherwise fall back to theme model
+    ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
+      # Try param as string, then symbol, then fall back to theme
+      hash[field] = params_override[field.to_s] || params_override[field] || fallback_theme.send(field)
     end
   end
 end
