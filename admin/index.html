@@ -353,35 +353,59 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Primary Color</label>
-                                        <input type="color" x-model="theme.primary_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.primary_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.primary_color" @input="validateAndUpdateColor($event, 'primary_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#3b82f6">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Secondary Color</label>
-                                        <input type="color" x-model="theme.secondary_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.secondary_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.secondary_color" @input="validateAndUpdateColor($event, 'secondary_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#8b5cf6">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Background Color</label>
-                                        <input type="color" x-model="theme.background_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.background_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.background_color" @input="validateAndUpdateColor($event, 'background_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#ffffff">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Text Color</label>
-                                        <input type="color" x-model="theme.text_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.text_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.text_color" @input="validateAndUpdateColor($event, 'text_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#1f2937">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Heading Color</label>
-                                        <input type="color" x-model="theme.heading_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.heading_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.heading_color" @input="validateAndUpdateColor($event, 'heading_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#111827">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Link Color</label>
-                                        <input type="color" x-model="theme.link_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.link_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.link_color" @input="validateAndUpdateColor($event, 'link_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#2563eb">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Link Hover Color</label>
-                                        <input type="color" x-model="theme.link_hover_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.link_hover_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.link_hover_color" @input="validateAndUpdateColor($event, 'link_hover_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#1d4ed8">
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-2">Border Color</label>
-                                        <input type="color" x-model="theme.border_color" @input="updatePreview" class="w-full h-10 border rounded">
+                                        <div class="flex gap-2">
+                                            <input type="color" x-model="theme.border_color" @input="updatePreview" class="h-10 w-16 border rounded cursor-pointer">
+                                            <input type="text" x-model="theme.border_color" @input="validateAndUpdateColor($event, 'border_color')" class="flex-1 border rounded px-3 py-2 font-mono text-sm" placeholder="#e5e7eb">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
