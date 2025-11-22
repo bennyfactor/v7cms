@@ -100,6 +100,21 @@ function cmsApp() {
             }
         },
 
+        validateAndUpdateColor(event, field) {
+            const value = event.target.value.trim();
+            const hexPattern = /^#([0-9A-Fa-f]{3}){1,2}$/;
+
+            // If valid hex color, update and trigger preview
+            if (hexPattern.test(value)) {
+                this.theme[field] = value.toLowerCase();
+                event.target.classList.remove('border-red-500');
+                this.updatePreview();
+            } else {
+                // Show validation error with red border
+                event.target.classList.add('border-red-500');
+            }
+        },
+
         updatePreview() {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = setTimeout(() => this.loadPreview(), 500);
