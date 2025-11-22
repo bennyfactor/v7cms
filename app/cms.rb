@@ -64,6 +64,15 @@ class CMS < Sinatra::Base
     OmniAuth::FailureEndpoint.new(env).redirect_to_failure
   end
 
+  # Initialize theme CSS on startup if it doesn't exist
+  configure do
+    theme_css_path = File.join(settings.public_folder, 'css', 'theme.css')
+    unless File.exist?(theme_css_path)
+      theme = Theme.instance rescue nil
+      ThemeGenerator.generate_and_write(theme) if theme
+    end
+  end
+
   # Public site routes
 
   # Homepage - list all published posts
@@ -351,6 +360,66 @@ class CMS < Sinatra::Base
     json({ settings: settings_json(settings) })
   end
 
+  # Theme API Routes
+
+  # GET /api/theme - Get current theme (no auth required for public display)
+  get '/api/theme' do
+    theme = Theme.instance
+    json({ theme: theme_json(theme) })
+  end
+
+  # PUT /api/theme - Update theme (auth required)
+  put '/api/theme' do
+    require_ajax_header
+    require_login
+
+    theme = Theme.instance
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    if theme.update(data)
+      json({ theme: theme_json(theme) })
+    else
+      halt 422, json({ errors: theme.errors.full_messages })
+    end
+  end
+
+  # POST /api/theme/reset - Reset to defaults (auth required)
+  post '/api/theme/reset' do
+    require_ajax_header
+    require_login
+
+    theme = Theme.instance
+    theme.reset_to_defaults!
+
+    json({ theme: theme_json(theme) })
+  end
+
+  # GET /api/theme/preview - Preview theme with temporary parameters (no auth, public)
+  get '/api/theme/preview' do
+    # Get current theme as base
+    theme = Theme.instance
+
+    # Create a new theme object with preview parameters (don't save to DB)
+    preview_theme = Theme.new(theme.attributes.except('id', 'created_at', 'updated_at'))
+
+    # Override with query parameters if provided
+    params.each do |key, value|
+      next if ['splat', 'captures'].include?(key)
+      preview_theme.send("#{key}=", value) if preview_theme.respond_to?("#{key}=")
+    end
+
+    # Generate CSS without saving
+    css = ThemeGenerator.new(preview_theme).generate_css
+
+    content_type 'text/css'
+    css
+  end
+
   # Pages API Routes
 
   # GET /api/pages - List pages
@@ -520,6 +589,32 @@ class CMS < Sinatra::Base
       social_url: setting.social_url,
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format
+    }
+  end
+
+  # Theme serialization helper
+  def theme_json(theme)
+    {
+      id: theme.id,
+      primary_color: theme.primary_color,
+      secondary_color: theme.secondary_color,
+      background_color: theme.background_color,
+      text_color: theme.text_color,
+      heading_color: theme.heading_color,
+      link_color: theme.link_color,
+      link_hover_color: theme.link_hover_color,
+      border_color: theme.border_color,
+      font_heading: theme.font_heading,
+      font_body: theme.font_body,
+      font_size_base: theme.font_size_base,
+      line_height: theme.line_height,
+      layout_width: theme.layout_width,
+      layout_style: theme.layout_style,
+      spacing_scale: theme.spacing_scale,
+      border_radius: theme.border_radius,
+      custom_css: theme.custom_css,
+      header_style: theme.header_style,
+      footer_style: theme.footer_style
     }
   end
 
