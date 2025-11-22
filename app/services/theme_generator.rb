@@ -1,4 +1,7 @@
+require_relative '../config/theme_fields'
+
 class ThemeGenerator
+  # Generate and write theme CSS (for non-CDN/compiled mode)
   def self.generate_and_write(theme)
     css = new(theme).generate_css
     path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'css', 'theme.css')
@@ -7,40 +10,28 @@ class ThemeGenerator
     path
   end
 
+  # Generate input.css for Tailwind CLI compilation
+  def self.generate_input_css(theme)
+    new(theme).generate_input_css
+  end
+
   def initialize(theme)
     @theme = theme
   end
 
+  # Generate standalone CSS file (current approach - used when theme.css is linked)
   def generate_css
     <<~CSS
+      /* Generated theme CSS - uses CSS custom properties */
       :root {
-        /* Colors */
-        --color-primary: #{@theme.primary_color};
-        --color-secondary: #{@theme.secondary_color};
-        --color-background: #{@theme.background_color};
-        --color-text: #{@theme.text_color};
-        --color-heading: #{@theme.heading_color};
-        --color-link: #{@theme.link_color};
-        --color-link-hover: #{@theme.link_hover_color};
-        --color-border: #{@theme.border_color};
-
-        /* Typography */
-        --font-heading: #{@theme.font_heading};
-        --font-body: #{@theme.font_body};
-        --font-size-base: #{@theme.font_size_base}px;
-        --line-height: #{@theme.line_height};
-
-        /* Layout */
-        --container-width: #{container_width_px};
-        --spacing-unit: #{@theme.spacing_scale}rem;
-        --border-radius: #{border_radius_px};
+#{generate_theme_variables}
       }
 
-      /* Apply variables to elements */
+      /* Apply theme variables to elements */
       body {
         font-family: var(--font-body);
         font-size: var(--font-size-base);
-        line-height: var(--line-height);
+        line-height: var(--line-height-base);
         color: var(--color-text);
         background: var(--color-background);
       }
@@ -59,28 +50,27 @@ class ThemeGenerator
       }
 
       .container {
-        max-width: var(--container-width);
+        max-width: var(--container-max);
       }
 
-      /* Borders */
       .border, hr {
         border-color: var(--color-border);
       }
 
-      /* Buttons */
-      .btn-primary {
-        background-color: var(--color-primary);
-        color: var(--color-background);
-      }
+      /* Custom CSS */
+      #{@theme.custom_css}
+    CSS
+  end
 
-      .btn-secondary {
-        background-color: var(--color-secondary);
-        color: var(--color-background);
-      }
+  # Generate input.css for Tailwind CLI (future compiled mode)
+  def generate_input_css
+    <<~CSS
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
 
-      /* Border radius */
-      .rounded {
-        border-radius: var(--border-radius);
+      @theme {
+#{generate_theme_variables}
       }
 
       /* Custom CSS */
@@ -90,23 +80,13 @@ class ThemeGenerator
 
   private
 
-  def container_width_px
-    case @theme.layout_width
-    when 'full' then '100%'
-    when 'wide' then '1400px'
-    when 'standard' then '1200px'
-    when 'narrow' then '900px'
-    else '1200px'
-    end
-  end
+  def generate_theme_variables
+    ThemeConfig::FIELDS.map do |field, config|
+      value = @theme.send(field)
+      next if value.nil?
 
-  def border_radius_px
-    case @theme.border_radius
-    when 'none' then '0'
-    when 'subtle' then '4px'
-    when 'medium' then '8px'
-    when 'large' then '16px'
-    else '8px'
-    end
+      formatted_value = ThemeConfig.format_value(field, value)
+      "  #{config[:css_var]}: #{formatted_value};"
+    end.compact.join("\n")
   end
 end
