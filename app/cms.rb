@@ -594,28 +594,14 @@ class CMS < Sinatra::Base
 
   # Theme serialization helper
   def theme_json(theme)
-    {
-      id: theme.id,
-      primary_color: theme.primary_color,
-      secondary_color: theme.secondary_color,
-      background_color: theme.background_color,
-      text_color: theme.text_color,
-      heading_color: theme.heading_color,
-      link_color: theme.link_color,
-      link_hover_color: theme.link_hover_color,
-      border_color: theme.border_color,
-      font_heading: theme.font_heading,
-      font_body: theme.font_body,
-      font_size_base: theme.font_size_base,
-      line_height: theme.line_height,
-      layout_width: theme.layout_width,
-      layout_style: theme.layout_style,
-      spacing_scale: theme.spacing_scale,
-      border_radius: theme.border_radius,
-      custom_css: theme.custom_css,
-      header_style: theme.header_style,
-      footer_style: theme.footer_style
-    }
+    # Build hash from all fields defined in ThemeConfig
+    result = { id: theme.id }
+
+    ThemeConfig.field_names.each do |field|
+      result[field] = theme.send(field) if theme.respond_to?(field)
+    end
+
+    result
   end
 
   # Page serialization helper
@@ -699,15 +685,28 @@ class CMS < Sinatra::Base
   def extract_theme_from_model(theme)
     # Simple: just get each field value directly from the theme model
     ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
-      hash[field] = theme.send(field) if theme.respond_to?(field)
+      if theme.respond_to?(field)
+        hash[field] = theme.send(field)
+      else
+        # Use default if field doesn't exist yet (pre-migration)
+        hash[field] = config[:default]
+      end
     end
   end
 
   def extract_theme_from_params(params_override, fallback_theme)
     # Get values from params if present, otherwise fall back to theme model
     ThemeConfig::FIELDS.each_with_object({}) do |(field, config), hash|
-      # Try param as string, then symbol, then fall back to theme
-      hash[field] = params_override[field.to_s] || params_override[field] || fallback_theme.send(field)
+      # Try param as string, then symbol, then fall back to theme (with default if field missing)
+      param_value = params_override[field.to_s] || params_override[field]
+      if param_value
+        hash[field] = param_value
+      elsif fallback_theme.respond_to?(field)
+        hash[field] = fallback_theme.send(field)
+      else
+        # Use default if field doesn't exist yet (pre-migration)
+        hash[field] = config[:default]
+      end
     end
   end
 end
