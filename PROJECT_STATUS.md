@@ -1,14 +1,19 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-21
+**Last Updated**: 2025-11-22
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
+**🗺️ NEW:** See [ROADMAP.md](ROADMAP.md) for a prioritized view of all pending work.
+
 ---
 
-## 🎯 Current Status: **Hierarchical Pages Complete + API Pagination Implemented**
+## 🎯 Current Status: **Theme Customization Implemented**
 
-The v7cms core is **complete and deployed** on shared hosting (DreamHost). The hierarchical Pages feature (Priority 4) has been merged to main. API pagination has been added to both Posts and Pages endpoints.
+The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recent completions include:
+- ✅ Hierarchical Pages (Priority 4) - merged to main
+- ✅ API Pagination - added to Posts and Pages endpoints
+- ✅ Theme Customization (Priority 6) - 40+ configurable fields across 8 categories, merged to main
 
 ---
 
@@ -16,12 +21,12 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The h
 
 ### ✅ Core Application (Phases 1-8)
 - **Backend**: Ruby 3.2 + Sinatra framework with SQLite database
-- **Models**: User (OAuth), Post (with auto-slugs), Setting (singleton)
+- **Models**: User (OAuth), Post (with auto-slugs), Page (hierarchical), Setting (singleton), Theme (singleton)
 - **Authentication**: OAuth 2.0 via OmniAuth (Google, GitHub)
-- **API**: RESTful JSON API for posts and settings CRUD with authentication
-- **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS)
-- **Public Site**: ERB templates for homepage and individual post pages
-- **Testing**: 264 RSpec tests (models, routes, helpers, services)
+- **API**: RESTful JSON API for posts, pages, settings, and theme CRUD with authentication
+- **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS v4)
+- **Public Site**: ERB templates for homepage, posts, and hierarchical pages
+- **Testing**: 396 RSpec tests (models, routes, helpers, services)
 - **Deployment**: FastCGI on shared hosting with Apache .htaccess routing
 - **Security**:
   - .htaccess rules blocking sensitive files (.rb, .db, .env, config/, etc.)
@@ -68,6 +73,15 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The h
   - Pagination metadata in responses (total, limit, offset, count)
   - Helper methods: pagination_params, pagination_metadata
   - Works with filters (include_drafts, top_level, parent_id)
+- **Theme Customization** (2025-11-21 to 2025-11-22) - MERGED:
+  - Theme model with 40+ configurable fields across 8 semantic categories
+  - ThemeConfig module for centralized field definitions and metadata
+  - ThemeGenerator service for CSS generation with custom properties
+  - Theme API endpoints (GET, PUT, POST reset, GET preview)
+  - Admin UI theme tab with color pickers and category organization
+  - Tailwind CSS v4 via CDN with @theme directive integration
+  - Auto-regeneration of theme.css and static HTML files on save
+  - Comprehensive tests for model, routes, and service
 
 ### ✅ Production Deployment Features
 - OAuth callback working in production
@@ -106,13 +120,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The h
 **→ `NEXT_STEPS.md`** - Roadmap for future features
 - **Status**: 🎯 ACTIVE DEVELOPMENT ROADMAP
 - 7 priority levels with detailed implementation plans
-- Start here for new features:
-  1. Settings Management (customize site text via admin)
-  2. Static HTML Generation (posts as static files)
-  3. RSS Feed Generation
-  4. Pages & Hierarchical Content
+- Completed priorities (1-4, 6):
+  1. ✅ Settings Management (customize site text via admin)
+  2. ✅ Static HTML Generation (posts as static files)
+  3. ✅ RSS Feed Generation
+  4. ✅ Pages & Hierarchical Content
+  6. ✅ Theme Customization (40+ fields)
+- Remaining priorities:
   5. Commenting System
-  6. Theme Customization
   7. Static Asset Management
 - Each priority includes:
   - Clear goals
@@ -134,7 +149,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The h
 
 ### "What should I work on next?"
 1. Open **`NEXT_STEPS.md`**
-2. Start with **Priority 2: Static HTML Generation**
+2. Start with **Priority 5: Commenting System** (next unimplemented feature)
 3. Follow the task checklist in that section
 
 ### "How does this project work?"
@@ -150,9 +165,9 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). The h
 
 ### "What's the tech stack?"
 - **Backend**: Ruby 3.2, Sinatra 3.0, SQLite, ActiveRecord, OmniAuth
-- **Frontend**: Alpine.js, Quill.js, Tailwind CSS (CDN)
+- **Frontend**: Alpine.js, Quill.js, Tailwind CSS v4 (CDN with @theme)
 - **Deployment**: FastCGI on Apache (shared hosting)
-- **Testing**: RSpec with Rack::Test and DatabaseCleaner
+- **Testing**: RSpec with Rack::Test and DatabaseCleaner (396 tests)
 
 ---
 
@@ -195,16 +210,27 @@ Follow existing pattern (see recent commits):
 ### Application Code
 ```
 app/
-  cms.rb                    # Main Sinatra application (routes, config)
+  cms.rb                    # Main Sinatra application (712 lines)
   models/
     user.rb                 # OAuth user model
     post.rb                 # Blog post model
+    page.rb                 # Hierarchical page model
+    setting.rb              # Site settings (singleton)
+    theme.rb                # Theme customization (singleton)
+  services/
+    post_renderer.rb        # Static HTML generation for posts
+    page_renderer.rb        # Static HTML generation for pages
+    feed_generator.rb       # RSS/Atom feed generation
+    theme_generator.rb      # CSS generation from theme
+  config/
+    theme_fields.rb         # Theme field metadata (ThemeConfig)
   helpers/
     auth_helper.rb          # Authentication helpers
   views/
-    layout.erb              # Site layout template
+    layout.erb              # Site layout with Tailwind v4 @theme
     index.erb               # Homepage (post list)
     post.erb                # Single post view
+    page.erb                # Single page view
     404.erb                 # Not found page
 ```
 
@@ -221,13 +247,14 @@ config/
 ### Frontend
 ```
 admin/
-  index.html                # Admin SPA
+  index.html                # Admin SPA (Posts, Pages, Settings, Theme)
 public/
   js/
     admin.js                # Admin app logic (Alpine.js)
   css/
-    input.css               # Tailwind input
-    output.css              # Generated CSS (gitignored)
+    theme.css               # Generated theme CSS (auto-generated, gitignored)
+  posts/                    # Generated static post HTML files
+  pages/                    # Generated static page HTML files
 ```
 
 ### Database
@@ -241,8 +268,9 @@ db/
 ### Testing
 ```
 spec/
-  models/                   # Model tests
-  routes/                   # Route/integration tests
+  models/                   # Model tests (User, Post, Page, Setting, Theme)
+  routes/                   # Route/integration tests (Auth, Posts, Pages, Settings, Theme, Feeds)
+  services/                 # Service tests (PostRenderer, PageRenderer, FeedGenerator, ThemeGenerator)
   helpers/                  # Helper tests
   spec_helper.rb            # RSpec configuration
 ```
@@ -271,14 +299,14 @@ Enable user engagement through comments on posts.
 
 **Estimated effort**: 2-8 hours (depending on approach)
 
-### Step 2: Theme Customization
-**File**: `NEXT_STEPS.md` → Priority 6
+### Step 2: Static Asset Management
+**File**: `NEXT_STEPS.md` → Priority 7
 
-Allow visual customization (colors, fonts, layout) via admin interface.
+Manage and serve uploaded media files (images, documents, etc.)
 
-**Decision needed**: Granular controls vs pre-built themes
+**Decision needed**: Storage strategy and admin UI approach
 
-**Estimated effort**: 4-12 hours
+**Estimated effort**: 6-10 hours
 
 ---
 
@@ -327,8 +355,8 @@ Allow visual customization (colors, fonts, layout) via admin interface.
 - Always run migrations in test env: `RACK_ENV=test bundle exec rake db:migrate`
 
 ### Tailwind CSS
-- Currently using **CDN** (not CLI) due to memory limits on shared hosting
-- For local dev: Use CLI with `--watch` flag
+- Using **Tailwind v4 CDN** with @theme directive (no build step required)
+- Theme customization integrated via theme.css (auto-generated)
 - For production: CDN link in templates (already configured)
 
 ### Security
@@ -339,15 +367,22 @@ Allow visual customization (colors, fonts, layout) via admin interface.
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 264 tests
+- Current count: 396 tests
 - Test coverage: models, routes, helpers, services
 - Always write tests for new features
 
 ### Static Files
-- Static HTML files auto-generated for published posts
-- Located in `public/posts/{slug}.html`
-- Use `rake posts:regenerate_all` after deployment to rebuild all files
-- Use `rake posts:verify` to check for missing files
+- Static HTML files auto-generated for published posts and pages
+- Posts located in `public/posts/{slug}.html`
+- Pages located in `public/pages/{slug}.html`
+- Use `rake posts:regenerate_all` and `rake pages:regenerate_all` after deployment
+- Use `rake posts:verify` and `rake pages:verify` to check for missing files
+
+### Theme Customization
+- Theme CSS auto-generated at `public/css/theme.css`
+- 40+ configurable fields across 8 categories
+- Changes applied automatically when saved via admin UI
+- To manually regenerate: `Theme.instance.send(:regenerate_theme_css)`
 
 ---
 
