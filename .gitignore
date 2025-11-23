@@ -91,4 +91,4 @@ public/pages/*.html
 *.md
 !README.md
 !ROADMAP.md
-!docs/CHANGELOG.md
+!docs/*.md
