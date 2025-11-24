@@ -1,6 +1,10 @@
 class Setting < ActiveRecord::Base
   # Singleton pattern - only one settings record should exist
 
+  # Class variables for caching
+  @@instance_cache = nil
+  @@cache_mutex = Mutex.new
+
   # Validations
   validates :site_title, presence: true, length: { maximum: 100 }
   validates :site_tagline, length: { maximum: 200 }
@@ -33,12 +37,32 @@ class Setting < ActiveRecord::Base
 
   validates :date_format, presence: true
 
-  # Feed regeneration callback
+  # Callbacks
   after_commit :regenerate_feeds
+  after_save :clear_instance_cache
 
-  # Singleton instance method
+  # Singleton instance method with caching
   def self.instance
-    first_or_create!
+    # Quick check outside mutex for performance
+    return @@instance_cache if @@instance_cache
+
+    # Load instance outside mutex to avoid deadlock with after_save callback
+    instance = first_or_create!
+
+    # Thread-safe cache assignment
+    @@cache_mutex.synchronize do
+      # Double-check inside mutex (another thread may have initialized)
+      @@instance_cache ||= instance
+    end
+
+    @@instance_cache
+  end
+
+  # Clear the instance cache
+  def self.clear_cache!
+    @@cache_mutex.synchronize do
+      @@instance_cache = nil
+    end
   end
 
   # Convenience method to get a setting value
@@ -70,5 +94,9 @@ class Setting < ActiveRecord::Base
 
   def regenerate_feeds
     FeedGenerator.write_feeds
+  end
+
+  def clear_instance_cache
+    self.class.clear_cache!
   end
 end

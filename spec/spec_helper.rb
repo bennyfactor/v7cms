@@ -45,6 +45,8 @@ RSpec.configure do |config|
 
   config.around(:each) do |example|
     DatabaseCleaner.cleaning do
+      # Clear Setting cache before each test to prevent test pollution
+      Setting.clear_cache! if Setting.respond_to?(:clear_cache!)
       example.run
     end
   end
