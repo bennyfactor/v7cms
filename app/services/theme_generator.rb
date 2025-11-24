@@ -96,6 +96,7 @@ class ThemeGenerator
     ThemeConfig::FIELDS.map do |field, config|
       value = @theme.send(field)
       next if value.nil?
+      next if config[:css_var].nil? # Skip fields without CSS variables (e.g., custom_css)
 
       formatted_value = ThemeConfig.format_value(field, value)
       "  #{config[:css_var]}: #{formatted_value};"
