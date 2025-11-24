@@ -348,4 +348,76 @@ RSpec.describe FeedGenerator do
       expect(File.exist?(File.join(Dir.pwd, 'public', 'atom.xml'))).to be true
     end
   end
+
+  describe 'error handling' do
+    let!(:post) { Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true) }
+
+    describe '#write_feeds' do
+      it 'returns true when both feed writes succeed' do
+        generator = FeedGenerator.new
+        result = generator.write_feeds
+        expect(result).to be true
+      end
+
+      it 'returns false when RSS write fails' do
+        generator = FeedGenerator.new
+        allow(File).to receive(:write).with(/feed\.xml/, anything).and_raise(Errno::EACCES, 'Permission denied')
+        allow(File).to receive(:write).with(/atom\.xml/, anything).and_return(true)
+
+        result = generator.write_feeds
+        expect(result).to be false
+      end
+
+      it 'returns false when Atom write fails' do
+        generator = FeedGenerator.new
+        allow(File).to receive(:write).with(/feed\.xml/, anything).and_return(true)
+        allow(File).to receive(:write).with(/atom\.xml/, anything).and_raise(Errno::EACCES, 'Permission denied')
+
+        result = generator.write_feeds
+        expect(result).to be false
+      end
+
+      it 'logs error when RSS write fails' do
+        generator = FeedGenerator.new
+        logger = instance_double(Logger)
+        allow(FeedGenerator).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:info)
+        expect(logger).to receive(:error).with(/RSS.*Permission denied/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(File).to receive(:write).with(/feed\.xml/, anything).and_raise(Errno::EACCES, 'Permission denied')
+        allow(File).to receive(:write).with(/atom\.xml/, anything).and_return(true)
+
+        generator.write_feeds
+      end
+
+      it 'logs error when Atom write fails' do
+        generator = FeedGenerator.new
+        logger = instance_double(Logger)
+        allow(FeedGenerator).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:info)
+        expect(logger).to receive(:error).with(/Atom.*Permission denied/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(File).to receive(:write).with(/feed\.xml/, anything).and_return(true)
+        allow(File).to receive(:write).with(/atom\.xml/, anything).and_raise(Errno::EACCES, 'Permission denied')
+
+        generator.write_feeds
+      end
+
+      it 'attempts both writes even if first fails' do
+        generator = FeedGenerator.new
+        allow(File).to receive(:write).with(/feed\.xml/, anything).and_raise(Errno::EACCES)
+        expect(File).to receive(:write).with(/atom\.xml/, anything)
+
+        generator.write_feeds
+      end
+    end
+
+    describe 'class method wrapper' do
+      it 'write_feeds returns boolean from instance method' do
+        allow_any_instance_of(FeedGenerator).to receive(:write_feeds).and_return(false)
+        result = FeedGenerator.write_feeds
+        expect(result).to be false
+      end
+    end
+  end
 end
