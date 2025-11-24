@@ -162,20 +162,79 @@
                         </div>
 
                         <div class="bg-white rounded-lg shadow-lg p-6">
+                            <!-- Validation Summary Banner -->
+                            <div x-show="showValidationSummary && validationSummaryErrors.length > 0"
+                                 class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-semibold text-red-800">
+                                            <span x-text="validationSummaryErrors.length"></span> error(s) prevent saving
+                                        </h3>
+                                        <ul class="mt-2 text-sm text-red-700 space-y-1">
+                                            <template x-for="error in validationSummaryErrors" :key="error.field">
+                                                <li>
+                                                    <a @click.prevent="focusField(error.field)"
+                                                       href="#"
+                                                       class="underline hover:text-red-900 cursor-pointer"
+                                                       x-text="`${error.label}: ${error.message}`"></a>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                    <button @click="showValidationSummary = false"
+                                            class="ml-3 text-red-600 hover:text-red-800">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                                <input x-model="currentPost.title" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter post title">
+                                <input x-model="currentPost.title"
+                                       @blur="markTouched('post', 'title'); validatePost()"
+                                       @input="touchedFields.post.has('title') && validatePost()"
+                                       :class="{
+                                           'border-red-500': validationErrors.post.title,
+                                           'border-green-500': touchedFields.post.has('title') && !validationErrors.post.title && currentPost.title
+                                       }"
+                                       type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter post title">
+                                <p x-show="validationErrors.post.title"
+                                   x-text="validationErrors.post.title"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug</label>
-                                <input x-model="currentPost.slug" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="post-slug">
+                                <input x-model="currentPost.slug"
+                                       @blur="markTouched('post', 'slug'); validatePost()"
+                                       @input="touchedFields.post.has('slug') && validatePost()"
+                                       :class="{
+                                           'border-red-500': validationErrors.post.slug,
+                                           'border-green-500': touchedFields.post.has('slug') && !validationErrors.post.slug && currentPost.slug
+                                       }"
+                                       type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="post-slug">
                                 <p class="mt-1 text-sm text-gray-500">Leave blank to auto-generate from title</p>
+                                <p x-show="validationErrors.post.slug"
+                                   x-text="validationErrors.post.slug"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                                <div id="editor" class="editor-container bg-white border border-gray-300 rounded-lg"></div>
+                                <div id="editor"
+                                     :class="{
+                                         'border-red-500': validationErrors.post.content,
+                                         'border-green-500': touchedFields.post.has('content') && !validationErrors.post.content && currentPost.content
+                                     }"
+                                     class="editor-container bg-white border border-gray-300 rounded-lg"></div>
+                                <p x-show="validationErrors.post.content"
+                                   x-text="validationErrors.post.content"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
@@ -187,7 +246,10 @@
 
                             <div class="flex justify-end space-x-4">
                                 <button @click="cancelEdit" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold transition">Cancel</button>
-                                <button @click="savePost" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow transition">
+                                <button @click="savePost"
+                                        :disabled="!isPostValid() || saving"
+                                        :class="{ 'opacity-50 cursor-not-allowed': !isPostValid() || saving }"
+                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow transition">
                                     <span x-show="saving">Saving...</span>
                                     <span x-show="!saving">Save Post</span>
                                 </button>
@@ -271,26 +333,87 @@
                         </div>
 
                         <div class="bg-white rounded-lg shadow-lg p-6">
+                            <!-- Validation Summary Banner -->
+                            <div x-show="showValidationSummary && validationSummaryErrors.length > 0"
+                                 class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-semibold text-red-800">
+                                            <span x-text="validationSummaryErrors.length"></span> error(s) prevent saving
+                                        </h3>
+                                        <ul class="mt-2 text-sm text-red-700 space-y-1">
+                                            <template x-for="error in validationSummaryErrors" :key="error.field">
+                                                <li>
+                                                    <a @click.prevent="focusField(error.field)"
+                                                       href="#"
+                                                       class="underline hover:text-red-900 cursor-pointer"
+                                                       x-text="`${error.label}: ${error.message}`"></a>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                    <button @click="showValidationSummary = false"
+                                            class="ml-3 text-red-600 hover:text-red-800">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                                <input x-model="currentPage.title" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter page title">
+                                <input x-model="currentPage.title"
+                                       @blur="markTouched('page', 'title'); validatePage()"
+                                       @input="touchedFields.page.has('title') && validatePage()"
+                                       :class="{
+                                           'border-red-500': validationErrors.page.title,
+                                           'border-green-500': touchedFields.page.has('title') && !validationErrors.page.title && currentPage.title
+                                       }"
+                                       type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter page title">
+                                <p x-show="validationErrors.page.title"
+                                   x-text="validationErrors.page.title"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Slug</label>
-                                <input x-model="currentPage.slug" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="page-slug">
+                                <input x-model="currentPage.slug"
+                                       @blur="markTouched('page', 'slug'); validatePage()"
+                                       @input="touchedFields.page.has('slug') && validatePage()"
+                                       :class="{
+                                           'border-red-500': validationErrors.page.slug,
+                                           'border-green-500': touchedFields.page.has('slug') && !validationErrors.page.slug && currentPage.slug
+                                       }"
+                                       type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="page-slug">
                                 <p class="mt-1 text-sm text-gray-500">Leave blank to auto-generate from title</p>
+                                <p x-show="validationErrors.page.slug"
+                                   x-text="validationErrors.page.slug"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Parent Page</label>
-                                <select x-model="currentPage.parent_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <select x-model="currentPage.parent_id"
+                                        @blur="markTouched('page', 'parent_id'); validatePage()"
+                                        @change="touchedFields.page.has('parent_id') && validatePage()"
+                                        :class="{
+                                            'border-red-500': validationErrors.page.parent_id,
+                                            'border-green-500': touchedFields.page.has('parent_id') && !validationErrors.page.parent_id
+                                        }"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="">None (Top Level)</option>
                                     <template x-for="page in pages.filter(p => p.id !== currentPage.id)" :key="page.id">
                                         <option :value="page.id" x-text="page.title"></option>
                                     </template>
                                 </select>
                                 <p class="mt-1 text-sm text-gray-500">Select a parent page to create a hierarchy</p>
+                                <p x-show="validationErrors.page.parent_id"
+                                   x-text="validationErrors.page.parent_id"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
@@ -310,7 +433,15 @@
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                                <div id="page-editor" class="editor-container bg-white border border-gray-300 rounded-lg"></div>
+                                <div id="page-editor"
+                                     :class="{
+                                         'border-red-500': validationErrors.page.content,
+                                         'border-green-500': touchedFields.page.has('content') && !validationErrors.page.content && currentPage.content
+                                     }"
+                                     class="editor-container bg-white border border-gray-300 rounded-lg"></div>
+                                <p x-show="validationErrors.page.content"
+                                   x-text="validationErrors.page.content"
+                                   class="mt-1 text-sm text-red-600"></p>
                             </div>
 
                             <div class="mb-6">
@@ -322,7 +453,10 @@
 
                             <div class="flex justify-end space-x-4">
                                 <button @click="cancelPageEdit" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold transition">Cancel</button>
-                                <button @click="savePage" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow transition">
+                                <button @click="savePage"
+                                        :disabled="!isPageValid() || savingPage"
+                                        :class="{ 'opacity-50 cursor-not-allowed': !isPageValid() || savingPage }"
+                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow transition">
                                     <span x-show="savingPage">Saving...</span>
                                     <span x-show="!savingPage">Save Page</span>
                                 </button>
@@ -532,6 +666,36 @@
                     <h2 class="text-3xl font-bold text-gray-800 mb-6">Site Settings</h2>
 
                     <form @submit.prevent="saveSettings" class="bg-white rounded-lg shadow p-6 space-y-8">
+                        <!-- Validation Summary Banner -->
+                        <div x-show="showValidationSummary && validationSummaryErrors.length > 0"
+                             class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <h3 class="text-sm font-semibold text-red-800">
+                                        <span x-text="validationSummaryErrors.length"></span> error(s) prevent saving
+                                    </h3>
+                                    <ul class="mt-2 text-sm text-red-700 space-y-1">
+                                        <template x-for="error in validationSummaryErrors" :key="error.field">
+                                            <li>
+                                                <a @click.prevent="focusField(error.field)"
+                                                   href="#"
+                                                   class="underline hover:text-red-900 cursor-pointer"
+                                                   x-text="`${error.label}: ${error.message}`"></a>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <button @click="showValidationSummary = false"
+                                        class="ml-3 text-red-600 hover:text-red-800">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
 
                         <!-- Site Identity Section -->
                         <div class="border-b pb-6">
@@ -540,22 +704,49 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Site Title *</label>
                                     <input type="text" x-model="settings.site_title"
+                                           @blur="markTouched('settings', 'site_title'); validateSettings()"
+                                           @input="touchedFields.settings.has('site_title') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.site_title,
+                                               'border-green-500': touchedFields.settings.has('site_title') && !validationErrors.settings.site_title && settings.site_title
+                                           }"
                                            class="w-full border rounded px-3 py-2" required maxlength="100">
                                     <p class="text-xs text-gray-600 mt-1">Shown in browser tab and header (max 100 characters)</p>
+                                    <p x-show="validationErrors.settings.site_title"
+                                       x-text="validationErrors.settings.site_title"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Site Tagline</label>
                                     <input type="text" x-model="settings.site_tagline"
+                                           @blur="markTouched('settings', 'site_tagline'); validateSettings()"
+                                           @input="touchedFields.settings.has('site_tagline') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.site_tagline,
+                                               'border-green-500': touchedFields.settings.has('site_tagline') && !validationErrors.settings.site_tagline && settings.site_tagline
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="200">
                                     <p class="text-xs text-gray-600 mt-1">Short description (max 200 characters)</p>
+                                    <p x-show="validationErrors.settings.site_tagline"
+                                       x-text="validationErrors.settings.site_tagline"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Site Author</label>
                                     <input type="text" x-model="settings.site_author"
+                                           @blur="markTouched('settings', 'site_author'); validateSettings()"
+                                           @input="touchedFields.settings.has('site_author') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.site_author,
+                                               'border-green-500': touchedFields.settings.has('site_author') && !validationErrors.settings.site_author && settings.site_author
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="100">
                                     <p class="text-xs text-gray-600 mt-1">Default author name (max 100 characters)</p>
+                                    <p x-show="validationErrors.settings.site_author"
+                                       x-text="validationErrors.settings.site_author"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
                             </div>
                         </div>
@@ -567,15 +758,33 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Welcome Title *</label>
                                     <input type="text" x-model="settings.welcome_title"
+                                           @blur="markTouched('settings', 'welcome_title'); validateSettings()"
+                                           @input="touchedFields.settings.has('welcome_title') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.welcome_title,
+                                               'border-green-500': touchedFields.settings.has('welcome_title') && !validationErrors.settings.welcome_title && settings.welcome_title
+                                           }"
                                            class="w-full border rounded px-3 py-2" required maxlength="200">
                                     <p class="text-xs text-gray-600 mt-1">Main heading on homepage (max 200 characters)</p>
+                                    <p x-show="validationErrors.settings.welcome_title"
+                                       x-text="validationErrors.settings.welcome_title"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Welcome Subtitle</label>
                                     <textarea x-model="settings.welcome_subtitle"
+                                              @blur="markTouched('settings', 'welcome_subtitle'); validateSettings()"
+                                              @input="touchedFields.settings.has('welcome_subtitle') && validateSettings()"
+                                              :class="{
+                                                  'border-red-500': validationErrors.settings.welcome_subtitle,
+                                                  'border-green-500': touchedFields.settings.has('welcome_subtitle') && !validationErrors.settings.welcome_subtitle && settings.welcome_subtitle
+                                              }"
                                               class="w-full border rounded px-3 py-2" rows="2" maxlength="300"></textarea>
                                     <p class="text-xs text-gray-600 mt-1">Supporting text below title (max 300 characters)</p>
+                                    <p x-show="validationErrors.settings.welcome_subtitle"
+                                       x-text="validationErrors.settings.welcome_subtitle"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
                             </div>
                         </div>
@@ -587,8 +796,17 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Footer Text</label>
                                     <input type="text" x-model="settings.footer_text"
+                                           @blur="markTouched('settings', 'footer_text'); validateSettings()"
+                                           @input="touchedFields.settings.has('footer_text') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.footer_text,
+                                               'border-green-500': touchedFields.settings.has('footer_text') && !validationErrors.settings.footer_text && settings.footer_text
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="300">
                                     <p class="text-xs text-gray-600 mt-1">Custom footer message (max 300 characters)</p>
+                                    <p x-show="validationErrors.settings.footer_text"
+                                       x-text="validationErrors.settings.footer_text"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
@@ -614,8 +832,17 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Meta Keywords</label>
                                     <input type="text" x-model="settings.meta_keywords"
+                                           @blur="markTouched('settings', 'meta_keywords'); validateSettings()"
+                                           @input="touchedFields.settings.has('meta_keywords') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.meta_keywords,
+                                               'border-green-500': touchedFields.settings.has('meta_keywords') && !validationErrors.settings.meta_keywords && settings.meta_keywords
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="500">
                                     <p class="text-xs text-gray-600 mt-1">Comma-separated keywords (max 500 characters)</p>
+                                    <p x-show="validationErrors.settings.meta_keywords"
+                                       x-text="validationErrors.settings.meta_keywords"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
                             </div>
                         </div>
@@ -627,22 +854,49 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Contact Email</label>
                                     <input type="email" x-model="settings.contact_email"
+                                           @blur="markTouched('settings', 'contact_email'); validateSettings()"
+                                           @input="touchedFields.settings.has('contact_email') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.contact_email,
+                                               'border-green-500': touchedFields.settings.has('contact_email') && !validationErrors.settings.contact_email && settings.contact_email
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="100">
+                                    <p x-show="validationErrors.settings.contact_email"
+                                       x-text="validationErrors.settings.contact_email"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">GitHub URL</label>
                                     <input type="url" x-model="settings.github_url"
+                                           @blur="markTouched('settings', 'github_url'); validateSettings()"
+                                           @input="touchedFields.settings.has('github_url') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.github_url,
+                                               'border-green-500': touchedFields.settings.has('github_url') && !validationErrors.settings.github_url && settings.github_url
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="200"
                                            placeholder="https://github.com/username">
+                                    <p x-show="validationErrors.settings.github_url"
+                                       x-text="validationErrors.settings.github_url"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Social URL</label>
                                     <input type="url" x-model="settings.social_url"
+                                           @blur="markTouched('settings', 'social_url'); validateSettings()"
+                                           @input="touchedFields.settings.has('social_url') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.social_url,
+                                               'border-green-500': touchedFields.settings.has('social_url') && !validationErrors.settings.social_url && settings.social_url
+                                           }"
                                            class="w-full border rounded px-3 py-2" maxlength="200"
                                            placeholder="https://twitter.com/username">
                                     <p class="text-xs text-gray-600 mt-1">Twitter, LinkedIn, or other social profile</p>
+                                    <p x-show="validationErrors.settings.social_url"
+                                       x-text="validationErrors.settings.social_url"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
                             </div>
                         </div>
@@ -654,18 +908,37 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Posts Per Page</label>
                                     <input type="number" x-model.number="settings.posts_per_page"
+                                           @blur="markTouched('settings', 'posts_per_page'); validateSettings()"
+                                           @input="touchedFields.settings.has('posts_per_page') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.posts_per_page,
+                                               'border-green-500': touchedFields.settings.has('posts_per_page') && !validationErrors.settings.posts_per_page && settings.posts_per_page
+                                           }"
                                            class="w-full border rounded px-3 py-2" min="1" max="100">
                                     <p class="text-xs text-gray-600 mt-1">Number of posts to show (1-100)</p>
+                                    <p x-show="validationErrors.settings.posts_per_page"
+                                       x-text="validationErrors.settings.posts_per_page"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Date Format</label>
-                                    <select x-model="settings.date_format" class="w-full border rounded px-3 py-2">
+                                    <select x-model="settings.date_format"
+                                            @blur="markTouched('settings', 'date_format'); validateSettings()"
+                                            @change="touchedFields.settings.has('date_format') && validateSettings()"
+                                            :class="{
+                                                'border-red-500': validationErrors.settings.date_format,
+                                                'border-green-500': touchedFields.settings.has('date_format') && !validationErrors.settings.date_format && settings.date_format
+                                            }"
+                                            class="w-full border rounded px-3 py-2">
                                         <option value="%B %d, %Y">November 13, 2025</option>
                                         <option value="%m/%d/%Y">11/13/2025</option>
                                         <option value="%Y-%m-%d">2025-11-13</option>
                                         <option value="%d %B %Y">13 November 2025</option>
                                     </select>
+                                    <p x-show="validationErrors.settings.date_format"
+                                       x-text="validationErrors.settings.date_format"
+                                       class="mt-1 text-sm text-red-600"></p>
                                 </div>
                             </div>
                         </div>
@@ -673,6 +946,8 @@
                         <!-- Action Buttons -->
                         <div class="flex gap-2 pt-4 border-t">
                             <button type="submit"
+                                    :disabled="!isSettingsValid() || savingSettings"
+                                    :class="{ 'opacity-50 cursor-not-allowed': !isSettingsValid() || savingSettings }"
                                     class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold transition">
                                 <span x-show="savingSettings">Saving...</span>
                                 <span x-show="!savingSettings">Save Settings</span>
