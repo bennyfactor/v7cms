@@ -45,18 +45,15 @@ RSpec.describe 'Theme Routes' do
       expect(theme).to have_key('font_heading')
       expect(theme).to have_key('font_body')
       expect(theme).to have_key('font_size_base')
-      expect(theme).to have_key('line_height')
+      expect(theme).to have_key('line_height_base')
 
       # Layout fields
       expect(theme).to have_key('layout_width')
-      expect(theme).to have_key('layout_style')
-      expect(theme).to have_key('spacing_scale')
-      expect(theme).to have_key('border_radius')
+      expect(theme).to have_key('spacing_unit')
+      expect(theme).to have_key('radius_default')
 
       # Advanced fields
       expect(theme).to have_key('custom_css')
-      expect(theme).to have_key('header_style')
-      expect(theme).to have_key('footer_style')
     end
   end
 
@@ -90,25 +87,25 @@ RSpec.describe 'Theme Routes' do
 
       it 'updates typography settings' do
         put '/api/theme',
-          { font_size_base: 18, line_height: 1.8 }.to_json,
+          { font_size_base: 18, line_height_base: 1.8 }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)
         expect(data['theme']['font_size_base']).to eq(18)
-        # line_height is a decimal field, could be serialized as string by JSON
-        expect(data['theme']['line_height'].to_f).to eq(1.8)
+        # line_height_base is a decimal field, could be serialized as string by JSON
+        expect(data['theme']['line_height_base'].to_f).to eq(1.8)
       end
 
       it 'updates layout settings' do
         put '/api/theme',
-          { layout_width: 'wide', border_radius: 'large' }.to_json,
+          { layout_width: 'wide', radius_default: '16px' }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)
         expect(data['theme']['layout_width']).to eq('wide')
-        expect(data['theme']['border_radius']).to eq('large')
+        expect(theme['radius_default']).to eq('16px')
       end
 
       it 'updates custom CSS' do
@@ -170,7 +167,7 @@ RSpec.describe 'Theme Routes' do
             secondary_color: '#222222',
             font_size_base: 18,
             layout_width: 'wide',
-            border_radius: 'large'
+            radius_default: '16px'
           }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
@@ -180,7 +177,7 @@ RSpec.describe 'Theme Routes' do
         expect(data['theme']['secondary_color']).to eq('#222222')
         expect(data['theme']['font_size_base']).to eq(18)
         expect(data['theme']['layout_width']).to eq('wide')
-        expect(data['theme']['border_radius']).to eq('large')
+        expect(data['theme']['radius_default']).to eq('16px')
       end
 
     end
