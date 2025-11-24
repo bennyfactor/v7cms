@@ -344,4 +344,51 @@ RSpec.describe ThemeGenerator do
       expect(css).to include('padding: 2rem;')
     end
   end
+
+  describe 'error handling' do
+    let(:theme) { Theme.instance }
+
+    describe '.generate_and_write' do
+      it 'returns file path when write succeeds' do
+        result = ThemeGenerator.generate_and_write(theme)
+        expect(result).to be_a(String)
+        expect(result).to end_with('theme.css')
+      end
+
+      it 'returns nil when directory creation fails' do
+        allow(FileUtils).to receive(:mkdir_p).and_raise(Errno::EACCES, 'Permission denied')
+
+        result = ThemeGenerator.generate_and_write(theme)
+        expect(result).to be_nil
+      end
+
+      it 'returns nil when file write fails' do
+        allow(File).to receive(:write).and_raise(Errno::ENOSPC, 'No space left on device')
+
+        result = ThemeGenerator.generate_and_write(theme)
+        expect(result).to be_nil
+      end
+
+      it 'logs error when directory creation fails' do
+        logger = instance_double(Logger)
+        allow(ThemeGenerator).to receive(:logger).and_return(logger)
+        expect(logger).to receive(:error).with(/Permission denied/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(FileUtils).to receive(:mkdir_p).and_raise(Errno::EACCES, 'Permission denied')
+
+        ThemeGenerator.generate_and_write(theme)
+      end
+
+      it 'logs error when file write fails' do
+        logger = instance_double(Logger)
+        allow(ThemeGenerator).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:info)
+        expect(logger).to receive(:error).with(/No space left/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(File).to receive(:write).and_raise(Errno::ENOSPC, 'No space left on device')
+
+        ThemeGenerator.generate_and_write(theme)
+      end
+    end
+  end
 end
