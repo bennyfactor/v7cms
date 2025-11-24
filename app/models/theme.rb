@@ -28,6 +28,7 @@ class Theme < ActiveRecord::Base
   validates :font_heading, :font_body, :font_mono, length: { maximum: 200 }, allow_blank: true
   validates :radius_sm, :radius_default, :radius_lg, :border_width, length: { maximum: 20 }, allow_blank: true
   validates :shadow_sm, :shadow_default, :shadow_lg, length: { maximum: 500 }, allow_blank: true
+  validates :custom_css, length: { maximum: 10000 }, allow_blank: true
 
   # Callbacks
   after_commit :regenerate_theme_css
