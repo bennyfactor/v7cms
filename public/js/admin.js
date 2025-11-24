@@ -486,6 +486,62 @@ function cmsApp() {
             return Object.keys(this.validationErrors.page).length === 0;
         },
 
+        validateSettings() {
+            const errors = {};
+
+            // Required fields
+            if (!this.settings.site_title?.trim()) {
+                errors.site_title = 'Site title is required';
+            } else if (this.settings.site_title.length > 100) {
+                errors.site_title = 'Site title must be 100 characters or less';
+            }
+
+            if (!this.settings.welcome_title?.trim()) {
+                errors.welcome_title = 'Welcome title is required';
+            } else if (this.settings.welcome_title.length > 200) {
+                errors.welcome_title = 'Welcome title must be 200 characters or less';
+            }
+
+            // Email format (optional field)
+            if (this.settings.contact_email && !this.validateEmail(this.settings.contact_email)) {
+                errors.contact_email = 'Invalid email format';
+            }
+
+            // URLs (optional fields)
+            if (this.settings.github_url && !this.validateUrl(this.settings.github_url)) {
+                errors.github_url = 'Invalid URL format';
+            }
+
+            if (this.settings.social_url && !this.validateUrl(this.settings.social_url)) {
+                errors.social_url = 'Invalid URL format';
+            }
+
+            // Numeric range
+            if (this.settings.posts_per_page < 1 || this.settings.posts_per_page > 100) {
+                errors.posts_per_page = 'Must be between 1 and 100';
+            }
+
+            // String length validations
+            if (this.settings.site_tagline && this.settings.site_tagline.length > 200) {
+                errors.site_tagline = 'Site tagline must be 200 characters or less';
+            }
+
+            if (this.settings.welcome_subtitle && this.settings.welcome_subtitle.length > 300) {
+                errors.welcome_subtitle = 'Welcome subtitle must be 300 characters or less';
+            }
+
+            if (this.settings.footer_text && this.settings.footer_text.length > 300) {
+                errors.footer_text = 'Footer text must be 300 characters or less';
+            }
+
+            this.validationErrors.settings = errors;
+            return Object.keys(errors).length === 0;
+        },
+
+        isSettingsValid() {
+            return Object.keys(this.validationErrors.settings).length === 0;
+        },
+
         // Pages Management
 
         async loadPages() {
