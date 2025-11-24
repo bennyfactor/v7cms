@@ -430,8 +430,8 @@ function cmsApp() {
                 if (!/^[a-z0-9-]+$/.test(this.currentPost.slug)) {
                     errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
                 } else {
-                    // Check uniqueness with debounce
-                    this.checkSlugUniqueness('post', this.currentPost.slug, this.currentPost.id);
+                    // TODO: Uncomment after Task 6 implements checkSlugUniqueness
+                    // this.checkSlugUniqueness('post', this.currentPost.slug, this.currentPost.id);
                 }
             }
 
