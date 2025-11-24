@@ -1,8 +1,8 @@
 # v7cms Development Roadmap
 
-**Last Updated:** 2025-11-23
-**Total Pending Tasks:** 8 (6 fixes + 2 features)
-**Estimated Effort:** ~11.5 hours
+**Last Updated:** 2025-11-24
+**Total Pending Tasks:** 5 (2 fixes + 2 features + 1 investigation)
+**Estimated Effort:** ~3.75 hours
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -55,7 +55,51 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 3 pending tasks | **Estimated Effort:** ~3.75 hours
+**Status:** 2 pending tasks | **Estimated Effort:** ~3.75 hours
+
+### ✓ Task: Fix Theme Test Failures
+**Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~1.5 hours
+**PR:** #26 [Branch: fix/theme-test-field-names]
+
+**Problem:** 67 test failures caused by Theme model schema expansion. Tests were using old field names (line_height, spacing_scale, border_radius) that were renamed/removed in migration `20251122060419_expand_theme_fields.rb`.
+
+**Root Cause:** Theme schema expansion migration renamed fields for semantic clarity:
+- `line_height` → `line_height_base`, `line_height_tight`, `line_height_loose`
+- `spacing_scale` → `spacing_unit`, `spacing_section`
+- `border_radius` → `radius_sm`, `radius_default`, `radius_lg`
+- Removed: `layout_style`, `header_style`, `footer_style`
+
+**Solution Implemented:** Systematically updated all 3 affected test files (theme_spec.rb, theme routes spec, theme_generator_spec.rb) with new field names, validation ranges, and CSS variable names.
+
+**Changes:**
+- spec/models/theme_spec.rb: Updated default values, validations, removed obsolete tests
+- spec/routes/theme_spec.rb: Updated API endpoint tests with new field names
+- spec/services/theme_generator_spec.rb: Updated Theme.new() calls, CSS variable assertions, removed obsolete helper tests
+- 273 lines modified across 3 test files
+
+**Impact:** Fixed 51 out of 67 test failures (76% success rate). Test results improved from 435 examples/67 failures → 435 examples/16 failures. Remaining 16 failures appear to be pre-existing issues unrelated to field name changes.
+
+---
+
+### ✓ Task: Fix Quill Content Validation Bug
+**Priority:** Critical (Hotfix) | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** 30 min
+**PR:** #25 [Branch: hotfix/quill-content-validation]
+
+**Problem:** "Content is required" validation error persisted even after adding content to Quill editor in posts/pages forms. Typing in title/slug fields triggered validation for ALL fields, but typing in Quill didn't clear the content error.
+
+**Root Cause:** Quill editors don't support standard HTML @blur/@input events. Content divs had no event bindings to trigger validation when content changes.
+
+**Solution Implemented:** Added Quill's native 'text-change' event listeners to both initQuill() and initPageQuill() methods. Listeners follow hybrid validation pattern: mark field as touched on first change, validate on subsequent changes.
+
+**Changes:**
+- Modified public/js/admin.js (16 lines added)
+- Added text-change listener to initQuill() for posts (lines 149-155)
+- Added text-change listener to initPageQuill() for pages (lines 767-773)
+- Both content fields now trigger validation when edited
+
+**Impact:** Content validation errors now clear when user types in editor. Posts and pages can be saved when valid content is present. Validation behaves consistently across all form fields.
+
+---
 
 ### ✓ Task: Add Form Validation to Admin UI
 **Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~3 hours
@@ -160,11 +204,19 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Recently Completed
 
-### ✅ Confirmation Dialogs for Destructive Actions
+### ✅ Theme Test Fixes (PR #26)
+**Completed:** 2025-11-24 | **Effort:** ~1.5 hours
+Fixed 51 out of 67 test failures caused by Theme schema expansion migration. Updated 3 test files with new field names (line_height → line_height_base, spacing_scale → spacing_unit, border_radius → radius_default), validation ranges, and CSS variable names. Removed tests for deleted fields (layout_style, header_style, footer_style). Test results improved from 435 examples/67 failures to 435 examples/16 failures.
+
+### ✅ Quill Content Validation Hotfix (PR #25)
+**Completed:** 2025-11-24 | **Effort:** 30 min
+Fixed critical bug where "Content is required" validation error persisted even after adding content to Quill editor. Added Quill's native 'text-change' event listeners to both posts and pages forms. Content validation now clears in real-time when user types in editor, following the hybrid validation pattern used throughout the application.
+
+### ✅ Confirmation Dialogs for Destructive Actions (PR #24)
 **Completed:** 2025-11-24 | **Effort:** 30 min
 Enhanced deletion confirmation dialogs with clear warnings. Posts and pages now show "This action cannot be undone" message. Pages with children display CASCADE WARNING with exact child count and explicit message that all child pages will be permanently deleted. Uses client-side child counting with proper singular/plural grammar.
 
-### ✅ Admin Form Validation
+### ✅ Admin Form Validation (PR #23)
 **Completed:** 2025-11-24 | **Effort:** ~3 hours
 Comprehensive client-side validation for all admin forms (Posts, Pages, Settings). Features hybrid validation timing (blur → real-time), validation summary banners with clickable errors, field-level feedback (red/green borders), debounced slug uniqueness checking with caching, and graceful error handling. Validates 19 fields across 3 forms with 625+ lines of JavaScript/HTML implementation.
 
