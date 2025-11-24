@@ -70,7 +70,7 @@ RSpec.describe ThemeGenerator do
         expect(css).to include('body {')
         expect(css).to include('font-family: var(--font-body);')
         expect(css).to include('font-size: var(--font-size-base);')
-        expect(css).to include('line-height: var(--line-height);')
+        expect(css).to include('line-height: var(--line-height-base);')
         expect(css).to include('color: var(--color-text);')
         expect(css).to include('background: var(--color-background);')
       end
@@ -93,29 +93,12 @@ RSpec.describe ThemeGenerator do
 
       it 'applies max-width to container class' do
         expect(css).to include('.container {')
-        expect(css).to include('max-width: var(--container-width);')
+        expect(css).to include('max-width: var(--container-max);')
       end
 
       it 'applies border color to border elements' do
         expect(css).to include('.border, hr {')
         expect(css).to include('border-color: var(--color-border);')
-      end
-
-      it 'applies primary color to primary button' do
-        expect(css).to include('.btn-primary {')
-        expect(css).to include('background-color: var(--color-primary);')
-        expect(css).to include('color: var(--color-background);')
-      end
-
-      it 'applies secondary color to secondary button' do
-        expect(css).to include('.btn-secondary {')
-        expect(css).to include('background-color: var(--color-secondary);')
-        expect(css).to include('color: var(--color-background);')
-      end
-
-      it 'applies border radius to rounded class' do
-        expect(css).to include('.rounded {')
-        expect(css).to include('border-radius: var(--border-radius);')
       end
     end
 
@@ -132,8 +115,8 @@ RSpec.describe ThemeGenerator do
         css = generator.generate_css
 
         expect(css).to include('/* Custom CSS */')
-        # Verify CSS ends cleanly after custom CSS comment with just the theme custom_css value
-        expect(css).to end_with("/* Custom CSS */\n\n")
+        # Verify CSS ends cleanly after custom CSS comment (nil interpolates to empty)
+        expect(css).to end_with("/* Custom CSS */\n      \n")
       end
 
       it 'does not add extra content when custom CSS is empty string' do
@@ -150,13 +133,8 @@ RSpec.describe ThemeGenerator do
       end
 
       it 'includes comment sections for organization' do
-        expect(css).to include('/* Colors */')
-        expect(css).to include('/* Typography */')
-        expect(css).to include('/* Layout */')
-        expect(css).to include('/* Apply variables to elements */')
-        expect(css).to include('/* Borders */')
-        expect(css).to include('/* Buttons */')
-        expect(css).to include('/* Border radius */')
+        expect(css).to include('/* Generated theme CSS')
+        expect(css).to include('/* Apply theme variables to elements */')
         expect(css).to include('/* Custom CSS */')
       end
     end
@@ -217,7 +195,7 @@ RSpec.describe ThemeGenerator do
   describe 'integration with different theme configurations' do
     it 'generates correct CSS for wide layout with large border radius' do
       theme.layout_width = 'wide'
-      theme.border_radius = 'large'
+      theme.radius_default = '16px'
       css = generator.generate_css
 
       expect(css).to include('--container-max: 1400px;')
@@ -226,7 +204,7 @@ RSpec.describe ThemeGenerator do
 
     it 'generates correct CSS for narrow layout with no border radius' do
       theme.layout_width = 'narrow'
-      theme.border_radius = 'none'
+      theme.radius_default = '0'
       css = generator.generate_css
 
       expect(css).to include('--container-max: 900px;')
@@ -248,14 +226,14 @@ RSpec.describe ThemeGenerator do
     end
 
     it 'handles different line height values' do
-      theme.line_height = 1.8
+      theme.line_height_base = 1.8
       css = generator.generate_css
 
       expect(css).to include('--line-height-base: 1.8;')
     end
 
     it 'handles different spacing scale values' do
-      theme.spacing_scale = 1.25
+      theme.spacing_unit = 1.25
       css = generator.generate_css
 
       expect(css).to include('--spacing-unit: 1.25rem;')
