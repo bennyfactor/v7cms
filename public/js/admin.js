@@ -502,6 +502,11 @@ function cmsApp() {
                 errors.welcome_title = 'Welcome title must be 200 characters or less';
             }
 
+            // site_author length check
+            if (this.settings.site_author && this.settings.site_author.length > 100) {
+                errors.site_author = 'Site author must be 100 characters or less';
+            }
+
             // Email format (optional field)
             if (this.settings.contact_email && !this.validateEmail(this.settings.contact_email)) {
                 errors.contact_email = 'Invalid email format';
@@ -516,14 +521,20 @@ function cmsApp() {
                 errors.social_url = 'Invalid URL format';
             }
 
-            // Numeric range
-            if (this.settings.posts_per_page < 1 || this.settings.posts_per_page > 100) {
-                errors.posts_per_page = 'Must be between 1 and 100';
+            // Numeric range with type checking
+            const postsPerPage = parseInt(this.settings.posts_per_page, 10);
+            if (isNaN(postsPerPage) || postsPerPage < 1 || postsPerPage > 100) {
+                errors.posts_per_page = 'Posts per page must be between 1 and 100';
             }
 
             // String length validations
             if (this.settings.site_tagline && this.settings.site_tagline.length > 200) {
                 errors.site_tagline = 'Site tagline must be 200 characters or less';
+            }
+
+            // meta_keywords length check
+            if (this.settings.meta_keywords && this.settings.meta_keywords.length > 500) {
+                errors.meta_keywords = 'Meta keywords must be 500 characters or less';
             }
 
             if (this.settings.welcome_subtitle && this.settings.welcome_subtitle.length > 300) {
@@ -532,6 +543,11 @@ function cmsApp() {
 
             if (this.settings.footer_text && this.settings.footer_text.length > 300) {
                 errors.footer_text = 'Footer text must be 300 characters or less';
+            }
+
+            // date_format required check
+            if (!this.settings.date_format?.trim()) {
+                errors.date_format = 'Date format is required';
             }
 
             this.validationErrors.settings = errors;
