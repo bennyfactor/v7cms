@@ -196,4 +196,88 @@ RSpec.describe PostRenderer do
       expect(File.exist?(static_file_path)).to be false
     end
   end
+
+  describe 'error handling' do
+    let(:post) { Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true) }
+
+    describe '#write_file' do
+      it 'returns true when file write succeeds' do
+        renderer = PostRenderer.new(post)
+        result = renderer.write_file
+        expect(result).to be true
+      end
+
+      it 'returns false when file write fails' do
+        renderer = PostRenderer.new(post)
+        allow(File).to receive(:write).and_raise(Errno::EACCES, 'Permission denied')
+
+        result = renderer.write_file
+        expect(result).to be false
+      end
+
+      it 'logs error when file write fails' do
+        renderer = PostRenderer.new(post)
+        logger = instance_double(Logger)
+        allow(PostRenderer).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:info)
+        expect(logger).to receive(:error).with(/Permission denied/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(File).to receive(:write).and_raise(Errno::EACCES, 'Permission denied')
+
+        renderer.write_file
+      end
+    end
+
+    describe '#delete_file' do
+      it 'returns true when file deletion succeeds' do
+        renderer = PostRenderer.new(post)
+        renderer.write_file
+
+        result = renderer.delete_file
+        expect(result).to be true
+      end
+
+      it 'returns true when file does not exist' do
+        renderer = PostRenderer.new(post)
+        result = renderer.delete_file
+        expect(result).to be true
+      end
+
+      it 'returns false when file deletion fails' do
+        renderer = PostRenderer.new(post)
+        renderer.write_file
+        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+
+        result = renderer.delete_file
+        expect(result).to be false
+      end
+
+      it 'logs error when file deletion fails' do
+        renderer = PostRenderer.new(post)
+        renderer.write_file
+        logger = instance_double(Logger)
+        allow(PostRenderer).to receive(:logger).and_return(logger)
+        allow(logger).to receive(:info)
+        expect(logger).to receive(:error).with(/Permission denied/)
+        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+
+        renderer.delete_file
+      end
+    end
+
+    describe 'class method wrappers' do
+      it 'write_static_file returns boolean from instance method' do
+        allow_any_instance_of(PostRenderer).to receive(:write_file).and_return(false)
+        result = PostRenderer.write_static_file(post)
+        expect(result).to be false
+      end
+
+      it 'delete_static_file returns boolean from instance method' do
+        allow_any_instance_of(PostRenderer).to receive(:delete_file).and_return(false)
+        result = PostRenderer.delete_static_file(post)
+        expect(result).to be false
+      end
+    end
+  end
 end
