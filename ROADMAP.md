@@ -1,8 +1,8 @@
 # v7cms Development Roadmap
 
 **Last Updated:** 2025-11-23
-**Total Pending Tasks:** 9 (7 fixes + 2 features)
-**Estimated Effort:** ~12.5 hours
+**Total Pending Tasks:** 8 (6 fixes + 2 features)
+**Estimated Effort:** ~11.5 hours
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -34,17 +34,22 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## High Priority
 
-**Status:** 1 pending task | **Estimated Effort:** ~1 hour
+**Status:** 0 pending tasks
 
-### Task: Fix Hierarchical Page File Path Collisions
-**Priority:** High | **Status:** Pending | **Estimate:** 1 hour | **Dependencies:** None
-**Plan:** [High Priority Fixes - Task 8](docs/plans/2025-11-17-high-priority-fixes.md#task-8)
+### ✓ Task: Fix Hierarchical Page File Path Collisions
+**Priority:** High | **Status:** Complete | **Completed:** 2025-11-23
+**PR:** [Branch: feature/fix-page-path-collisions]
 
 **Problem:** Pages with same slug but different parents overwrite each other's static files.
 
-**Solution:** Use full hierarchical path (e.g., `public/pages/grandparent/parent/child.html`).
+**Solution:** Implemented full hierarchical path (e.g., `public/pages/grandparent/parent/child.html`).
 
-**Impact:** Prevents file collisions, proper nested directory structure.
+**Changes:**
+- Added `Page#full_slug_path` method to build hierarchical paths from breadcrumb trail
+- Updated `PageRenderer#static_file_path` to use full hierarchical paths
+- Added directory cleanup on delete to remove empty parent directories
+- 9 new tests added (3 Page model, 4 hierarchical paths, 2 directory cleanup)
+- All 62 Page/PageRenderer tests passing with no regressions
 
 ---
 

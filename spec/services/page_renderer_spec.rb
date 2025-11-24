@@ -89,6 +89,48 @@ RSpec.describe PageRenderer do
 
         renderer.delete_file
       end
+
+      it 'cleans up empty parent directories when deleting files' do
+        parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+        child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+        renderer = PageRenderer.new(child)
+        renderer.write_file
+
+        # Verify directory exists
+        parent_dir = File.join(PageRenderer::STATIC_DIR, 'parent')
+        expect(Dir.exist?(parent_dir)).to be true
+
+        # Delete the file
+        renderer.delete_file
+
+        # Parent directory should be removed since it's now empty
+        expect(Dir.exist?(parent_dir)).to be false
+      end
+
+      it 'does not remove parent directories that still contain files' do
+        parent = Page.create!(title: 'Services', slug: 'services', published: true)
+        child1 = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
+        child2 = Page.create!(title: 'Consulting', slug: 'consulting', parent: parent, published: true)
+
+        renderer1 = PageRenderer.new(child1)
+        renderer2 = PageRenderer.new(child2)
+        renderer1.write_file
+        renderer2.write_file
+
+        # Verify both files exist
+        parent_dir = File.join(PageRenderer::STATIC_DIR, 'services')
+        expect(Dir.exist?(parent_dir)).to be true
+        expect(File.exist?(renderer1.send(:static_file_path))).to be true
+        expect(File.exist?(renderer2.send(:static_file_path))).to be true
+
+        # Delete only the first child
+        renderer1.delete_file
+
+        # Parent directory should still exist because child2's file remains
+        expect(Dir.exist?(parent_dir)).to be true
+        expect(File.exist?(renderer2.send(:static_file_path))).to be true
+      end
     end
 
     describe 'class method wrappers' do
@@ -103,6 +145,66 @@ RSpec.describe PageRenderer do
         result = PageRenderer.delete_static_file(page)
         expect(result).to be false
       end
+    end
+  end
+
+  describe 'hierarchical path handling' do
+    let(:static_dir) { File.join(Dir.pwd, 'public', 'pages') }
+
+    after do
+      # Clean up any generated files
+      FileUtils.rm_rf(static_dir) if Dir.exist?(static_dir)
+    end
+
+    it 'uses parent directory in file path for nested pages' do
+      parent = Page.create!(title: 'Services', slug: 'services', published: true)
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
+
+      renderer = PageRenderer.new(child)
+      path = renderer.send(:static_file_path)
+
+      # Should include parent directory
+      expect(path).to include('services/web-dev.html')
+      expect(path).not_to eq(File.join(PageRenderer::STATIC_DIR, 'web-dev.html'))
+    end
+
+    it 'generates correct nested directory structure' do
+      grandparent = Page.create!(title: 'GP', slug: 'gp', published: true)
+      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent, published: true)
+      child = Page.create!(title: 'C', slug: 'c', parent: parent, published: true)
+
+      renderer = PageRenderer.new(child)
+      path = renderer.send(:static_file_path)
+
+      # Should be: public/pages/gp/p/c.html
+      expect(path).to end_with('gp/p/c.html')
+      expect(path).to include('public/pages/')
+    end
+
+    it 'handles top-level pages correctly' do
+      page = Page.create!(title: 'About', slug: 'about', published: true)
+
+      renderer = PageRenderer.new(page)
+      path = renderer.send(:static_file_path)
+
+      # Should be: public/pages/about.html (no double pages/)
+      expect(path).to end_with('pages/about.html')
+      expect(path).not_to include('pages/pages')
+    end
+
+    it 'creates nested directories when writing files' do
+      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+
+      renderer = PageRenderer.new(child)
+      result = renderer.write_file
+
+      expect(result).to be true
+
+      # Verify file exists in nested location
+      path = renderer.send(:static_file_path)
+      expect(File.exist?(path)).to be true
+      expect(path).to include('parent/child.html')
     end
   end
 end

@@ -351,4 +351,24 @@ RSpec.describe Page, type: :model do
       expect(result.length).to eq(4)  # L1, L2, L3, L4
     end
   end
+
+  describe '#full_slug_path' do
+    it 'returns just slug for top-level pages' do
+      page = Page.create!(title: 'About', slug: 'about', published: true)
+      expect(page.full_slug_path).to eq('about')
+    end
+
+    it 'returns parent/child for one level deep' do
+      parent = Page.create!(title: 'Services', slug: 'services', published: true)
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
+      expect(child.full_slug_path).to eq('services/web-dev')
+    end
+
+    it 'returns full path for deeply nested pages' do
+      grandparent = Page.create!(title: 'GP', slug: 'gp', published: true)
+      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent, published: true)
+      child = Page.create!(title: 'C', slug: 'c', parent: parent, published: true)
+      expect(child.full_slug_path).to eq('gp/p/c')
+    end
+  end
 end
