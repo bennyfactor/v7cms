@@ -220,7 +220,12 @@ function cmsApp() {
         },
 
         async deletePost(post) {
-            if (!confirm(`Are you sure you want to delete "${post.title}"?`)) {
+            const confirmed = confirm(
+                `Are you sure you want to delete "${post.title}"?\n\n` +
+                `This action cannot be undone.`
+            );
+
+            if (!confirmed) {
                 return;
             }
 
@@ -841,7 +846,22 @@ function cmsApp() {
         },
 
         async deletePage(page) {
-            if (!confirm(`Are you sure you want to delete "${page.title}"?`)) {
+            // Count child pages
+            const childCount = this.pages.filter(p => p.parent_id === page.id).length;
+
+            // Build confirmation message
+            let message = `Are you sure you want to delete "${page.title}"?\n\n`;
+
+            if (childCount > 0) {
+                message += `WARNING: This page has ${childCount} child page${childCount > 1 ? 's' : ''}.\n`;
+                message += `Deleting this page will also permanently delete all ${childCount} child page${childCount > 1 ? 's' : ''}.\n\n`;
+            }
+
+            message += `This action cannot be undone.`;
+
+            const confirmed = confirm(message);
+
+            if (!confirmed) {
                 return;
             }
 
