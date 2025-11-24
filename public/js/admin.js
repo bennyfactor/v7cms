@@ -605,6 +605,61 @@ function cmsApp() {
             return Object.keys(this.validationErrors.settings).length === 0;
         },
 
+        // Validation Summary Methods
+
+        updateValidationSummary(formType) {
+            const errors = this.validationErrors[formType];
+            const labels = {
+                title: 'Title',
+                slug: 'Slug',
+                content: 'Content',
+                parent_id: 'Parent Page',
+                site_title: 'Site Title',
+                site_tagline: 'Site Tagline',
+                site_author: 'Site Author',
+                welcome_title: 'Welcome Title',
+                welcome_subtitle: 'Welcome Subtitle',
+                footer_text: 'Footer Text',
+                contact_email: 'Contact Email',
+                github_url: 'GitHub URL',
+                social_url: 'Social URL',
+                posts_per_page: 'Posts Per Page',
+                meta_keywords: 'Meta Keywords',
+                date_format: 'Date Format'
+            };
+
+            this.validationSummaryErrors = Object.entries(errors).map(([field, message]) => ({
+                field: `${formType}-${field}`,
+                label: labels[field] || field,
+                message
+            }));
+        },
+
+        clearValidationState(formType) {
+            this.validationErrors[formType] = {};
+            this.touchedFields[formType].clear();
+            this.validationSummaryErrors = [];
+            this.showValidationSummary = false;
+            this.clearSlugCache();
+        },
+
+        scrollToFirstError() {
+            if (this.validationSummaryErrors.length > 0) {
+                const firstError = this.validationSummaryErrors[0];
+                const fieldName = firstError.field.split('-').pop();
+                const element = document.querySelector(`[x-model*="${fieldName}"]`);
+                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element?.focus();
+            }
+        },
+
+        focusField(fieldId) {
+            const fieldName = fieldId.split('-').pop();
+            const element = document.querySelector(`[x-model*="${fieldName}"]`);
+            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element?.focus();
+        },
+
         // Pages Management
 
         async loadPages() {
