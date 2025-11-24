@@ -1,8 +1,8 @@
 # v7cms Development Roadmap
 
-**Last Updated:** 2025-11-22
-**Total Pending Tasks:** 11 (9 fixes + 2 features)
-**Estimated Effort:** ~14.75 hours
+**Last Updated:** 2025-11-23
+**Total Pending Tasks:** 9 (7 fixes + 2 features)
+**Estimated Effort:** ~12.5 hours
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -34,33 +34,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## High Priority
 
-**Status:** 3 pending tasks | **Estimated Effort:** ~3.25 hours
-
-### Task: Fix N+1 Query in Page#ancestors
-**Priority:** High | **Status:** Pending | **Estimate:** 45min | **Dependencies:** None
-**Plan:** [High Priority Fixes - Task 5](docs/plans/2025-11-17-high-priority-fixes.md#task-5)
-
-**Problem:** Page model loads parents one-by-one causing N+1 database queries.
-
-**Solution:** Use recursive CTE (Common Table Expression) for single-query ancestor loading.
-
-**Impact:** Query reduction from O(n) to O(1) for hierarchy depth.
-
-**⚠️ Decision:** Verify SQLite version supports recursive CTEs (3.8.3+) or use batch loading fallback.
-
----
-
-### Task: Add Error Handling to Service Classes
-**Priority:** High | **Status:** Pending | **Estimate:** 1.5 hours | **Dependencies:** None
-**Plan:** [High Priority Fixes - Task 7](docs/plans/2025-11-17-high-priority-fixes.md#task-7)
-
-**Problem:** PostRenderer, PageRenderer, FeedGenerator have no error handling for file I/O operations.
-
-**Solution:** Add try/catch blocks, logging with Logger, return boolean success/failure.
-
-**Impact:** Better debugging, prevents silent failures in production.
-
----
+**Status:** 1 pending task | **Estimated Effort:** ~1 hour
 
 ### Task: Fix Hierarchical Page File Path Collisions
 **Priority:** High | **Status:** Pending | **Estimate:** 1 hour | **Dependencies:** None
@@ -160,6 +134,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Recently Completed
 
+### ✅ Service Error Handling
+**Completed:** 2025-11-23 | **Effort:** ~2 hours
+Added comprehensive error handling to all 4 service classes (PostRenderer, PageRenderer, FeedGenerator, ThemeGenerator) with try/catch blocks, Logger integration, and 31 error scenario tests. Services now return boolean success/failure and log detailed error messages with stack traces.
+
 ### ✅ Theme Customization (Priority 6)
 **Completed:** 2025-11-22 | **Effort:** ~8 hours
 40+ configurable fields across 8 semantic categories, Tailwind v4 CDN integration, auto-generated theme.css.
@@ -167,6 +145,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 ### ✅ API Pagination
 **Completed:** 2025-11-21 | **Effort:** 1 hour
 Added limit/offset pagination to Posts and Pages endpoints with metadata responses.
+
+### ✅ Fix N+1 Query in Page#ancestors
+**Completed:** 2025-11-18 | **Effort:** ~45min
+Implemented recursive CTE (Common Table Expression) for single-query ancestor loading. Reduced query complexity from O(n) to O(1) for hierarchy depth. Includes performance test verifying single query execution.
 
 ### ✅ Critical Fixes
 **Completed:** 2025-11-18 | **Effort:** 2 hours
