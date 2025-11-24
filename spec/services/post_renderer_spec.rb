@@ -162,6 +162,8 @@ RSpec.describe PostRenderer do
     end
 
     it 'does not raise error if file does not exist' do
+      # Ensure file doesn't exist (it may have been created by callback in before block)
+      FileUtils.rm_f(static_file_path) if File.exist?(static_file_path)
       expect(File.exist?(static_file_path)).to be false
 
       expect { renderer.delete_file }.not_to raise_error
