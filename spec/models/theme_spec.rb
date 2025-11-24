@@ -82,8 +82,8 @@ RSpec.describe Theme, type: :model do
         expect(theme.font_size_base).to eq(16)
       end
 
-      it 'has default line_height' do
-        expect(theme.line_height).to eq(1.6)
+      it 'has default line_height_base' do
+        expect(theme.line_height_base).to eq(1.6)
       end
     end
 
@@ -92,30 +92,18 @@ RSpec.describe Theme, type: :model do
         expect(theme.layout_width).to eq('standard')
       end
 
-      it 'has default layout_style' do
-        expect(theme.layout_style).to eq('boxed')
+      it 'has default spacing_unit' do
+        expect(theme.spacing_unit).to eq(1.0)
       end
 
-      it 'has default spacing_scale' do
-        expect(theme.spacing_scale).to eq(1.0)
-      end
-
-      it 'has default border_radius' do
-        expect(theme.border_radius).to eq('medium')
+      it 'has default radius_default' do
+        expect(theme.radius_default).to eq('8px')
       end
     end
 
     describe 'advanced fields' do
       it 'has default custom_css as nil' do
         expect(theme.custom_css).to be_nil
-      end
-
-      it 'has default header_style' do
-        expect(theme.header_style).to eq('default')
-      end
-
-      it 'has default footer_style' do
-        expect(theme.footer_style).to eq('default')
       end
     end
   end
@@ -205,26 +193,26 @@ RSpec.describe Theme, type: :model do
 
     describe 'numeric validations' do
       describe 'font_size_base' do
-        it 'accepts value of 14' do
-          theme.font_size_base = 14
+        it 'accepts value of 12' do
+          theme.font_size_base = 12
           expect(theme).to be_valid
         end
 
-        it 'accepts value of 20' do
-          theme.font_size_base = 20
+        it 'accepts value of 24' do
+          theme.font_size_base = 24
           expect(theme).to be_valid
         end
 
-        it 'rejects value less than 14' do
-          theme.font_size_base = 13
+        it 'rejects value less than 12' do
+          theme.font_size_base = 11
           expect(theme).not_to be_valid
-          expect(theme.errors[:font_size_base]).to include('must be greater than or equal to 14')
+          expect(theme.errors[:font_size_base]).to include('must be greater than or equal to 12')
         end
 
-        it 'rejects value greater than 20' do
-          theme.font_size_base = 21
+        it 'rejects value greater than 24' do
+          theme.font_size_base = 25
           expect(theme).not_to be_valid
-          expect(theme.errors[:font_size_base]).to include('must be less than or equal to 20')
+          expect(theme.errors[:font_size_base]).to include('must be less than or equal to 24')
         end
 
         it 'rejects non-integer values' do
@@ -234,60 +222,60 @@ RSpec.describe Theme, type: :model do
         end
       end
 
-      describe 'line_height' do
-        it 'accepts value of 1.4' do
-          theme.line_height = 1.4
+      describe 'line_height_base' do
+        it 'accepts value of 1.0' do
+          theme.line_height_base = 1.0
           expect(theme).to be_valid
         end
 
-        it 'accepts value of 2.0' do
-          theme.line_height = 2.0
+        it 'accepts value of 2.5' do
+          theme.line_height_base = 2.5
           expect(theme).to be_valid
         end
 
-        it 'rejects value less than 1.4' do
-          theme.line_height = 1.3
+        it 'rejects value less than 1.0' do
+          theme.line_height_base = 0.9
           expect(theme).not_to be_valid
-          expect(theme.errors[:line_height]).to include('must be greater than or equal to 1.4')
+          expect(theme.errors[:line_height_base]).to include('must be greater than or equal to 1.0')
         end
 
-        it 'rejects value greater than 2.0' do
-          theme.line_height = 2.1
+        it 'rejects value greater than 2.5' do
+          theme.line_height_base = 2.6
           expect(theme).not_to be_valid
-          expect(theme.errors[:line_height]).to include('must be less than or equal to 2.0')
+          expect(theme.errors[:line_height_base]).to include('must be less than or equal to 2.5')
         end
 
         it 'accepts decimal values' do
-          theme.line_height = 1.75
+          theme.line_height_base = 1.75
           expect(theme).to be_valid
         end
       end
 
-      describe 'spacing_scale' do
-        it 'accepts value of 0.75' do
-          theme.spacing_scale = 0.75
+      describe 'spacing_unit' do
+        it 'accepts value of 0.25' do
+          theme.spacing_unit = 0.25
           expect(theme).to be_valid
         end
 
-        it 'accepts value of 1.5' do
-          theme.spacing_scale = 1.5
+        it 'accepts value of 10.0' do
+          theme.spacing_unit = 10.0
           expect(theme).to be_valid
         end
 
-        it 'rejects value less than 0.75' do
-          theme.spacing_scale = 0.74
+        it 'rejects value less than 0.25' do
+          theme.spacing_unit = 0.24
           expect(theme).not_to be_valid
-          expect(theme.errors[:spacing_scale]).to include('must be greater than or equal to 0.75')
+          expect(theme.errors[:spacing_unit]).to include('must be greater than or equal to 0.25')
         end
 
-        it 'rejects value greater than 1.5' do
-          theme.spacing_scale = 1.51
+        it 'rejects value greater than 10.0' do
+          theme.spacing_unit = 10.1
           expect(theme).not_to be_valid
-          expect(theme.errors[:spacing_scale]).to include('must be less than or equal to 1.5')
+          expect(theme.errors[:spacing_unit]).to include('must be less than or equal to 10.0')
         end
 
         it 'accepts decimal values' do
-          theme.spacing_scale = 1.25
+          theme.spacing_unit = 1.25
           expect(theme).to be_valid
         end
       end
@@ -306,66 +294,6 @@ RSpec.describe Theme, type: :model do
           theme.layout_width = 'invalid'
           expect(theme).not_to be_valid
           expect(theme.errors[:layout_width]).to include('is not included in the list')
-        end
-      end
-
-      describe 'layout_style' do
-        it 'accepts valid values' do
-          %w[full-width boxed centered].each do |value|
-            theme.layout_style = value
-            expect(theme).to be_valid
-          end
-        end
-
-        it 'rejects invalid values' do
-          theme.layout_style = 'invalid'
-          expect(theme).not_to be_valid
-          expect(theme.errors[:layout_style]).to include('is not included in the list')
-        end
-      end
-
-      describe 'border_radius' do
-        it 'accepts valid values' do
-          %w[none subtle medium large].each do |value|
-            theme.border_radius = value
-            expect(theme).to be_valid
-          end
-        end
-
-        it 'rejects invalid values' do
-          theme.border_radius = 'invalid'
-          expect(theme).not_to be_valid
-          expect(theme.errors[:border_radius]).to include('is not included in the list')
-        end
-      end
-
-      describe 'header_style' do
-        it 'accepts valid values' do
-          %w[default minimal prominent].each do |value|
-            theme.header_style = value
-            expect(theme).to be_valid
-          end
-        end
-
-        it 'rejects invalid values' do
-          theme.header_style = 'invalid'
-          expect(theme).not_to be_valid
-          expect(theme.errors[:header_style]).to include('is not included in the list')
-        end
-      end
-
-      describe 'footer_style' do
-        it 'accepts valid values' do
-          %w[default minimal detailed].each do |value|
-            theme.footer_style = value
-            expect(theme).to be_valid
-          end
-        end
-
-        it 'rejects invalid values' do
-          theme.footer_style = 'invalid'
-          expect(theme).not_to be_valid
-          expect(theme.errors[:footer_style]).to include('is not included in the list')
         end
       end
     end
@@ -409,14 +337,11 @@ RSpec.describe Theme, type: :model do
         font_heading: 'Arial',
         font_body: 'Helvetica',
         font_size_base: 18,
-        line_height: 1.8,
+        line_height_base: 1.8,
         layout_width: 'wide',
-        layout_style: 'centered',
-        spacing_scale: 1.2,
-        border_radius: 'large',
-        custom_css: '.test { color: red; }',
-        header_style: 'prominent',
-        footer_style: 'detailed'
+        spacing_unit: 1.2,
+        radius_default: '12px',
+        custom_css: '.test { color: red; }'
       )
 
       theme.reset_to_defaults!
@@ -435,14 +360,11 @@ RSpec.describe Theme, type: :model do
       expect(theme.font_heading).to eq('system-ui, -apple-system, sans-serif')
       expect(theme.font_body).to eq('system-ui, -apple-system, sans-serif')
       expect(theme.font_size_base).to eq(16)
-      expect(theme.line_height).to eq(1.6)
+      expect(theme.line_height_base).to eq(1.6)
       expect(theme.layout_width).to eq('standard')
-      expect(theme.layout_style).to eq('boxed')
-      expect(theme.spacing_scale).to eq(1.0)
-      expect(theme.border_radius).to eq('medium')
+      expect(theme.spacing_unit).to eq(1.0)
+      expect(theme.radius_default).to eq('8px')
       expect(theme.custom_css).to be_nil
-      expect(theme.header_style).to eq('default')
-      expect(theme.footer_style).to eq('default')
     end
   end
 
