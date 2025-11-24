@@ -80,6 +80,11 @@ class Page < ActiveRecord::Base
     ancestors.count
   end
 
+  # Returns full slug path including ancestors (e.g., "grandparent/parent/child")
+  def full_slug_path
+    breadcrumb_trail.map(&:slug).join('/')
+  end
+
   private
 
   def prevent_circular_reference
