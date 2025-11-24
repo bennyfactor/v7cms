@@ -413,6 +413,41 @@ function cmsApp() {
             this.slugCheckCache = {};
         },
 
+        // Form Validation Methods
+
+        validatePost() {
+            const errors = {};
+
+            // Title: required, max 200 chars
+            if (!this.currentPost.title?.trim()) {
+                errors.title = 'Title is required';
+            } else if (this.currentPost.title.length > 200) {
+                errors.title = 'Title must be 200 characters or less';
+            }
+
+            // Slug: optional, but if provided must be valid format
+            if (this.currentPost.slug?.trim()) {
+                if (!/^[a-z0-9-]+$/.test(this.currentPost.slug)) {
+                    errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
+                } else {
+                    // Check uniqueness with debounce
+                    this.checkSlugUniqueness('post', this.currentPost.slug, this.currentPost.id);
+                }
+            }
+
+            // Content: Quill editor not empty
+            if (!quill || quill.getText().trim().length === 0) {
+                errors.content = 'Content is required';
+            }
+
+            this.validationErrors.post = errors;
+            return Object.keys(errors).length === 0;
+        },
+
+        isPostValid() {
+            return Object.keys(this.validationErrors.post).length === 0;
+        },
+
         // Pages Management
 
         async loadPages() {
