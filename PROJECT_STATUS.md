@@ -1,6 +1,6 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-22
+**Last Updated**: 2025-11-23
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
@@ -8,12 +8,13 @@ This document provides a quick overview of project status and guides you to the 
 
 ---
 
-## 🎯 Current Status: **Theme Customization Implemented**
+## 🎯 Current Status: **Service Error Handling Implemented**
 
 The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recent completions include:
-- ✅ Hierarchical Pages (Priority 4) - merged to main
-- ✅ API Pagination - added to Posts and Pages endpoints
+- ✅ Service Error Handling - comprehensive error handling for all 4 service classes with logging (PR #21)
 - ✅ Theme Customization (Priority 6) - 40+ configurable fields across 8 categories, merged to main
+- ✅ API Pagination - added to Posts and Pages endpoints
+- ✅ Hierarchical Pages (Priority 4) - merged to main
 
 ---
 
@@ -26,7 +27,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **API**: RESTful JSON API for posts, pages, settings, and theme CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS v4)
 - **Public Site**: ERB templates for homepage, posts, and hierarchical pages
-- **Testing**: 396 RSpec tests (models, routes, helpers, services)
+- **Testing**: 427 RSpec tests (models, routes, helpers, services)
 - **Deployment**: FastCGI on shared hosting with Apache .htaccess routing
 - **Security**:
   - .htaccess rules blocking sensitive files (.rb, .db, .env, config/, etc.)
@@ -82,6 +83,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
   - Tailwind CSS v4 via CDN with @theme directive integration
   - Auto-regeneration of theme.css and static HTML files on save
   - Comprehensive tests for model, routes, and service
+- **Service Error Handling** (2025-11-23) - PR #21:
+  - Comprehensive error handling for all 4 service classes
+  - Try/catch blocks around all I/O operations (File.write, File.delete, FileUtils.mkdir_p)
+  - Logger integration with STDOUT output for production visibility
+  - Boolean return values (true/false) for success/failure
+  - 31 new error scenario tests across PostRenderer, PageRenderer, FeedGenerator, ThemeGenerator
+  - Detailed error messages with full stack traces
+  - Split FeedGenerator into write_rss_feed and write_atom_feed methods
 
 ### ✅ Production Deployment Features
 - OAuth callback working in production
@@ -367,7 +376,7 @@ Manage and serve uploaded media files (images, documents, etc.)
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 396 tests
+- Current count: 427 tests (31 new error handling tests as of 2025-11-23)
 - Test coverage: models, routes, helpers, services
 - Always write tests for new features
 
