@@ -298,6 +298,15 @@ module ThemeConfig
       type: :text,
       label: 'Large Shadow',
       description: 'Prominent shadow for modals and overlays'
+    },
+
+    # ===== Advanced Customization =====
+    custom_css: {
+      css_var: nil, # Not a CSS variable, raw CSS injection
+      default: nil,
+      type: :text,
+      label: 'Custom CSS',
+      description: 'Additional custom CSS rules (max 10000 characters)'
     }
   }.freeze
 
