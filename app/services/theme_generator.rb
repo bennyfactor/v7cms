@@ -1,13 +1,25 @@
 require_relative '../config/theme_fields'
+require 'logger'
 
 class ThemeGenerator
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
+  end
+
   # Generate and write theme CSS (for non-CDN/compiled mode)
   def self.generate_and_write(theme)
-    css = new(theme).generate_css
-    path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'css', 'theme.css')
-    FileUtils.mkdir_p(File.dirname(path))
-    File.write(path, css)
-    path
+    begin
+      css = new(theme).generate_css
+      path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'css', 'theme.css')
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, css)
+      logger.info("Generated theme CSS")
+      path
+    rescue => e
+      logger.error("Failed to generate theme CSS: #{e.message}")
+      logger.error(e.backtrace.join("\n"))
+      nil
+    end
   end
 
   # Generate input.css for Tailwind CLI compilation
