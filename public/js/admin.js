@@ -265,6 +265,17 @@ function cmsApp() {
         async saveSettings() {
             if (this.savingSettings) return;
 
+            // Validate all fields and show summary
+            this.showValidationSummary = true;
+            const isValid = this.validateSettings();
+            this.updateValidationSummary('settings');
+
+            if (!isValid) {
+                // Scroll to first error
+                this.scrollToFirstError();
+                return;
+            }
+
             this.savingSettings = true;
             try {
                 const response = await fetch('/api/settings', {
@@ -279,6 +290,8 @@ function cmsApp() {
                     const data = await response.json();
                     this.settings = data.settings;
                     alert('Settings saved successfully!');
+                    // Clear validation state on success
+                    this.clearValidationState('settings');
                 } else {
                     const data = await response.json();
                     alert('Failed to save settings: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
