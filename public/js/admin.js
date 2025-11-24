@@ -33,6 +33,22 @@ function cmsApp() {
             date_format: '%B %d, %Y'
         },
         savingSettings: false,
+
+        // Validation state
+        validationErrors: {
+            post: {},
+            page: {},
+            settings: {}
+        },
+        touchedFields: {
+            post: new Set(),
+            page: new Set(),
+            settings: new Set()
+        },
+        showValidationSummary: false,
+        validationSummaryErrors: [],
+        slugCheckTimeout: null,
+        slugCheckCache: {},
         theme: {},
         themeTab: 'colors',
         savingTheme: false,
