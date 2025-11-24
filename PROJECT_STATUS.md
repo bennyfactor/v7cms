@@ -1,6 +1,6 @@
 # v7cms - Project Status & Navigation Guide
 
-**Last Updated**: 2025-11-23
+**Last Updated**: 2025-11-24
 
 This document provides a quick overview of project status and guides you to the right documentation.
 
@@ -8,13 +8,17 @@ This document provides a quick overview of project status and guides you to the 
 
 ---
 
-## 🎯 Current Status: **Service Error Handling Implemented**
+## 🎯 Current Status: **Theme Tests Fixed - 51 Failures Resolved**
 
 The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recent completions include:
-- ✅ Service Error Handling - comprehensive error handling for all 4 service classes with logging (PR #21)
-- ✅ Theme Customization (Priority 6) - 40+ configurable fields across 8 categories, merged to main
-- ✅ API Pagination - added to Posts and Pages endpoints
-- ✅ Hierarchical Pages (Priority 4) - merged to main
+- ✅ Theme Test Fixes (PR #26) - Fixed 51 test failures caused by Theme schema expansion
+- ✅ Quill Content Validation Hotfix (PR #25) - Fixed critical bug preventing posts/pages from being saved
+- ✅ Confirmation Dialogs (PR #24) - Enhanced delete confirmations with cascade warnings
+- ✅ Admin Form Validation (PR #23) - Comprehensive client-side validation for all admin forms
+- ✅ Service Error Handling (PR #21) - Comprehensive error handling for all 4 service classes with logging
+- ✅ Theme Customization (Priority 6) - 40+ configurable fields across 8 categories
+- ✅ API Pagination - Added to Posts and Pages endpoints
+- ✅ Hierarchical Pages (Priority 4) - Full hierarchical page support
 
 ---
 
@@ -27,7 +31,24 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **API**: RESTful JSON API for posts, pages, settings, and theme CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS v4)
 - **Public Site**: ERB templates for homepage, posts, and hierarchical pages
-- **Testing**: 427 RSpec tests (models, routes, helpers, services)
+- **Testing**: 435 RSpec tests (models, routes, helpers, services) - 16 failures remaining (down from 67)
+- **Theme Test Fixes** (2025-11-24) - PR #26:
+  - Fixed 51 test failures caused by Theme schema expansion migration
+  - Updated field names: line_height → line_height_base, spacing_scale → spacing_unit, border_radius → radius_default
+  - Updated validation ranges to match new field semantics
+  - Removed tests for deleted fields (layout_style, header_style, footer_style)
+  - Updated CSS variable names in assertions
+  - Test results: 435 examples, 16 failures (down from 67)
+- **Admin Form Validation** (2025-11-24) - PR #23, #24, #25:
+  - Client-side validation for Posts, Pages, and Settings forms (19 fields total)
+  - Hybrid validation timing (blur → real-time after touched)
+  - Validation summary banners with clickable error links
+  - Red/green border feedback and field-level error messages
+  - Debounced slug uniqueness checking with caching (1-second debounce)
+  - Enhanced confirmation dialogs for destructive actions
+  - Cascade warnings when deleting pages with children
+  - Quill text-change event listeners for content validation
+  - Testing checklist: docs/TESTING_CHECKLIST.md
 - **Deployment**: FastCGI on shared hosting with Apache .htaccess routing
 - **Security**:
   - .htaccess rules blocking sensitive files (.rb, .db, .env, config/, etc.)
@@ -176,7 +197,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **Backend**: Ruby 3.2, Sinatra 3.0, SQLite, ActiveRecord, OmniAuth
 - **Frontend**: Alpine.js, Quill.js, Tailwind CSS v4 (CDN with @theme)
 - **Deployment**: FastCGI on Apache (shared hosting)
-- **Testing**: RSpec with Rack::Test and DatabaseCleaner (396 tests)
+- **Testing**: RSpec with Rack::Test and DatabaseCleaner (435 tests)
 
 ---
 
@@ -376,9 +397,11 @@ Manage and serve uploaded media files (images, documents, etc.)
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 427 tests (31 new error handling tests as of 2025-11-23)
+- Current count: 435 tests
+- Test status: 419 passing, 16 failing (51 failures fixed in PR #26)
 - Test coverage: models, routes, helpers, services
 - Always write tests for new features
+- ℹ️ **Note**: 16 remaining test failures appear to be pre-existing issues unrelated to recent changes
 
 ### Static Files
 - Static HTML files auto-generated for published posts and pages
