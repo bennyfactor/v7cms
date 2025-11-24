@@ -448,6 +448,44 @@ function cmsApp() {
             return Object.keys(this.validationErrors.post).length === 0;
         },
 
+        validatePage() {
+            const errors = {};
+
+            // Title: required, max 200 chars
+            if (!this.currentPage.title?.trim()) {
+                errors.title = 'Title is required';
+            } else if (this.currentPage.title.length > 200) {
+                errors.title = 'Title must be 200 characters or less';
+            }
+
+            // Slug: optional, but if provided must be valid format
+            if (this.currentPage.slug?.trim()) {
+                if (!/^[a-z0-9-]+$/.test(this.currentPage.slug)) {
+                    errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
+                } else {
+                    // TODO: Uncomment after Task 6 implements checkSlugUniqueness
+                    // this.checkSlugUniqueness('page', this.currentPage.slug, this.currentPage.id);
+                }
+            }
+
+            // Content: Quill editor not empty
+            if (!pageQuill || pageQuill.getText().trim().length === 0) {
+                errors.content = 'Content is required';
+            }
+
+            // Parent validation: ensure not circular
+            if (this.currentPage.parent_id && this.currentPage.parent_id === this.currentPage.id) {
+                errors.parent_id = 'A page cannot be its own parent';
+            }
+
+            this.validationErrors.page = errors;
+            return Object.keys(errors).length === 0;
+        },
+
+        isPageValid() {
+            return Object.keys(this.validationErrors.page).length === 0;
+        },
+
         // Pages Management
 
         async loadPages() {
