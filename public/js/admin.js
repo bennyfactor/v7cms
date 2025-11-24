@@ -102,6 +102,8 @@ function cmsApp() {
                 published: false
             };
             this.editingPost = true;
+            // Clear any previous validation state
+            this.clearValidationState('post');
 
             // Initialize Quill editor
             this.$nextTick(() => {
@@ -710,6 +712,8 @@ function cmsApp() {
                 published: false
             };
             this.editingPage = true;
+            // Clear any previous validation state
+            this.clearValidationState('page');
 
             // Initialize Quill editor for pages
             this.$nextTick(() => {
