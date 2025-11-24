@@ -61,11 +61,13 @@ class PageRenderer
   private
 
   def static_file_path
-    File.join(STATIC_DIR, "#{@page.slug}.html")
+    File.join(STATIC_DIR, "#{@page.full_slug_path}.html")
   end
 
   def ensure_directory_exists
-    FileUtils.mkdir_p(STATIC_DIR) unless Dir.exist?(STATIC_DIR)
+    # Get the directory path for the specific file
+    dir_path = File.dirname(static_file_path)
+    FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
   end
 
   def static_template
