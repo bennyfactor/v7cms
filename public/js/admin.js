@@ -145,6 +145,14 @@ function cmsApp() {
             if (content) {
                 quill.root.innerHTML = content;
             }
+
+            // Add validation on text change (hybrid: mark touched, then validate)
+            quill.on('text-change', () => {
+                this.markTouched('post', 'content');
+                if (this.touchedFields.post.has('content')) {
+                    this.validatePost();
+                }
+            });
         },
 
         async savePost() {
@@ -755,6 +763,14 @@ function cmsApp() {
             if (content) {
                 pageQuill.root.innerHTML = content;
             }
+
+            // Add validation on text change (hybrid: mark touched, then validate)
+            pageQuill.on('text-change', () => {
+                this.markTouched('page', 'content');
+                if (this.touchedFields.page.has('content')) {
+                    this.validatePage();
+                }
+            });
         },
 
         async savePage() {
