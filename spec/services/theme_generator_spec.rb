@@ -15,10 +15,10 @@ RSpec.describe ThemeGenerator do
       font_heading: 'system-ui, -apple-system, sans-serif',
       font_body: 'Georgia, serif',
       font_size_base: 16,
-      line_height: 1.6,
+      line_height_base: 1.6,
       layout_width: 'standard',
-      spacing_scale: 1.0,
-      border_radius: 'medium',
+      spacing_unit: 1.0,
+      radius_default: '8px',
       custom_css: nil
     )
   end
@@ -55,13 +55,13 @@ RSpec.describe ThemeGenerator do
         expect(css).to include('--font-heading: system-ui, -apple-system, sans-serif;')
         expect(css).to include('--font-body: Georgia, serif;')
         expect(css).to include('--font-size-base: 16px;')
-        expect(css).to include('--line-height: 1.6;')
+        expect(css).to include('--line-height-base: 1.6;')
       end
 
       it 'includes all layout custom properties' do
-        expect(css).to include('--container-width: 1200px;')
+        expect(css).to include('--container-max: 1200px;')
         expect(css).to include('--spacing-unit: 1.0rem;')
-        expect(css).to include('--border-radius: 8px;')
+        expect(css).to include('--radius-default: 8px;')
       end
     end
 
@@ -162,60 +162,6 @@ RSpec.describe ThemeGenerator do
     end
   end
 
-  describe '#container_width_px' do
-    it 'returns 100% for full width' do
-      theme.layout_width = 'full'
-      expect(generator.send(:container_width_px)).to eq('100%')
-    end
-
-    it 'returns 1400px for wide layout' do
-      theme.layout_width = 'wide'
-      expect(generator.send(:container_width_px)).to eq('1400px')
-    end
-
-    it 'returns 1200px for standard layout' do
-      theme.layout_width = 'standard'
-      expect(generator.send(:container_width_px)).to eq('1200px')
-    end
-
-    it 'returns 900px for narrow layout' do
-      theme.layout_width = 'narrow'
-      expect(generator.send(:container_width_px)).to eq('900px')
-    end
-
-    it 'returns 1200px for unknown layout width (default)' do
-      theme.layout_width = 'invalid'
-      expect(generator.send(:container_width_px)).to eq('1200px')
-    end
-  end
-
-  describe '#border_radius_px' do
-    it 'returns 0 for none border radius' do
-      theme.border_radius = 'none'
-      expect(generator.send(:border_radius_px)).to eq('0')
-    end
-
-    it 'returns 4px for subtle border radius' do
-      theme.border_radius = 'subtle'
-      expect(generator.send(:border_radius_px)).to eq('4px')
-    end
-
-    it 'returns 8px for medium border radius' do
-      theme.border_radius = 'medium'
-      expect(generator.send(:border_radius_px)).to eq('8px')
-    end
-
-    it 'returns 16px for large border radius' do
-      theme.border_radius = 'large'
-      expect(generator.send(:border_radius_px)).to eq('16px')
-    end
-
-    it 'returns 8px for unknown border radius (default)' do
-      theme.border_radius = 'invalid'
-      expect(generator.send(:border_radius_px)).to eq('8px')
-    end
-  end
-
   describe '.generate_and_write' do
     it 'creates theme.css file' do
       # Delete the file first to ensure clean test
@@ -274,8 +220,8 @@ RSpec.describe ThemeGenerator do
       theme.border_radius = 'large'
       css = generator.generate_css
 
-      expect(css).to include('--container-width: 1400px;')
-      expect(css).to include('--border-radius: 16px;')
+      expect(css).to include('--container-max: 1400px;')
+      expect(css).to include('--radius-default: 16px;')
     end
 
     it 'generates correct CSS for narrow layout with no border radius' do
@@ -283,15 +229,15 @@ RSpec.describe ThemeGenerator do
       theme.border_radius = 'none'
       css = generator.generate_css
 
-      expect(css).to include('--container-width: 900px;')
-      expect(css).to include('--border-radius: 0;')
+      expect(css).to include('--container-max: 900px;')
+      expect(css).to include('--radius-default: 0;')
     end
 
     it 'generates correct CSS for full width layout' do
       theme.layout_width = 'full'
       css = generator.generate_css
 
-      expect(css).to include('--container-width: 100%;')
+      expect(css).to include('--container-max: 100%;')
     end
 
     it 'handles different font size values' do
@@ -305,7 +251,7 @@ RSpec.describe ThemeGenerator do
       theme.line_height = 1.8
       css = generator.generate_css
 
-      expect(css).to include('--line-height: 1.8;')
+      expect(css).to include('--line-height-base: 1.8;')
     end
 
     it 'handles different spacing scale values' do
