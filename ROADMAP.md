@@ -55,17 +55,27 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 5 pending tasks | **Estimated Effort:** ~5.75 hours
+**Status:** 4 pending tasks | **Estimated Effort:** ~4.25 hours
 
-### Task: Add Form Validation to Admin UI
-**Priority:** Medium | **Status:** Pending | **Estimate:** 1.5 hours | **Dependencies:** None
-**Plan:** [Medium Priority Improvements - Task 9](docs/plans/2025-11-17-medium-priority-fixes.md#task-9)
+### ✓ Task: Add Form Validation to Admin UI
+**Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~3 hours
+**PR:** [Branch: feature/admin-form-validation]
+**Plan:** [Admin Form Validation Design](docs/plans/2025-11-24-admin-form-validation-design.md)
 
-**Problem:** Admin forms submit without client-side validation, causing server errors.
+**Problem:** Admin forms submitted without client-side validation, causing server errors and poor UX.
 
-**Solution:** Alpine.js validation with real-time feedback for posts, pages, settings.
+**Solution Implemented:** Comprehensive Alpine.js validation with hybrid timing (blur → real-time), validation summary banners, field-level feedback, and slug uniqueness checking with debouncing.
 
-**Impact:** Better UX, fewer API errors, prevents invalid data submission.
+**Changes:**
+- Added validation infrastructure to admin.js (350+ lines): state management, validators, helper methods
+- Added HTML bindings to admin/index.html (275+ lines): summary banners, field bindings, error displays
+- Added backend slug filtering to API endpoints (2 lines in cms.rb)
+- 12 commits, 625+ lines added, 13 lines modified
+- Validates 19 fields across 3 forms (Posts: 3, Pages: 4, Settings: 12)
+- Features: hybrid validation timing, debounced slug uniqueness (1sec), caching, graceful error handling
+- Testing checklist created: docs/TESTING_CHECKLIST.md
+
+**Impact:** Prevents invalid submissions, immediate user feedback, reduces server load, improves UX.
 
 ---
 
@@ -138,6 +148,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 ---
 
 ## Recently Completed
+
+### ✅ Admin Form Validation
+**Completed:** 2025-11-24 | **Effort:** ~3 hours
+Comprehensive client-side validation for all admin forms (Posts, Pages, Settings). Features hybrid validation timing (blur → real-time), validation summary banners with clickable errors, field-level feedback (red/green borders), debounced slug uniqueness checking with caching, and graceful error handling. Validates 19 fields across 3 forms with 625+ lines of JavaScript/HTML implementation.
 
 ### ✅ Service Error Handling
 **Completed:** 2025-11-23 | **Effort:** ~2 hours
