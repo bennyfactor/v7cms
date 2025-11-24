@@ -55,7 +55,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 4 pending tasks | **Estimated Effort:** ~4.25 hours
+**Status:** 3 pending tasks | **Estimated Effort:** ~3.75 hours
 
 ### ✓ Task: Add Form Validation to Admin UI
 **Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~3 hours
@@ -79,15 +79,26 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ---
 
-### Task: Add Confirmation Dialogs for Destructive Actions
-**Priority:** Medium | **Status:** Pending | **Estimate:** 30min | **Dependencies:** None
-**Plan:** [Medium Priority Improvements - Task 10](docs/plans/2025-11-17-medium-priority-fixes.md#task-10)
+### ✓ Task: Add Confirmation Dialogs for Destructive Actions
+**Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** 30 min
+**PR:** [Branch: feature/confirmation-dialogs]
+**Plan:** [Confirmation Dialogs Design](docs/plans/2025-11-24-confirmation-dialogs-design.md)
 
-**Problem:** Delete buttons immediately delete without confirmation.
+**Problem:** Delete buttons had basic confirmations without clear warnings about consequences.
 
-**Solution:** Confirmation dialogs with item title, special warnings for parent pages with children.
+**Solution Implemented:** Enhanced native `confirm()` dialogs with multi-line warnings:
+- Posts: "This action cannot be undone" message
+- Pages without children: Same enhanced warning
+- Pages with children: CASCADE WARNING showing count of child pages that will be deleted
 
-**Impact:** Prevents accidental data loss.
+**Changes:**
+- Updated `deletePost()` method in admin.js (5 lines modified)
+- Updated `deletePage()` method in admin.js (17 lines modified)
+- Client-side child counting using array filter (no API calls needed)
+- Proper singular/plural grammar handling
+- Backend cascade deletion unchanged (dependent: :destroy)
+
+**Impact:** Prevents accidental data loss with clear, explicit warnings about deletion consequences.
 
 ---
 
@@ -148,6 +159,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 ---
 
 ## Recently Completed
+
+### ✅ Confirmation Dialogs for Destructive Actions
+**Completed:** 2025-11-24 | **Effort:** 30 min
+Enhanced deletion confirmation dialogs with clear warnings. Posts and pages now show "This action cannot be undone" message. Pages with children display CASCADE WARNING with exact child count and explicit message that all child pages will be permanently deleted. Uses client-side child counting with proper singular/plural grammar.
 
 ### ✅ Admin Form Validation
 **Completed:** 2025-11-24 | **Effort:** ~3 hours
