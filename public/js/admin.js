@@ -428,6 +428,10 @@ function cmsApp() {
                 try {
                     const endpoint = type === 'post' ? '/api/posts' : '/api/pages';
                     const response = await fetch(`${endpoint}?slug=${encodeURIComponent(slug)}`);
+                    if (!response.ok) {
+                        console.error('Slug uniqueness check failed:', response.status);
+                        return; // Don't block on API errors
+                    }
                     const data = await response.json();
 
                     // Check if slug exists and belongs to different item
@@ -440,7 +444,7 @@ function cmsApp() {
                         this.validationErrors[type].slug = 'This slug is already in use';
                     } else {
                         // Clear slug error if it was about uniqueness
-                        if (this.validationErrors[type].slug?.includes('already in use')) {
+                        if (this.validationErrors[type].slug === 'This slug is already in use') {
                             delete this.validationErrors[type].slug;
                         }
                     }
