@@ -1,8 +1,13 @@
 require 'erb'
 require 'fileutils'
+require 'logger'
 
 class PageRenderer
   STATIC_DIR = File.join(Dir.pwd, 'public', 'pages')
+
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
+  end
 
   def self.render_to_static(page)
     new(page).render_html
@@ -27,12 +32,30 @@ class PageRenderer
   end
 
   def write_file
-    ensure_directory_exists
-    File.write(static_file_path, render_html)
+    begin
+      ensure_directory_exists
+      File.write(static_file_path, render_html)
+      self.class.logger.info("Generated static HTML for page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate static HTML for page #{@page.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
   end
 
   def delete_file
-    File.delete(static_file_path) if File.exist?(static_file_path)
+    return true unless File.exist?(static_file_path)
+
+    begin
+      File.delete(static_file_path)
+      self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
   end
 
   private
