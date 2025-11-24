@@ -1,8 +1,13 @@
 require 'builder'
 require 'fileutils'
+require 'logger'
 
 class FeedGenerator
   FEED_LIMIT = 20
+
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
+  end
 
   def self.generate_rss
     new.generate_rss
@@ -81,11 +86,38 @@ class FeedGenerator
 
   def write_feeds
     ensure_public_directory_exists
-    File.write(rss_file_path, generate_rss)
-    File.write(atom_file_path, generate_atom)
+
+    rss_success = write_rss_feed
+    atom_success = write_atom_feed
+
+    rss_success && atom_success
   end
 
   private
+
+  def write_rss_feed
+    begin
+      File.write(rss_file_path, generate_rss)
+      self.class.logger.info("Generated RSS feed")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate RSS feed: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
+  end
+
+  def write_atom_feed
+    begin
+      File.write(atom_file_path, generate_atom)
+      self.class.logger.info("Generated Atom feed")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate Atom feed: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
+  end
 
   def site_url
     @base_url || ENV.fetch('SITE_URL', 'http://localhost:9292')
