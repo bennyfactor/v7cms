@@ -413,6 +413,49 @@ function cmsApp() {
             this.slugCheckCache = {};
         },
 
+        async checkSlugUniqueness(type, slug, currentId) {
+            // Clear existing timeout
+            clearTimeout(this.slugCheckTimeout);
+
+            // Check cache first
+            const cacheKey = `${type}-${slug}`;
+            if (this.slugCheckCache[cacheKey] !== undefined) {
+                return this.slugCheckCache[cacheKey];
+            }
+
+            // Debounce: wait 1000ms (1 second) after user stops typing
+            this.slugCheckTimeout = setTimeout(async () => {
+                try {
+                    const endpoint = type === 'post' ? '/api/posts' : '/api/pages';
+                    const response = await fetch(`${endpoint}?slug=${encodeURIComponent(slug)}`);
+                    const data = await response.json();
+
+                    // Check if slug exists and belongs to different item
+                    const items = data.posts || data.pages;
+                    const exists = items.some(item =>
+                        item.slug === slug && item.id !== currentId
+                    );
+
+                    if (exists) {
+                        this.validationErrors[type].slug = 'This slug is already in use';
+                    } else {
+                        // Clear slug error if it was about uniqueness
+                        if (this.validationErrors[type].slug?.includes('already in use')) {
+                            delete this.validationErrors[type].slug;
+                        }
+                    }
+
+                    // Cache the result
+                    this.slugCheckCache[cacheKey] = !exists;
+                    this.updateValidationSummary(type);
+
+                } catch (error) {
+                    console.error('Error checking slug uniqueness:', error);
+                    // Don't block saving on network error
+                }
+            }, 1000);
+        },
+
         // Form Validation Methods
 
         validatePost() {
@@ -430,8 +473,8 @@ function cmsApp() {
                 if (!/^[a-z0-9-]+$/.test(this.currentPost.slug)) {
                     errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
                 } else {
-                    // TODO: Uncomment after Task 6 implements checkSlugUniqueness
-                    // this.checkSlugUniqueness('post', this.currentPost.slug, this.currentPost.id);
+                    // Check uniqueness with 1 second debounce
+                    this.checkSlugUniqueness('post', this.currentPost.slug, this.currentPost.id);
                 }
             }
 
@@ -463,8 +506,8 @@ function cmsApp() {
                 if (!/^[a-z0-9-]+$/.test(this.currentPage.slug)) {
                     errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
                 } else {
-                    // TODO: Uncomment after Task 6 implements checkSlugUniqueness
-                    // this.checkSlugUniqueness('page', this.currentPage.slug, this.currentPage.id);
+                    // Check uniqueness with 1 second debounce
+                    this.checkSlugUniqueness('page', this.currentPage.slug, this.currentPage.id);
                 }
             }
 
