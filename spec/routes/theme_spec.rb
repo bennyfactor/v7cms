@@ -105,7 +105,7 @@ RSpec.describe 'Theme Routes' do
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)
         expect(data['theme']['layout_width']).to eq('wide')
-        expect(theme['radius_default']).to eq('16px')
+        expect(data['theme']['radius_default']).to eq('16px')
       end
 
       it 'updates custom CSS' do
