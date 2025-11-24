@@ -49,6 +49,7 @@ class PageRenderer
 
     begin
       File.delete(static_file_path)
+      cleanup_empty_directories
       self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
       true
     rescue => e
@@ -68,6 +69,24 @@ class PageRenderer
     # Get the directory path for the specific file
     dir_path = File.dirname(static_file_path)
     FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
+  end
+
+  def cleanup_empty_directories
+    # Start with the parent directory of the deleted file
+    dir_path = File.dirname(static_file_path)
+
+    # Walk up the directory tree, removing empty directories
+    while dir_path != STATIC_DIR && Dir.exist?(dir_path)
+      # Check if directory is empty
+      if Dir.empty?(dir_path)
+        Dir.rmdir(dir_path)
+        # Move up to parent directory
+        dir_path = File.dirname(dir_path)
+      else
+        # Directory is not empty, stop cleanup
+        break
+      end
+    end
   end
 
   def static_template
