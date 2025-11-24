@@ -389,6 +389,30 @@ function cmsApp() {
             this.previewUrl = `${this.previewPage}?theme_preview=1&${params.toString()}`;
         },
 
+        // Validation Helper Methods
+
+        validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        },
+
+        validateUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        },
+
+        markTouched(formType, fieldName) {
+            this.touchedFields[formType].add(fieldName);
+        },
+
+        clearSlugCache() {
+            this.slugCheckCache = {};
+        },
+
         // Pages Management
 
         async loadPages() {
