@@ -213,6 +213,9 @@ class CMS < Sinatra::Base
       Post.published.recent
     end
 
+    # Apply slug filter if provided
+    posts_scope = posts_scope.where(slug: params[:slug]) if params[:slug]
+
     # Get pagination params
     page_params = pagination_params
 
@@ -436,6 +439,9 @@ class CMS < Sinatra::Base
 
     # Support parent filtering
     pages_scope = pages_scope.where(parent_id: params[:parent_id]) if params[:parent_id]
+
+    # Apply slug filter if provided
+    pages_scope = pages_scope.where(slug: params[:slug]) if params[:slug]
 
     # Get pagination params
     page_params = pagination_params
