@@ -741,12 +741,23 @@ function cmsApp() {
         },
 
         async savePage() {
-            this.savingPage = true;
-
-            // Get content from Quill
+            // Get content from Quill before validation
             if (pageQuill) {
                 this.currentPage.content = pageQuill.root.innerHTML;
             }
+
+            // Validate all fields and show summary
+            this.showValidationSummary = true;
+            const isValid = this.validatePage();
+            this.updateValidationSummary('page');
+
+            if (!isValid) {
+                // Scroll to first error
+                this.scrollToFirstError();
+                return;
+            }
+
+            this.savingPage = true;
 
             try {
                 const method = this.currentPage.id ? 'PUT' : 'POST';
@@ -776,6 +787,8 @@ function cmsApp() {
                     this.editingPage = false;
                     this.currentPage = {};
                     pageQuill = null;
+                    // Clear validation state on success
+                    this.clearValidationState('page');
                 } else {
                     const error = await response.json();
                     alert('Error: ' + (error.errors ? error.errors.join(', ') : error.error));
