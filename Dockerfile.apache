@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libapache2-mod-fcgid \
     build-essential \
     libsqlite3-dev \
+    libfcgi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache modules
@@ -20,16 +21,30 @@ WORKDIR /var/www/v7cms
 # Copy application files
 COPY . /var/www/v7cms/
 
-# Install gems
+# Install gems in deployment mode (creates vendor/bundle)
+RUN bundle config set --local deployment 'true'
+RUN bundle config set --local path 'vendor/bundle'
 RUN bundle install
 
-# Copy .htaccess to Apache config directory
-COPY .htaccess /var/www/v7cms/.htaccess
+# Copy .htaccess to public directory (DocumentRoot)
+COPY .htaccess /var/www/v7cms/public/.htaccess
 
-# Configure Apache
-RUN echo '<VirtualHost *:80>\n\
+# Configure Apache with ScriptAlias for index.fcgi and set global FastCGI env vars
+RUN echo 'FcgidInitialEnv BUNDLE_PATH /var/www/v7cms/vendor/bundle\n\
+FcgidInitialEnv BUNDLE_DEPLOYMENT true\n\
+FcgidInitialEnv BUNDLE_GEMFILE /var/www/v7cms/Gemfile\n\
+FcgidInitialEnv GEM_HOME /var/www/v7cms/vendor/bundle/ruby/3.2.0\n\
+FcgidInitialEnv GEM_PATH /var/www/v7cms/vendor/bundle/ruby/3.2.0\n\
+\n\
+<VirtualHost *:80>\n\
     ServerName localhost\n\
     DocumentRoot /var/www/v7cms/public\n\
+    \n\
+    # Allow access to the parent directory for index.fcgi\n\
+    <Directory /var/www/v7cms>\n\
+        Options +ExecCGI\n\
+        Require all granted\n\
+    </Directory>\n\
     \n\
     <Directory /var/www/v7cms/public>\n\
         Options -Indexes +FollowSymLinks\n\
@@ -40,6 +55,9 @@ RUN echo '<VirtualHost *:80>\n\
     # FastCGI configuration\n\
     FcgidMaxRequestLen 1073741824\n\
     AddHandler fcgid-script .fcgi\n\
+    \n\
+    # Map /index.fcgi to the script in parent directory\n\
+    ScriptAlias /index.fcgi /var/www/v7cms/index.fcgi\n\
     \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
@@ -58,6 +76,11 @@ RUN bundle exec rake feeds:regenerate RACK_ENV=production
 # Ensure proper permissions
 RUN chown -R www-data:www-data /var/www/v7cms
 RUN chmod +x /var/www/v7cms/index.fcgi
+
+# Set Bundler environment variables for FastCGI runtime
+ENV BUNDLE_PATH=/var/www/v7cms/vendor/bundle \
+    BUNDLE_DEPLOYMENT=true \
+    BUNDLE_GEMFILE=/var/www/v7cms/Gemfile
 
 EXPOSE 80
 
