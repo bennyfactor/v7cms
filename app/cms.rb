@@ -624,6 +624,65 @@ class CMS < Sinatra::Base
     end
   end
 
+  # GET /api/comments - List all comments with filters (admin only)
+  get '/api/comments' do
+    require_login
+
+    status_filter = params[:status] # 'pending', 'approved', 'spam', or nil for all
+
+    comments = case status_filter
+    when 'pending'
+      Comment.pending
+    when 'approved'
+      Comment.approved
+    when 'spam'
+      Comment.spam
+    else
+      Comment.all
+    end
+
+    comments = comments.includes(:post).order(created_at: :desc)
+
+    json({
+      comments: comments.map { |c| admin_comment_json(c) }
+    })
+  end
+
+  # GET /api/comments/pending_count - Get count of pending comments (public for badge)
+  get '/api/comments/pending_count' do
+    json({ count: Comment.pending_count })
+  end
+
+  # PUT /api/comments/:id/approve - Approve a comment (admin only)
+  put '/api/comments/:id/approve' do
+    require_login
+
+    comment = Comment.find(params[:id])
+    comment.update!(approved: true, spam: false)
+
+    json({ success: true, comment: admin_comment_json(comment) })
+  end
+
+  # PUT /api/comments/:id/spam - Mark comment as spam (admin only)
+  put '/api/comments/:id/spam' do
+    require_login
+
+    comment = Comment.find(params[:id])
+    comment.update!(spam: true, approved: false)
+
+    json({ success: true, comment: admin_comment_json(comment) })
+  end
+
+  # DELETE /api/comments/:id - Delete a comment permanently (admin only)
+  delete '/api/comments/:id' do
+    require_login
+
+    comment = Comment.find(params[:id])
+    comment.destroy
+
+    json({ success: true })
+  end
+
   # Helper methods
 
   # JSON helper
@@ -712,6 +771,27 @@ class CMS < Sinatra::Base
       content: comment.content,
       created_at: comment.created_at.iso8601,
       post_id: comment.post_id
+    }
+  end
+
+  # Admin comment serialization helper (includes sensitive fields)
+  def admin_comment_json(comment)
+    {
+      id: comment.id,
+      author_name: comment.author_name,
+      author_email: comment.author_email,
+      author_url: comment.author_url,
+      content: comment.content,
+      ip_address: comment.ip_address,
+      recaptcha_score: comment.recaptcha_score,
+      approved: comment.approved,
+      spam: comment.spam,
+      created_at: comment.created_at.iso8601,
+      post: {
+        id: comment.post.id,
+        title: comment.post.title,
+        slug: comment.post.slug
+      }
     }
   end
 

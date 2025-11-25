@@ -191,4 +191,117 @@ RSpec.describe 'Comments API' do
       expect(last_response.status).to eq(404)
     end
   end
+
+  describe 'Admin Comments API' do
+    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '12345') }
+
+    def login_as(user)
+      env 'rack.session', { user_id: user.id }
+    end
+
+    describe 'GET /api/comments' do
+      before do
+        @pending = Comment.create!(post: test_post, author_name: 'Pending', author_email: 'pending@example.com', content: 'Pending', approved: false, spam: false)
+        @approved = Comment.create!(post: test_post, author_name: 'Approved', author_email: 'approved@example.com', content: 'Approved', approved: true, spam: false)
+        @spam = Comment.create!(post: test_post, author_name: 'Spam', author_email: 'spam@example.com', content: 'Spam', approved: false, spam: true)
+      end
+
+      it 'requires authentication' do
+        get '/api/comments'
+        expect(last_response.status).to eq(401)
+      end
+
+      it 'returns all comments with post info when authenticated' do
+        login_as(user)
+
+        get '/api/comments'
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['comments'].size).to eq(3)
+
+        comment = data['comments'].find { |c| c['id'] == @pending.id }
+        expect(comment['post']['title']).to eq('Test Post')
+        expect(comment['post']['slug']).to eq('test-post')
+      end
+
+      it 'filters by status' do
+        login_as(user)
+
+        get '/api/comments?status=pending'
+        data = JSON.parse(last_response.body)
+        expect(data['comments'].size).to eq(1)
+        expect(data['comments'].first['id']).to eq(@pending.id)
+      end
+    end
+
+    describe 'GET /api/comments/pending_count' do
+      it 'returns pending count without authentication' do
+        Comment.create!(post: test_post, author_name: 'Pending', author_email: 'pending@example.com', content: 'Pending', approved: false)
+
+        get '/api/comments/pending_count'
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['count']).to eq(1)
+      end
+    end
+
+    describe 'PUT /api/comments/:id/approve' do
+      let(:comment) { Comment.create!(post: test_post, author_name: 'John', author_email: 'john@example.com', content: 'Test', approved: false) }
+
+      it 'requires authentication' do
+        put "/api/comments/#{comment.id}/approve"
+        expect(last_response.status).to eq(401)
+      end
+
+      it 'approves comment when authenticated' do
+        login_as(user)
+
+        put "/api/comments/#{comment.id}/approve"
+
+        expect(last_response).to be_ok
+        expect(comment.reload.approved).to eq(true)
+        expect(comment.spam).to eq(false)
+      end
+    end
+
+    describe 'PUT /api/comments/:id/spam' do
+      let(:comment) { Comment.create!(post: test_post, author_name: 'John', author_email: 'john@example.com', content: 'Test', approved: false) }
+
+      it 'requires authentication' do
+        put "/api/comments/#{comment.id}/spam"
+        expect(last_response.status).to eq(401)
+      end
+
+      it 'marks comment as spam when authenticated' do
+        login_as(user)
+
+        put "/api/comments/#{comment.id}/spam"
+
+        expect(last_response).to be_ok
+        expect(comment.reload.spam).to eq(true)
+        expect(comment.approved).to eq(false)
+      end
+    end
+
+    describe 'DELETE /api/comments/:id' do
+      let(:comment) { Comment.create!(post: test_post, author_name: 'John', author_email: 'john@example.com', content: 'Test') }
+
+      it 'requires authentication' do
+        delete "/api/comments/#{comment.id}"
+        expect(last_response.status).to eq(401)
+      end
+
+      it 'deletes comment when authenticated' do
+        login_as(user)
+        comment_id = comment.id
+
+        delete "/api/comments/#{comment.id}"
+
+        expect(last_response).to be_ok
+        expect(Comment.find_by(id: comment_id)).to be_nil
+      end
+    end
+  end
 end
