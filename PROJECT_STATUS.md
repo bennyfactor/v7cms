@@ -11,6 +11,7 @@ This document provides a quick overview of project status and guides you to the 
 ## 🎯 Current Status: **All Tests Passing - 100% Test Success**
 
 The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recent completions include:
+- ✅ Setting.instance Caching (PR #28) - Thread-safe in-memory caching reducing database queries from O(n) to O(1)
 - ✅ Remaining Test Fixes (PR #27) - Fixed all 17 remaining test failures (custom_css, ThemeGenerator, PostRenderer)
 - ✅ Theme Test Fixes (PR #26) - Fixed 51 test failures caused by Theme schema expansion
 - ✅ Quill Content Validation Hotfix (PR #25) - Fixed critical bug preventing posts/pages from being saved
@@ -32,7 +33,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **API**: RESTful JSON API for posts, pages, settings, and theme CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS v4)
 - **Public Site**: ERB templates for homepage, posts, and hierarchical pages
-- **Testing**: 411 RSpec tests (models, routes, helpers, services) - **ALL PASSING** ✅
+- **Testing**: 414 RSpec tests (models, routes, helpers, services) - **ALL PASSING** ✅
+- **Setting.instance Caching** (2025-11-24) - PR #28:
+  - Thread-safe in-memory caching with double-checked locking pattern
+  - Added `@@instance_cache` and `@@cache_mutex` class variables
+  - Added `Setting.clear_cache!` method and after_save callback
+  - 3 new tests for caching behavior (memory, clearing, thread safety)
+  - Global cache clearing in spec_helper for test isolation
+  - Test results: 414 examples, 0 failures (100% pass rate maintained)
 - **Remaining Test Fixes** (2025-11-24) - PR #27:
   - Fixed all 17 remaining test failures using systematic debugging
   - Added custom_css to ThemeConfig::FIELDS with validation
@@ -70,6 +78,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
   - Singleton pattern for single settings record
   - Comprehensive validation (email, URL, numeric ranges)
   - JavaScript-based admin link injection (static-site ready)
+  - Thread-safe in-memory caching (PR #28) - O(1) query performance
 - **Static HTML Generation** (2025-11-14):
   - PostRenderer service generates standalone HTML files
   - Automatic generation via ActiveRecord callbacks
@@ -204,7 +213,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **Backend**: Ruby 3.2, Sinatra 3.0, SQLite, ActiveRecord, OmniAuth
 - **Frontend**: Alpine.js, Quill.js, Tailwind CSS v4 (CDN with @theme)
 - **Deployment**: FastCGI on Apache (shared hosting)
-- **Testing**: RSpec with Rack::Test and DatabaseCleaner (435 tests)
+- **Testing**: RSpec with Rack::Test and DatabaseCleaner (414 tests, 100% passing)
 
 ---
 
