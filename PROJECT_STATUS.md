@@ -11,6 +11,7 @@ This document provides a quick overview of project status and guides you to the 
 ## 🎯 Current Status: **All Tests Passing - 100% Test Success**
 
 The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recent completions include:
+- ✅ Rate Limiting Middleware (PR #29) - FastCGI-compatible rate limiting with FileStore cache, tested with 8 concurrent worker processes
 - ✅ Setting.instance Caching (PR #28) - Thread-safe in-memory caching reducing database queries from O(n) to O(1)
 - ✅ Remaining Test Fixes (PR #27) - Fixed all 17 remaining test failures (custom_css, ThemeGenerator, PostRenderer)
 - ✅ Theme Test Fixes (PR #26) - Fixed 51 test failures caused by Theme schema expansion
@@ -33,14 +34,14 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **API**: RESTful JSON API for posts, pages, settings, and theme CRUD with authentication
 - **Admin Interface**: Single-page app (Alpine.js + Quill.js WYSIWYG editor + Tailwind CSS v4)
 - **Public Site**: ERB templates for homepage, posts, and hierarchical pages
-- **Testing**: 414 RSpec tests (models, routes, helpers, services) - **ALL PASSING** ✅
+- **Testing**: 425 RSpec tests (models, routes, helpers, services, middleware) - **ALL PASSING** ✅
 - **Setting.instance Caching** (2025-11-24) - PR #28:
   - Thread-safe in-memory caching with double-checked locking pattern
   - Added `@@instance_cache` and `@@cache_mutex` class variables
   - Added `Setting.clear_cache!` method and after_save callback
   - 3 new tests for caching behavior (memory, clearing, thread safety)
   - Global cache clearing in spec_helper for test isolation
-  - Test results: 414 examples, 0 failures (100% pass rate maintained)
+  - Test results: 425 examples, 0 failures (100% pass rate maintained)
 - **Remaining Test Fixes** (2025-11-24) - PR #27:
   - Fixed all 17 remaining test failures using systematic debugging
   - Added custom_css to ThemeConfig::FIELDS with validation
@@ -213,7 +214,7 @@ The v7cms core is **complete and deployed** on shared hosting (DreamHost). Recen
 - **Backend**: Ruby 3.2, Sinatra 3.0, SQLite, ActiveRecord, OmniAuth
 - **Frontend**: Alpine.js, Quill.js, Tailwind CSS v4 (CDN with @theme)
 - **Deployment**: FastCGI on Apache (shared hosting)
-- **Testing**: RSpec with Rack::Test and DatabaseCleaner (414 tests, 100% passing)
+- **Testing**: RSpec with Rack::Test and DatabaseCleaner (425 tests, 100% passing)
 
 ---
 
@@ -413,9 +414,9 @@ Manage and serve uploaded media files (images, documents, etc.)
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 411 tests
-- Test status: **411 passing, 0 failures** ✅ (100% pass rate)
-- Test coverage: models, routes, helpers, services
+- Current count: 425 tests
+- Test status: **425 passing, 0 failures** ✅ (100% pass rate)
+- Test coverage: models, routes, helpers, services, middleware
 - Always write tests for new features
 - ✅ All test failures resolved (PR #26 + PR #27)
 
