@@ -1,5 +1,39 @@
 # Changelog
 
+## 2025-11-24 - Performance Optimization and Testing Improvements
+
+### Added (PR #28 - Setting.instance Caching)
+- **Thread-Safe In-Memory Caching**: Implemented caching for Setting.instance to reduce database queries
+  - Added `@@instance_cache` and `@@cache_mutex` class variables
+  - Double-checked locking pattern for thread safety
+  - `Setting.clear_cache!` method for explicit cache clearing
+  - `after_save` callback for automatic cache invalidation on updates
+- **Caching Tests**: Added 3 comprehensive tests for caching behavior
+  - Test 1: Verifies instance cached in memory after first load (no DB query on second call)
+  - Test 2: Verifies cache clears when settings are updated (fresh object loaded)
+  - Test 3: Verifies thread-safe cache access (10 concurrent threads get same instance)
+- **Test Infrastructure**: Global cache clearing in spec_helper before each test
+
+### Changed (PR #28)
+- Modified 3 files:
+  - app/models/setting.rb: Added caching implementation (17 lines)
+  - spec/models/setting_spec.rb: Added caching tests and clean state handling (67 lines)
+  - spec/spec_helper.rb: Added cache clearing to prevent test pollution (2 lines)
+- Test results: **414 examples, 0 failures** ✅ (100% pass rate maintained)
+
+### Fixed (PR #28)
+- **Query Performance**: Setting.instance now O(1) instead of O(n) for repeated calls
+- **Test Isolation**: Cache clearing prevents cached Setting from polluting other tests
+- **Deadlock Prevention**: first_or_create! called outside mutex to avoid recursive locking
+
+### Impact (PR #28)
+- **Performance**: First call queries database, all subsequent calls use in-memory cache
+- **Thread Safety**: Mutex protection ensures safe concurrent access
+- **Auto-Invalidation**: Cache automatically cleared when settings updated
+- Test count increased from 411 to 414 examples (3 new caching tests)
+
+---
+
 ## 2025-11-24 - Admin Form Enhancements, Bug Fixes, and Complete Test Suite Fix
 
 ### Added (PR #27 - Remaining Test Fixes)
