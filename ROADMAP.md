@@ -1,9 +1,9 @@
 # v7cms Development Roadmap
 
-**Last Updated:** 2025-11-24
-**Total Pending Tasks:** 3 (1 medium priority + 2 features)
-**Estimated Effort:** ~6-9 hours
-**Test Status:** ✅ 414 examples, 0 failures (100% pass rate)
+**Last Updated:** 2025-11-25
+**Total Pending Tasks:** 2 (2 features)
+**Estimated Effort:** ~5+ hours
+**Test Status:** ✅ 425 examples, 0 failures (100% pass rate)
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -56,7 +56,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 1 pending task | **Estimated Effort:** ~1 hour
+**Status:** 0 pending tasks
 
 ### ✓ Task: Fix Remaining Test Failures
 **Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~2 hours
@@ -197,18 +197,6 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ---
 
-### Task: Add Rate Limiting Middleware
-**Priority:** Medium | **Status:** Pending | **Estimate:** 1 hour | **Dependencies:** None
-**Plan:** [Medium Priority Improvements - Task 13](docs/plans/2025-11-17-medium-priority-fixes.md#task-13)
-
-**Problem:** API endpoints vulnerable to abuse and DoS attacks.
-
-**Solution:** Rack::Attack middleware with IP-based limits (100 general, 20 writes, 5 logins per minute).
-
-**Impact:** Security hardening against automated attacks.
-
----
-
 ## Low Priority
 
 **Status:** 1 pending task | **Estimated Effort:** ~2 hours
@@ -246,6 +234,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 ---
 
 ## Recently Completed
+
+### ✅ Rate Limiting Middleware (PR #29)
+**Completed:** 2025-11-25 | **Effort:** ~3 hours
+Implemented Rack::Attack rate limiting middleware with FileStore cache for FastCGI multi-process compatibility. Added rack-attack gem (~> 6.7), created config/rate_limit.rb with FileStore cache pointing to ./tmp/rack-attack-cache for shared cache across processes. Added Rack::Attack middleware to cms.rb (disabled in test environment). Configured rate limits: 100 req/min for general traffic (excludes /admin paths), 20 req/min for API writes (POST/PUT/DELETE), 5 req/min for login attempts. IP blocklist configurable via BLOCKED_IPS env var. Returns 429 status with Retry-After header when rate limited. Added 11 comprehensive tests. Updated Dockerfile.apache with libfcgi-dev dependency, deployment mode bundle install, FcgidInitialEnv directives for Bundler paths, and ScriptAlias configuration. Tested successfully with Apache FastCGI container spawning 8 worker processes. Test results: 425 examples, **0 failures** ✅ (100% pass rate maintained).
 
 ### ✅ Setting.instance Caching (PR #28)
 **Completed:** 2025-11-24 | **Effort:** ~45min
