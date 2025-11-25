@@ -657,7 +657,8 @@ class CMS < Sinatra::Base
   put '/api/comments/:id/approve' do
     require_login
 
-    comment = Comment.find(params[:id])
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
     comment.update!(approved: true, spam: false)
 
     json({ success: true, comment: admin_comment_json(comment) })
@@ -667,7 +668,8 @@ class CMS < Sinatra::Base
   put '/api/comments/:id/spam' do
     require_login
 
-    comment = Comment.find(params[:id])
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
     comment.update!(spam: true, approved: false)
 
     json({ success: true, comment: admin_comment_json(comment) })
@@ -677,7 +679,8 @@ class CMS < Sinatra::Base
   delete '/api/comments/:id' do
     require_login
 
-    comment = Comment.find(params[:id])
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
     comment.destroy
 
     json({ success: true })
