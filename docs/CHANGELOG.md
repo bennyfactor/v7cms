@@ -1,5 +1,55 @@
 # Changelog
 
+## 2025-11-25 - Rate Limiting and Security Hardening
+
+### Added (PR #29 - Rate Limiting Middleware)
+- **Rack::Attack Middleware**: Implemented rate limiting with FastCGI multi-process compatibility
+  - Added rack-attack gem (~> 6.7) to Gemfile
+  - Created config/rate_limit.rb with FileStore cache for shared state across processes
+  - Cache directory: ./tmp/rack-attack-cache (auto-created, shared across all FastCGI workers)
+  - General traffic throttle: 100 requests/minute per IP (excludes /admin paths)
+  - API write throttle: 20 requests/minute per IP for POST/PUT/DELETE operations
+  - Login throttle: 5 requests/minute per IP for /auth/* endpoints
+  - IP blocklist: Configurable via BLOCKED_IPS environment variable (comma-separated)
+  - Custom 429 response with Retry-After header in JSON format
+- **Rate Limiting Tests**: Added 11 comprehensive tests in spec/middleware/rate_limiter_spec.rb
+  - General traffic throttle tests (under limit, over limit, excludes /admin)
+  - API writes throttle tests (under limit, over limit, GET requests not throttled)
+  - Login throttle tests (under limit, over limit)
+  - IP blocklist tests
+  - Custom error response format test
+- **Dockerfile.apache Enhancements**: Fixed FastCGI compatibility issues
+  - Added libfcgi-dev dependency for fcgi gem compilation
+  - Configured bundle install in deployment mode (creates vendor/bundle)
+  - Moved .htaccess to public directory (DocumentRoot location)
+  - Added FcgidInitialEnv directives to pass Bundler environment variables (BUNDLE_PATH, BUNDLE_GEMFILE, GEM_HOME, GEM_PATH)
+  - Configured ScriptAlias to execute index.fcgi from parent directory
+  - Added directory permissions for /var/www/v7cms with +ExecCGI
+
+### Changed (PR #29)
+- Modified 6 files:
+  - Gemfile: Added rack-attack gem
+  - Gemfile.lock: Locked dependencies
+  - app/cms.rb: Added Rack::Attack middleware (disabled in test env)
+  - config/rate_limit.rb: Created new rate limiting configuration (55 lines)
+  - spec/middleware/rate_limiter_spec.rb: Created new test file (143 lines)
+  - Dockerfile.apache: Updated for FastCGI compatibility (28 insertions, 5 deletions)
+- Test results: **425 examples, 0 failures** ✅ (100% pass rate maintained)
+
+### Fixed (PR #29)
+- **Security**: API endpoints now protected against abuse and DoS attacks
+- **FastCGI Compatibility**: Dockerfile.apache now properly runs application with Bundler gem resolution
+- **Multi-Process Rate Limiting**: FileStore cache enables rate limiting across 8+ concurrent FastCGI worker processes
+
+### Impact (PR #29)
+- **Security Hardening**: Prevents automated attacks and abuse via rate limiting
+- **Production Ready**: Tested successfully with Apache FastCGI spawning 8 worker processes
+- **Thread-Safe**: File locking ensures safe concurrent access to rate limit counters
+- **Flexible Configuration**: IP blocklist allows quick response to malicious actors
+- Test count increased from 414 to 425 examples (11 new middleware tests)
+
+---
+
 ## 2025-11-24 - Performance Optimization and Testing Improvements
 
 ### Added (PR #28 - Setting.instance Caching)
