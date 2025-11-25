@@ -590,6 +590,40 @@ class CMS < Sinatra::Base
     })
   end
 
+  # POST /api/posts/:id/comments - Submit a new comment (public, requires reCAPTCHA)
+  post '/api/posts/:id/comments' do
+    post_record = Post.find_by(id: params[:id])
+    halt 404, json({ error: 'Post not found' }) unless post_record
+
+    data = JSON.parse(request.body.read)
+    recaptcha_token = data['recaptcha_token']
+
+    # Verify reCAPTCHA
+    recaptcha_score = verify_recaptcha_v3(recaptcha_token, request.ip)
+
+    # Reject if score too low (likely bot)
+    if recaptcha_score < 0.5
+      halt 400, json({ error: 'reCAPTCHA verification failed. Please try again.' })
+    end
+
+    # Create comment
+    comment = post_record.comments.build(
+      author_name: data['author_name'],
+      author_email: data['author_email'],
+      author_url: data['author_url'],
+      content: data['content'],
+      ip_address: request.ip,
+      recaptcha_score: recaptcha_score,
+      approved: false # Requires moderation
+    )
+
+    if comment.save
+      json({ success: true, message: 'Comment submitted for moderation. It will appear after approval.' })
+    else
+      halt 400, json({ error: comment.errors.full_messages.join(', ') })
+    end
+  end
+
   # Helper methods
 
   # JSON helper
@@ -679,6 +713,30 @@ class CMS < Sinatra::Base
       created_at: comment.created_at.iso8601,
       post_id: comment.post_id
     }
+  end
+
+  # reCAPTCHA v3 verification helper
+  def verify_recaptcha_v3(token, remote_ip)
+    return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
+
+    require 'net/http'
+    require 'json'
+
+    uri = URI.parse('https://www.google.com/recaptcha/api/siteverify')
+    response = Net::HTTP.post_form(uri, {
+      secret: ENV['RECAPTCHA_SECRET_KEY'],
+      response: token,
+      remoteip: remote_ip
+    })
+
+    result = JSON.parse(response.body)
+
+    # Return score (0.0 = bot, 1.0 = human)
+    result['success'] ? result['score'] : 0.0
+  rescue => e
+    # Log error and return safe default
+    puts "reCAPTCHA verification error: #{e.message}"
+    0.0
   end
 
   # Pagination helper - extract and validate pagination parameters
