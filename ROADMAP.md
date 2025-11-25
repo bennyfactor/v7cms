@@ -1,9 +1,9 @@
 # v7cms Development Roadmap
 
 **Last Updated:** 2025-11-24
-**Total Pending Tasks:** 5 (2 fixes + 2 features + 1 investigation)
-**Estimated Effort:** ~3.75 hours
-**Test Status:** ✅ 411 examples, 0 failures (100% pass rate)
+**Total Pending Tasks:** 4 (1 fix + 2 features + 1 investigation)
+**Estimated Effort:** ~3 hours
+**Test Status:** ✅ 414 examples, 0 failures (100% pass rate)
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -56,7 +56,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 2 pending tasks | **Estimated Effort:** ~3.75 hours
+**Status:** 1 pending task | **Estimated Effort:** ~3 hours
 
 ### ✓ Task: Fix Remaining Test Failures
 **Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~2 hours
@@ -176,15 +176,24 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ---
 
-### Task: Cache Setting.instance Results
-**Priority:** Medium | **Status:** Pending | **Estimate:** 45min | **Dependencies:** None
-**Plan:** [Medium Priority Improvements - Task 11](docs/plans/2025-11-17-medium-priority-fixes.md#task-11)
+### ✓ Task: Cache Setting.instance Results
+**Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~45min
+**PR:** #28 [Branch: feature/cache-setting-instance]
 
 **Problem:** Setting.instance hits database on every call despite rare changes.
 
-**Solution:** In-memory cache with Mutex for thread safety, auto-clear on updates.
+**Solution Implemented:** In-memory cache with Mutex for thread safety, auto-clear on updates.
 
-**Impact:** Query reduction from O(n) to O(1) for setting access.
+**Changes:**
+- Added `@@instance_cache` and `@@cache_mutex` class variables for thread-safe caching
+- Modified `Setting.instance` to use double-checked locking pattern
+- Added `Setting.clear_cache!` method for explicit cache clearing
+- Added `after_save` callback to automatically clear cache on updates
+- Added 3 new tests for caching behavior (memory caching, cache clearing, thread safety)
+- Added global cache clearing in spec_helper to prevent test pollution
+- Fixed one existing test for clean state
+
+**Impact:** Query reduction from O(n) to O(1) for setting access. Test results: 414 examples, **0 failures** ✅ (100% pass rate maintained)
 
 ---
 
@@ -233,6 +242,10 @@ All critical issues resolved. Monitor production for new critical bugs.
 ---
 
 ## Recently Completed
+
+### ✅ Setting.instance Caching (PR #28)
+**Completed:** 2025-11-24 | **Effort:** ~45min
+Implemented thread-safe in-memory caching for Setting.instance to reduce database queries from O(n) to O(1). Added @@instance_cache and @@cache_mutex class variables with double-checked locking pattern. Added Setting.clear_cache! method and after_save callback for automatic cache invalidation. Added 3 new tests (memory caching, cache clearing, thread safety) and global cache clearing in spec_helper. Test results: 414 examples, **0 failures** ✅ (100% pass rate maintained).
 
 ### ✅ Remaining Test Fixes (PR #27)
 **Completed:** 2025-11-24 | **Effort:** ~2 hours
