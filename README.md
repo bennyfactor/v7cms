@@ -356,6 +356,26 @@ POST /api/settings/reset
 ```
 Requires authentication. Resets all settings to default values.
 
+### Comments API
+
+**Public Endpoints:**
+- `GET /api/posts/:id/comments` - List approved comments for a post
+  - Query params: `limit` (default 20, max 100), `offset` (default 0)
+  - Returns: `{ comments: [], pagination: { total, limit, offset, has_more } }`
+- `POST /api/posts/:id/comments` - Submit a new comment
+  - Requires: `author_name`, `author_email`, `content`, `recaptcha_token`
+  - Optional: `author_url`
+  - Returns: `{ success: true, message: '...' }`
+  - Note: All comments require moderation (approved=false by default)
+
+**Admin Endpoints (authentication required):**
+- `GET /api/comments` - List all comments with filters
+  - Query params: `status` (pending, approved, spam)
+- `GET /api/comments/pending_count` - Get count of pending comments
+- `PUT /api/comments/:id/approve` - Approve a comment
+- `PUT /api/comments/:id/spam` - Mark comment as spam
+- `DELETE /api/comments/:id` - Delete a comment permanently
+
 ## Development
 
 ### Running Tests
