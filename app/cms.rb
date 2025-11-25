@@ -563,6 +563,33 @@ class CMS < Sinatra::Base
     status 204
   end
 
+  # Comments API Routes
+
+  # GET /api/posts/:id/comments - List approved comments for a post (public)
+  get '/api/posts/:id/comments' do
+    post = Post.find_by(id: params[:id])
+    halt 404, json({ error: 'Post not found' }) unless post
+
+    limit = [params[:limit].to_i, 1].max
+    limit = [limit, 100].min # Cap at 100
+    limit = 20 if limit == 0 || params[:limit].nil?
+
+    offset = [params[:offset].to_i, 0].max
+
+    comments = post.comments.approved.order(created_at: :asc).limit(limit).offset(offset)
+    total = post.comments.approved.count
+
+    json({
+      comments: comments.map { |c| comment_json(c) },
+      pagination: {
+        total: total,
+        limit: limit,
+        offset: offset,
+        has_more: (offset + limit) < total
+      }
+    })
+  end
+
   # Helper methods
 
   # JSON helper
@@ -640,6 +667,19 @@ class CMS < Sinatra::Base
     end
 
     result
+  end
+
+  # Comment serialization helper
+  def comment_json(comment)
+    {
+      id: comment.id,
+      author_name: comment.author_name,
+      author_email: comment.author_email,
+      author_url: comment.author_url,
+      content: comment.content,
+      created_at: comment.created_at.iso8601,
+      post_id: comment.post_id
+    }
   end
 
   # Pagination helper - extract and validate pagination parameters
