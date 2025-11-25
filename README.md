@@ -72,13 +72,15 @@ cd v7cms
 cp .env.example .env
 ```
 
-3. Edit `.env` and add your OAuth credentials:
+3. Edit `.env` and add your OAuth and reCAPTCHA credentials:
 ```
 SESSION_SECRET=<generate-random-string>
 GOOGLE_CLIENT_ID=<your-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-google-client-secret>
 GITHUB_CLIENT_ID=<your-github-client-id>
 GITHUB_CLIENT_SECRET=<your-github-client-secret>
+RECAPTCHA_SITE_KEY=<your-recaptcha-site-key>
+RECAPTCHA_SECRET_KEY=<your-recaptcha-secret-key>
 ```
 
 4. Start the application:
@@ -186,6 +188,31 @@ Important: Changes may take 5 minutes to a few hours to take effect.
    ```
    GITHUB_CLIENT_ID=your-client-id-here
    GITHUB_CLIENT_SECRET=your-client-secret-here
+   ```
+
+### reCAPTCHA Setup
+
+reCAPTCHA v3 is required for spam prevention on comment submissions.
+
+1. Visit Google reCAPTCHA Admin: https://www.google.com/recaptcha/admin/create
+2. Fill in the registration form:
+
+   **Label:** Choose a descriptive name (e.g., "v7cms")
+
+   **reCAPTCHA type:** Select "reCAPTCHA v3"
+
+   **Domains:**
+   - For development: localhost
+   - For production: yourdomain.com
+
+   Note: You can add multiple domains to support both development and production.
+
+3. Accept the reCAPTCHA Terms of Service
+4. Click "Submit" to create the reCAPTCHA site
+5. Copy the Site Key and Secret Key to your `.env` file:
+   ```
+   RECAPTCHA_SITE_KEY=your-site-key-here
+   RECAPTCHA_SECRET_KEY=your-secret-key-here
    ```
 
 ### Security Notes
