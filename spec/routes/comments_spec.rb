@@ -65,7 +65,7 @@ RSpec.describe 'Comments API' do
       comment = data['comments'].first
 
       expect(comment['author_name']).to eq('John Doe')
-      expect(comment['author_email']).to eq('john@example.com')
+      expect(comment['author_email']).to be_nil
       expect(comment['content']).to eq('First comment')
       expect(comment['created_at']).to be_present
     end
