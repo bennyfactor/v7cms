@@ -225,13 +225,39 @@ RSpec.describe 'Comments API' do
         expect(comment['post']['slug']).to eq('test-post')
       end
 
-      it 'filters by status' do
+      it 'filters by status=pending' do
         login_as(user)
 
         get '/api/comments?status=pending'
         data = JSON.parse(last_response.body)
         expect(data['comments'].size).to eq(1)
         expect(data['comments'].first['id']).to eq(@pending.id)
+      end
+
+      it 'filters by status=approved' do
+        login_as(user)
+
+        get '/api/comments?status=approved'
+        data = JSON.parse(last_response.body)
+        expect(data['comments'].size).to eq(1)
+        expect(data['comments'].first['id']).to eq(@approved.id)
+      end
+
+      it 'filters by status=spam' do
+        login_as(user)
+
+        get '/api/comments?status=spam'
+        data = JSON.parse(last_response.body)
+        expect(data['comments'].size).to eq(1)
+        expect(data['comments'].first['id']).to eq(@spam.id)
+      end
+
+      it 'returns all comments when no status filter is provided' do
+        login_as(user)
+
+        get '/api/comments'
+        data = JSON.parse(last_response.body)
+        expect(data['comments'].size).to eq(3)
       end
     end
 
@@ -264,6 +290,16 @@ RSpec.describe 'Comments API' do
         expect(comment.reload.approved).to eq(true)
         expect(comment.spam).to eq(false)
       end
+
+      it 'returns 404 for non-existent comment' do
+        login_as(user)
+
+        put '/api/comments/99999/approve'
+
+        expect(last_response.status).to eq(404)
+        data = JSON.parse(last_response.body)
+        expect(data['error']).to eq('Comment not found')
+      end
     end
 
     describe 'PUT /api/comments/:id/spam' do
@@ -283,6 +319,16 @@ RSpec.describe 'Comments API' do
         expect(comment.reload.spam).to eq(true)
         expect(comment.approved).to eq(false)
       end
+
+      it 'returns 404 for non-existent comment' do
+        login_as(user)
+
+        put '/api/comments/99999/spam'
+
+        expect(last_response.status).to eq(404)
+        data = JSON.parse(last_response.body)
+        expect(data['error']).to eq('Comment not found')
+      end
     end
 
     describe 'DELETE /api/comments/:id' do
@@ -301,6 +347,16 @@ RSpec.describe 'Comments API' do
 
         expect(last_response).to be_ok
         expect(Comment.find_by(id: comment_id)).to be_nil
+      end
+
+      it 'returns 404 for non-existent comment' do
+        login_as(user)
+
+        delete '/api/comments/99999'
+
+        expect(last_response.status).to eq(404)
+        data = JSON.parse(last_response.body)
+        expect(data['error']).to eq('Comment not found')
       end
     end
   end
