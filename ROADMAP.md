@@ -1,8 +1,8 @@
 # v7cms Development Roadmap
 
 **Last Updated:** 2025-11-24
-**Total Pending Tasks:** 4 (1 fix + 2 features + 1 investigation)
-**Estimated Effort:** ~3 hours
+**Total Pending Tasks:** 3 (1 medium priority + 2 features)
+**Estimated Effort:** ~6-9 hours
 **Test Status:** ✅ 414 examples, 0 failures (100% pass rate)
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
@@ -56,7 +56,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Medium Priority
 
-**Status:** 1 pending task | **Estimated Effort:** ~3 hours
+**Status:** 1 pending task | **Estimated Effort:** ~1 hour
 
 ### ✓ Task: Fix Remaining Test Failures
 **Priority:** Medium | **Status:** Complete | **Completed:** 2025-11-24 | **Actual Effort:** ~2 hours
@@ -197,18 +197,6 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ---
 
-### Task: Add API Documentation with OpenAPI
-**Priority:** Medium | **Status:** Pending | **Estimate:** 2 hours | **Dependencies:** None
-**Plan:** [Medium Priority Improvements - Task 12](docs/plans/2025-11-17-medium-priority-fixes.md#task-12)
-
-**Problem:** API endpoints lack formal documentation for developers.
-
-**Solution:** OpenAPI 3.0 spec + Swagger UI at `/api/docs` with interactive testing.
-
-**Impact:** Better developer experience, reduces support questions.
-
----
-
 ### Task: Add Rate Limiting Middleware
 **Priority:** Medium | **Status:** Pending | **Estimate:** 1 hour | **Dependencies:** None
 **Plan:** [Medium Priority Improvements - Task 13](docs/plans/2025-11-17-medium-priority-fixes.md#task-13)
@@ -218,6 +206,22 @@ All critical issues resolved. Monitor production for new critical bugs.
 **Solution:** Rack::Attack middleware with IP-based limits (100 general, 20 writes, 5 logins per minute).
 
 **Impact:** Security hardening against automated attacks.
+
+---
+
+## Low Priority
+
+**Status:** 1 pending task | **Estimated Effort:** ~2 hours
+
+### Task: Add API Documentation with OpenAPI
+**Priority:** Low | **Status:** Pending | **Estimate:** 2 hours | **Dependencies:** None
+**Plan:** [Medium Priority Improvements - Task 12](docs/plans/2025-11-17-medium-priority-fixes.md#task-12)
+
+**Problem:** API endpoints lack formal documentation for developers.
+
+**Solution:** OpenAPI 3.0 spec + Swagger UI at `/api/docs` with interactive testing.
+
+**Impact:** Better developer experience, reduces support questions.
 
 ---
 
