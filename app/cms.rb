@@ -674,7 +674,6 @@ class CMS < Sinatra::Base
     {
       id: comment.id,
       author_name: comment.author_name,
-      author_email: comment.author_email,
       author_url: comment.author_url,
       content: comment.content,
       created_at: comment.created_at.iso8601,
