@@ -20,6 +20,9 @@ gem 'omniauth-google-oauth2', '~> 1.1'
 gem 'omniauth-github', '~> 2.0'
 gem 'rack-protection', '~> 3.0'
 
+# Rate limiting
+gem 'rack-attack', '~> 6.7'
+
 # Configuration
 gem 'dotenv', '~> 2.8'
 

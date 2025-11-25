@@ -37,6 +37,12 @@ class CMS < Sinatra::Base
   # Disable AuthenticityToken entirely - using session-based auth instead
   use Rack::Protection, except: [:session_hijacking, :remote_token, :authenticity_token] unless ENV['RACK_ENV'] == 'test'
 
+  # Rate limiting (disabled in test to avoid test pollution)
+  unless ENV['RACK_ENV'] == 'test'
+    require_relative '../config/rate_limit'
+    use Rack::Attack
+  end
+
   # OmniAuth configuration - allow GET requests (required for OAuth links)
   OmniAuth.config.allowed_request_methods = [:get, :post]
   OmniAuth.config.silence_get_warning = true
