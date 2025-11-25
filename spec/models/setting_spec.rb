@@ -1,6 +1,11 @@
 require 'spec_helper'
 
 RSpec.describe Setting do
+  # Clear cache before each test to prevent test pollution
+  before do
+    Setting.clear_cache! if Setting.respond_to?(:clear_cache!)
+  end
+
   describe '.instance' do
     it 'returns a settings record' do
       setting = Setting.instance
@@ -15,6 +20,8 @@ RSpec.describe Setting do
     end
 
     it 'creates a settings record if none exists' do
+      Setting.delete_all  # Ensure clean state
+      Setting.clear_cache!  # Clear cache after deletion
       expect(Setting.count).to eq(0)
       Setting.instance
       expect(Setting.count).to eq(1)
@@ -30,6 +37,66 @@ RSpec.describe Setting do
 
     it 'returns nil for invalid key' do
       expect(Setting.get(:nonexistent_key)).to be_nil
+    end
+  end
+
+  describe 'caching' do
+    it 'caches instance in memory after first load' do
+      # Track database queries
+      queries = []
+      ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+        queries << payload[:sql] if payload[:sql] =~ /SELECT.*FROM.*settings/
+      end
+
+      # First call should hit database
+      Setting.instance
+      first_query_count = queries.length
+
+      # Second call should use cache (no new queries)
+      queries.clear
+      Setting.instance
+      second_query_count = queries.length
+
+      expect(first_query_count).to be > 0
+      expect(second_query_count).to eq(0)
+    end
+
+    it 'clears cache when settings are updated' do
+      # Load instance into cache
+      setting = Setting.instance
+      original_object_id = setting.object_id
+
+      # Verify it's cached (same object returned)
+      cached_setting = Setting.instance
+      expect(cached_setting.object_id).to eq(original_object_id)
+
+      # Update the setting (this should clear the cache)
+      setting.update!(site_title: 'Updated Title')
+
+      # Next call should load a fresh instance from database (different object)
+      fresh_setting = Setting.instance
+      expect(fresh_setting.object_id).not_to eq(original_object_id)
+      expect(fresh_setting.site_title).to eq('Updated Title')
+    end
+
+    it 'provides thread-safe cache access' do
+      threads = []
+      results = []
+      mutex = Mutex.new
+
+      # Spawn multiple threads that all try to access instance simultaneously
+      10.times do
+        threads << Thread.new do
+          instance = Setting.instance
+          mutex.synchronize { results << instance.id }
+        end
+      end
+
+      # Wait for all threads to complete
+      threads.each(&:join)
+
+      # All threads should get the same instance (same ID)
+      expect(results.uniq.length).to eq(1)
     end
   end
 
