@@ -75,6 +75,61 @@ RSpec.describe Post, type: :model do
     end
   end
 
+  describe 'comments_enabled validation' do
+    it 'accepts true' do
+      post = Post.new(title: 'Test', comments_enabled: true)
+      post.valid?
+      expect(post.errors[:comments_enabled]).to be_empty
+    end
+
+    it 'accepts false' do
+      post = Post.new(title: 'Test', comments_enabled: false)
+      post.valid?
+      expect(post.errors[:comments_enabled]).to be_empty
+    end
+
+    it 'rejects nil' do
+      post = Post.new(title: 'Test', comments_enabled: nil)
+      post.valid?
+      expect(post.errors[:comments_enabled]).to include('is not included in the list')
+    end
+  end
+
+  describe '#comments_allowed?' do
+    let(:post) { Post.create!(title: 'Test', slug: 'test', comments_enabled: true) }
+
+    context 'when both post and global setting allow comments' do
+      it 'returns true' do
+        Setting.instance.update!(allow_comments: true)
+        expect(post.comments_allowed?).to be true
+      end
+    end
+
+    context 'when post disables comments' do
+      it 'returns false' do
+        post.update!(comments_enabled: false)
+        Setting.instance.update!(allow_comments: true)
+        expect(post.comments_allowed?).to be false
+      end
+    end
+
+    context 'when global setting disables comments' do
+      it 'returns false' do
+        post.update!(comments_enabled: true)
+        Setting.instance.update!(allow_comments: false)
+        expect(post.comments_allowed?).to be false
+      end
+    end
+
+    context 'when both disable comments' do
+      it 'returns false' do
+        post.update!(comments_enabled: false)
+        Setting.instance.update!(allow_comments: false)
+        expect(post.comments_allowed?).to be false
+      end
+    end
+  end
+
   describe 'static file generation' do
     let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post.html') }
 
