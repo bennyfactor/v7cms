@@ -190,6 +190,40 @@ RSpec.describe 'Comments API' do
 
       expect(last_response.status).to eq(404)
     end
+
+    it 'returns 403 when comments are disabled globally' do
+      allow_any_instance_of(CMS).to receive(:verify_recaptcha_v3).and_return(0.9)
+      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: true)
+      Setting.instance.update!(allow_comments: false)
+
+      post "/api/posts/#{post.id}/comments", {
+        author_name: 'Test',
+        author_email: 'test@example.com',
+        content: 'Test comment',
+        recaptcha_token: 'test_token'
+      }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(last_response.status).to eq(403)
+      json = JSON.parse(last_response.body)
+      expect(json['error']).to eq('Comments are closed for this post')
+    end
+
+    it 'returns 403 when comments are disabled for post' do
+      allow_any_instance_of(CMS).to receive(:verify_recaptcha_v3).and_return(0.9)
+      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: false)
+      Setting.instance.update!(allow_comments: true)
+
+      post "/api/posts/#{post.id}/comments", {
+        author_name: 'Test',
+        author_email: 'test@example.com',
+        content: 'Test comment',
+        recaptcha_token: 'test_token'
+      }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(last_response.status).to eq(403)
+      json = JSON.parse(last_response.body)
+      expect(json['error']).to eq('Comments are closed for this post')
+    end
   end
 
   describe 'Admin Comments API' do
