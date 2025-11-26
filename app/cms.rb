@@ -274,7 +274,8 @@ class CMS < Sinatra::Base
       title: data['title'],
       slug: data['slug'],
       content: data['content'],
-      published: data['published'] || false
+      published: data['published'] || false,
+      comments_enabled: data.key?('comments_enabled') ? data['comments_enabled'] : true
     )
 
     if post.save
@@ -307,6 +308,7 @@ class CMS < Sinatra::Base
     post.slug = data['slug'] if data.key?('slug')
     post.content = data['content'] if data.key?('content')
     post.published = data['published'] if data.key?('published')
+    post.comments_enabled = data['comments_enabled'] if data.key?('comments_enabled')
 
     if post.save
       json({ post: post_json(post) })
@@ -703,7 +705,9 @@ class CMS < Sinatra::Base
       content: post.content,
       published: post.published,
       created_at: post.created_at,
-      updated_at: post.updated_at
+      updated_at: post.updated_at,
+      comments_enabled: post.comments_enabled,
+      comments_allowed: post.comments_allowed?
     }
   end
 
