@@ -727,7 +727,8 @@ class CMS < Sinatra::Base
       github_url: setting.github_url,
       social_url: setting.social_url,
       posts_per_page: setting.posts_per_page,
-      date_format: setting.date_format
+      date_format: setting.date_format,
+      allow_comments: setting.allow_comments
     }
   end
 
