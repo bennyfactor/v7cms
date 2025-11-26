@@ -597,6 +597,9 @@ class CMS < Sinatra::Base
     post_record = Post.find_by(id: params[:id])
     halt 404, json({ error: 'Post not found' }) unless post_record
 
+    # Check if comments are allowed
+    halt 403, json({ error: 'Comments are closed for this post' }) unless post_record.comments_allowed?
+
     data = JSON.parse(request.body.read)
     recaptcha_token = data['recaptcha_token']
 
