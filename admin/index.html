@@ -251,6 +251,13 @@
                                 </label>
                             </div>
 
+                            <div class="mb-6">
+                                <label class="flex items-center">
+                                    <input x-model="currentPost.comments_enabled" type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="ml-2 text-sm font-medium text-gray-700">Enable comments for this post</span>
+                                </label>
+                            </div>
+
                             <div class="flex justify-end space-x-4">
                                 <button @click="cancelEdit" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold transition">Cancel</button>
                                 <button @click="savePost"
