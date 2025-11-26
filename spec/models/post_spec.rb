@@ -134,6 +134,8 @@ RSpec.describe Post, type: :model do
     let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post.html') }
 
     before do
+      # Clean up any generated files from previous tests
+      FileUtils.rm_rf(PostRenderer::STATIC_DIR) if Dir.exist?(PostRenderer::STATIC_DIR)
       # Ensure settings exist
       Setting.instance
     end
