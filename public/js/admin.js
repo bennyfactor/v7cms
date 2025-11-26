@@ -136,7 +136,7 @@ function cmsApp() {
     },
 
     createNewPost() {
-      this.currentPost = { title: '', slug: '', content: '', published: false };
+      this.currentPost = { title: '', slug: '', content: '', published: false, comments_enabled: true };
       this.editingPost = true;
       this.resetValidation('post');
       this.$nextTick(() => this.initQuill());
