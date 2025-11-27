@@ -116,8 +116,9 @@ function cmsApp() {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' });
         if (response.ok) {
-          this.user = await response.json();
-          this.authenticated = true;
+          const data = await response.json();
+          this.user = data.user || {};
+          this.authenticated = data.logged_in === true;
         } else {
           console.error('Auth check failed:', response.status, response.statusText);
           this.authenticated = false;
