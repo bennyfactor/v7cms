@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe 'Theme Routes' do
-  let(:user) { User.create!(email: 'admin@example.com', provider: 'google_oauth2', uid: '12345', name: 'Admin') }
+  let(:user) { User.create!(email: 'admin@example.com', provider: 'google_oauth2', uid: '12345', name: 'Admin', admin: true) }
 
   # Mock callbacks to prevent actual file generation during tests
   before do

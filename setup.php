@@ -227,6 +227,23 @@ if (empty($errors)) {
     // Check .env file exists
     if (file_exists('.env')) {
         add_output('.env file found ✓', 'success');
+
+        // Check ADMIN_EMAILS configuration
+        $env_content = file_get_contents('.env');
+        if (preg_match('/^ADMIN_EMAILS=(.+)$/m', $env_content, $matches)) {
+            $admin_emails_raw = trim($matches[1]);
+            if (!empty($admin_emails_raw)) {
+                $admin_emails = array_map('trim', explode(',', $admin_emails_raw));
+                $count = count($admin_emails);
+                add_output("ADMIN_EMAILS configured ✓ ($count authorized admin" . ($count === 1 ? '' : 's') . ")", 'success');
+                add_output("Authorized emails: " . implode(', ', $admin_emails), 'info');
+            } else {
+                add_error('ADMIN_EMAILS is set but empty - admin login will be DISABLED');
+            }
+        } else {
+            add_error('ADMIN_EMAILS not found in .env - admin login will be DISABLED');
+            add_error('Add to .env: ADMIN_EMAILS=your-email@example.com');
+        }
     } else {
         add_error('.env file not found - you will need to create it with OAuth credentials');
     }
