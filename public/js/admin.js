@@ -150,7 +150,8 @@ function cmsApp() {
           this.posts = [];
           return;
         }
-        this.posts = await response.json();
+        const data = await response.json();
+        this.posts = data.posts || [];
       } catch (error) {
         console.error('Error fetching posts:', error);
         this.posts = [];
@@ -281,7 +282,8 @@ function cmsApp() {
           this.pages = [];
           return;
         }
-        this.pages = await response.json();
+        const data = await response.json();
+        this.pages = data.pages || [];
       } catch (error) {
         console.error('Error fetching pages:', error);
         this.pages = [];
@@ -417,7 +419,8 @@ function cmsApp() {
           this.theme = {};
           return;
         }
-        this.theme = await response.json();
+        const data = await response.json();
+        this.theme = data.theme || {};
         this.loadPreview();
       } catch (error) {
         console.error('Error fetching theme:', error);
@@ -504,7 +507,8 @@ function cmsApp() {
           this.settings = {};
           return;
         }
-        this.settings = await response.json();
+        const data = await response.json();
+        this.settings = data.settings || {};
       } catch (error) {
         console.error('Error loading settings:', error);
         this.settings = {};
