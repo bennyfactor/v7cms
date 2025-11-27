@@ -33,6 +33,7 @@ ADMIN_EMAILS=admin@example.com,editor@example.com
 - Only users with emails in this list can access the admin panel
 - The application will reject all login attempts if `ADMIN_EMAILS` is not set (fail closed for security)
 - Changes to `ADMIN_EMAILS` require users to log out and log back in to take effect
+- ✅ Fully implemented in PR #31 with User.admin field and OAuth callback validation
 
 ## Technology Stack
 
@@ -591,6 +592,18 @@ v7cms/
 
 Note: Only one settings record exists (singleton pattern).
 
+### Comments Table
+- `id` - Primary key
+- `post_id` - Foreign key to posts table
+- `author_name` - Commenter name (max 100 chars)
+- `author_email` - Commenter email address (max 100 chars)
+- `author_url` - Optional website URL
+- `content` - Comment text (max 5000 chars)
+- `approved` - Boolean flag for moderation status (default: false)
+- `spam` - Boolean flag for spam detection (default: false)
+- `recaptcha_score` - reCAPTCHA v3 score (0.0-1.0)
+- `created_at`, `updated_at` - Timestamps
+
 ## Security Considerations
 
 The application implements several security measures:
@@ -656,7 +669,7 @@ Contributions are welcome. Please follow these guidelines:
 
 ## Testing
 
-The project maintains comprehensive test coverage with **136 tests**:
+The project maintains comprehensive test coverage with **489 tests** (489 examples, 12 failures in comments system):
 
 - Model tests for validations and business logic
 - Route tests for all endpoints

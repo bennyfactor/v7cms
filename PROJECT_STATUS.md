@@ -414,8 +414,8 @@ Manage and serve uploaded media files (images, documents, etc.)
 
 ### Testing
 - Run all tests before deploying: `bundle exec rspec`
-- Current count: 425 tests
-- Test status: **425 passing, 0 failures** ✅ (100% pass rate)
+- Current count: 489 tests
+- Test status: **477 passing, 12 failures** (97.5% pass rate - 12 failures in comments system)
 - Test coverage: models, routes, helpers, services, middleware
 - Always write tests for new features
 - ✅ All test failures resolved (PR #26 + PR #27)
