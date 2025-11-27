@@ -224,7 +224,8 @@ class CMS < Sinatra::Base
           email: current_user.email,
           name: current_user.name,
           avatar_url: current_user.avatar_url,
-          provider: current_user.provider
+          provider: current_user.provider,
+          admin: current_user.admin
         }
       })
     else
