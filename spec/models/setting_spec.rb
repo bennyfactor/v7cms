@@ -247,6 +247,26 @@ RSpec.describe Setting do
         expect(setting).not_to be_valid
       end
     end
+
+    describe 'allow_comments validation' do
+      let(:setting) { Setting.instance }
+
+      it 'accepts true' do
+        setting.allow_comments = true
+        expect(setting).to be_valid
+      end
+
+      it 'accepts false' do
+        setting.allow_comments = false
+        expect(setting).to be_valid
+      end
+
+      it 'rejects nil' do
+        setting.allow_comments = nil
+        expect(setting).not_to be_valid
+        expect(setting.errors[:allow_comments]).to include('is not included in the list')
+      end
+    end
   end
 
   describe 'defaults' do
@@ -293,6 +313,13 @@ RSpec.describe Setting do
       expect(setting.welcome_title).to eq('Welcome to v7cms')
       expect(setting.footer_text).to eq('Powered by v7cms')
       expect(setting.posts_per_page).to eq(10)
+    end
+
+    it 'resets allow_comments to true' do
+      setting = Setting.instance
+      setting.update!(allow_comments: false)
+      setting.reset_to_defaults!
+      expect(setting.allow_comments).to be true
     end
   end
 end
