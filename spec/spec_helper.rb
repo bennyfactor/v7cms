@@ -20,6 +20,7 @@ OmniAuth.config.test_mode = true
 # Load models
 require_relative '../app/models/user'
 require_relative '../app/models/post'
+require_relative '../app/models/comment'
 require_relative '../app/models/theme'
 
 # Load Sinatra app for integration tests
