@@ -298,7 +298,8 @@ class CMS < Sinatra::Base
       title: data['title'],
       slug: data['slug'],
       content: data['content'],
-      published: data['published'] || false
+      published: data['published'] || false,
+      comments_enabled: data.key?('comments_enabled') ? data['comments_enabled'] : true
     )
 
     if post.save
@@ -331,6 +332,7 @@ class CMS < Sinatra::Base
     post.slug = data['slug'] if data.key?('slug')
     post.content = data['content'] if data.key?('content')
     post.published = data['published'] if data.key?('published')
+    post.comments_enabled = data['comments_enabled'] if data.key?('comments_enabled')
 
     if post.save
       json({ post: post_json(post) })
@@ -587,6 +589,132 @@ class CMS < Sinatra::Base
     status 204
   end
 
+  # Comments API Routes
+
+  # GET /api/posts/:id/comments - List approved comments for a post (public)
+  get '/api/posts/:id/comments' do
+    post = Post.find_by(id: params[:id])
+    halt 404, json({ error: 'Post not found' }) unless post
+
+    limit = [params[:limit].to_i, 1].max
+    limit = [limit, 100].min # Cap at 100
+    limit = 20 if limit == 0 || params[:limit].nil?
+
+    offset = [params[:offset].to_i, 0].max
+
+    comments = post.comments.approved.order(created_at: :asc).limit(limit).offset(offset)
+    total = post.comments.approved.count
+
+    json({
+      comments: comments.map { |c| comment_json(c) },
+      pagination: {
+        total: total,
+        limit: limit,
+        offset: offset,
+        has_more: (offset + limit) < total
+      }
+    })
+  end
+
+  # POST /api/posts/:id/comments - Submit a new comment (public, requires reCAPTCHA)
+  post '/api/posts/:id/comments' do
+    post_record = Post.find_by(id: params[:id])
+    halt 404, json({ error: 'Post not found' }) unless post_record
+
+    # Check if comments are allowed
+    halt 403, json({ error: 'Comments are closed for this post' }) unless post_record.comments_allowed?
+
+    data = JSON.parse(request.body.read)
+    recaptcha_token = data['recaptcha_token']
+
+    # Verify reCAPTCHA
+    recaptcha_score = verify_recaptcha_v3(recaptcha_token, request.ip)
+
+    # Reject if score too low (likely bot)
+    if recaptcha_score < 0.5
+      halt 400, json({ error: 'reCAPTCHA verification failed. Please try again.' })
+    end
+
+    # Create comment
+    comment = post_record.comments.build(
+      author_name: data['author_name'],
+      author_email: data['author_email'],
+      author_url: data['author_url'],
+      content: data['content'],
+      ip_address: request.ip,
+      recaptcha_score: recaptcha_score,
+      approved: false # Requires moderation
+    )
+
+    if comment.save
+      json({ success: true, message: 'Comment submitted for moderation. It will appear after approval.' })
+    else
+      halt 400, json({ error: comment.errors.full_messages.join(', ') })
+    end
+  end
+
+  # GET /api/comments - List all comments with filters (admin only)
+  get '/api/comments' do
+    require_login
+
+    status_filter = params[:status] # 'pending', 'approved', 'spam', or nil for all
+
+    comments = case status_filter
+    when 'pending'
+      Comment.pending
+    when 'approved'
+      Comment.approved
+    when 'spam'
+      Comment.spam
+    else
+      Comment.all
+    end
+
+    comments = comments.includes(:post).order(created_at: :desc)
+
+    json({
+      comments: comments.map { |c| admin_comment_json(c) }
+    })
+  end
+
+  # GET /api/comments/pending_count - Get count of pending comments (public for badge)
+  get '/api/comments/pending_count' do
+    json({ count: Comment.pending_count })
+  end
+
+  # PUT /api/comments/:id/approve - Approve a comment (admin only)
+  put '/api/comments/:id/approve' do
+    require_login
+
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
+    comment.update!(approved: true, spam: false)
+
+    json({ success: true, comment: admin_comment_json(comment) })
+  end
+
+  # PUT /api/comments/:id/spam - Mark comment as spam (admin only)
+  put '/api/comments/:id/spam' do
+    require_login
+
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
+    comment.update!(spam: true, approved: false)
+
+    json({ success: true, comment: admin_comment_json(comment) })
+  end
+
+  # DELETE /api/comments/:id - Delete a comment permanently (admin only)
+  delete '/api/comments/:id' do
+    require_login
+
+    comment = Comment.find_by(id: params[:id])
+    halt 404, json({ error: 'Comment not found' }) unless comment
+    comment.destroy
+
+    json({ success: true })
+  end
+
   # Helper methods
 
   # JSON helper
@@ -604,7 +732,9 @@ class CMS < Sinatra::Base
       content: post.content,
       published: post.published,
       created_at: post.created_at,
-      updated_at: post.updated_at
+      updated_at: post.updated_at,
+      comments_enabled: post.comments_enabled,
+      comments_allowed: post.comments_allowed?
     }
   end
 
@@ -624,7 +754,8 @@ class CMS < Sinatra::Base
       github_url: setting.github_url,
       social_url: setting.social_url,
       posts_per_page: setting.posts_per_page,
-      date_format: setting.date_format
+      date_format: setting.date_format,
+      allow_comments: setting.allow_comments
     }
   end
 
@@ -664,6 +795,63 @@ class CMS < Sinatra::Base
     end
 
     result
+  end
+
+  # Comment serialization helper
+  def comment_json(comment)
+    {
+      id: comment.id,
+      author_name: comment.author_name,
+      author_url: comment.author_url,
+      content: comment.content,
+      created_at: comment.created_at.iso8601,
+      post_id: comment.post_id
+    }
+  end
+
+  # Admin comment serialization helper (includes sensitive fields)
+  def admin_comment_json(comment)
+    {
+      id: comment.id,
+      author_name: comment.author_name,
+      author_email: comment.author_email,
+      author_url: comment.author_url,
+      content: comment.content,
+      ip_address: comment.ip_address,
+      recaptcha_score: comment.recaptcha_score,
+      approved: comment.approved,
+      spam: comment.spam,
+      created_at: comment.created_at.iso8601,
+      post: {
+        id: comment.post.id,
+        title: comment.post.title,
+        slug: comment.post.slug
+      }
+    }
+  end
+
+  # reCAPTCHA v3 verification helper
+  def verify_recaptcha_v3(token, remote_ip)
+    return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
+
+    require 'net/http'
+    require 'json'
+
+    uri = URI.parse('https://www.google.com/recaptcha/api/siteverify')
+    response = Net::HTTP.post_form(uri, {
+      secret: ENV['RECAPTCHA_SECRET_KEY'],
+      response: token,
+      remoteip: remote_ip
+    })
+
+    result = JSON.parse(response.body)
+
+    # Return score (0.0 = bot, 1.0 = human)
+    result['success'] ? result['score'] : 0.0
+  rescue => e
+    # Log error and return safe default
+    puts "reCAPTCHA verification error: #{e.message}"
+    0.0
   end
 
   # Pagination helper - extract and validate pagination parameters

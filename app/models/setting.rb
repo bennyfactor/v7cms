@@ -37,6 +37,8 @@ class Setting < ActiveRecord::Base
 
   validates :date_format, presence: true
 
+  validates :allow_comments, inclusion: { in: [true, false] }
+
   # Callbacks
   after_commit :regenerate_feeds
   after_save :clear_instance_cache
@@ -86,7 +88,8 @@ class Setting < ActiveRecord::Base
       github_url: '',
       social_url: '',
       posts_per_page: 10,
-      date_format: '%B %d, %Y'
+      date_format: '%B %d, %Y',
+      allow_comments: true
     )
   end
 
