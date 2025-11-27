@@ -1,6 +1,9 @@
 class Post < ActiveRecord::Base
+  has_many :comments, dependent: :destroy
+
   validates :title, presence: true
   validates :slug, presence: true, uniqueness: true
+  validates :comments_enabled, inclusion: { in: [true, false] }
 
   before_validation :generate_slug, on: :create
 
@@ -14,6 +17,10 @@ class Post < ActiveRecord::Base
 
   scope :published, -> { where(published: true) }
   scope :recent, -> { order(created_at: :desc) }
+
+  def comments_allowed?
+    comments_enabled && Setting.instance.allow_comments
+  end
 
   private
 

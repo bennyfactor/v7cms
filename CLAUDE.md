@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-v7cms is a modern, minimal content management system built with Ruby 3.2 and Sinatra. It features OAuth authentication, a RESTful API, and a single-page admin interface built with Alpine.js and Tailwind CSS. The application is designed to run on shared hosting (DreamHost) via FastCGI or containerized with Docker for development/deployment.
+v7cms is a modern, minimal content management system built with Ruby 3.2 and Sinatra. It features OAuth authentication, a RESTful API, a single-page admin interface built with Alpine.js and Tailwind CSS, and self-hosted commenting with reCAPTCHA v3 spam prevention. The application is designed to run on shared hosting (DreamHost) via FastCGI or containerized with Docker for development/deployment.
 
 ## Architecture
 
@@ -222,6 +222,7 @@ bundle exec rake db:rollback
 - **users**: id, email, name, provider, uid, avatar_url, timestamps
 - **posts**: id, title, slug (unique), content, published (boolean), timestamps
 - **settings**: id, site_title, site_tagline, site_author, welcome_title, welcome_subtitle, footer_text, show_copyright_year, meta_description, meta_keywords, contact_email, github_url, social_url, posts_per_page, date_format, timestamps (singleton: only one record)
+- **comments**: id, post_id (FK), author_name, author_email, author_url, content, ip_address, recaptcha_score, approved (boolean, default false), spam (boolean, default false), timestamps
 
 ## API Documentation
 
