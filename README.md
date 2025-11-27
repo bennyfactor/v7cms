@@ -22,6 +22,18 @@ The system runs on shared hosting environments via FastCGI or can be containeriz
 - Lightweight JavaScript framework (Alpine.js)
 - Comprehensive test coverage
 
+## Admin Access Control
+
+**REQUIRED**: Set the `ADMIN_EMAILS` environment variable with a comma-separated list of authorized admin email addresses:
+
+```
+ADMIN_EMAILS=admin@example.com,editor@example.com
+```
+
+- Only users with emails in this list can access the admin panel
+- The application will reject all login attempts if `ADMIN_EMAILS` is not set (fail closed for security)
+- Changes to `ADMIN_EMAILS` require users to log out and log back in to take effect
+
 ## Technology Stack
 
 **Backend:**
