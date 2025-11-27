@@ -16,12 +16,14 @@ This roadmap provides a prioritized view of all pending work with clear next ste
 ## Documentation Map
 
 - **ROADMAP.md** (this file) - Prioritized task list with dependencies
-- **PROJECT_STATUS.md** - Current project state and navigation guide
-- **NEXT_STEPS.md** - Feature roadmap (7 priorities, 5 completed)
-- **CLAUDE.md** - Comprehensive project documentation for development
-- **README.md** - User-facing documentation and API reference
-- **CHANGELOG.md** - History of completed work
-- **docs/plans/** - Detailed implementation plans for specific tasks
+- **[docs/README.md](docs/README.md)** - Documentation index and navigation guide
+- **[CLAUDE.md](CLAUDE.md)** - Comprehensive project documentation for development
+- **[README.md](README.md)** - User-facing documentation and API reference
+- **[CHANGELOG.md](CHANGELOG.md)** - History of completed work
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
+- **[SECURITY.md](SECURITY.md)** - Security policy and vulnerability reporting
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Production deployment guide
+- **[docs/plans/](docs/plans/)** - Detailed implementation plans for specific tasks
 
 ---
 
@@ -219,7 +221,7 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ### Feature: Static Asset Management (Priority 7)
 **Priority:** Low | **Status:** Planning | **Estimate:** 6-10 hours | **Dependencies:** None
-**Plan:** [NEXT_STEPS.md - Priority 7](NEXT_STEPS.md#priority-7-static-asset-management--recovery)
+**Plan:** See CLAUDE.md Theme Customization design section for related file management patterns
 
 **Scope:** Image uploads, file management UI, storage strategy, .htaccess routing for assets.
 
@@ -312,4 +314,4 @@ Fixed feed route tests, added foreign key constraints to pages, circular referen
 - Quarterly security audits
 - Monitor production logs for errors
 
-**See [DEPLOYMENT.txt](DEPLOYMENT.txt) for maintenance procedures.**
+**See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for maintenance procedures.**

@@ -683,9 +683,12 @@ Run the test suite before submitting changes.
 
 Additional documentation is available:
 
-- **DEPLOYMENT.txt** - Production deployment guide
-- **IMPLEMENTATION_PLAN.txt** - Development roadmap
-- **PROJECT_STATUS.txt** - Project completion summary
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Production deployment guide
+- **[ROADMAP.md](ROADMAP.md)** - Development roadmap and priorities
+- **[CHANGELOG.md](CHANGELOG.md)** - Project history and completed features
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
+- **[SECURITY.md](SECURITY.md)** - Security policy and best practices
+- **[docs/archive/IMPLEMENTATION_PLAN.md](docs/archive/IMPLEMENTATION_PLAN.md)** - Original implementation plan (historical reference)
 
 ## License
 
