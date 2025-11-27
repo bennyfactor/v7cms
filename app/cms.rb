@@ -43,6 +43,17 @@ class CMS < Sinatra::Base
     use Rack::Attack
   end
 
+  # Security check: Warn if ADMIN_EMAILS not configured
+  configure do
+    if ENV['ADMIN_EMAILS'].nil? || ENV['ADMIN_EMAILS'].strip.empty?
+      warn "=" * 80
+      warn "WARNING: ADMIN_EMAILS environment variable is not set!"
+      warn "Admin login is DISABLED until you configure authorized emails."
+      warn "Add to .env file: ADMIN_EMAILS=your-email@example.com"
+      warn "=" * 80
+    end
+  end
+
   # OmniAuth configuration - allow GET requests (required for OAuth links)
   OmniAuth.config.allowed_request_methods = [:get, :post]
   OmniAuth.config.silence_get_warning = true
