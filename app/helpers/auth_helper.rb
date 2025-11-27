@@ -8,7 +8,7 @@ module AuthHelper
   end
 
   def require_login
-    unless logged_in?
+    unless logged_in? && current_user.admin?
       halt 401, { error: 'Unauthorized' }.to_json
     end
   end

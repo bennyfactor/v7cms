@@ -71,11 +71,23 @@ RSpec.describe 'AuthHelper' do
       end
     end
 
-    context 'when user is logged in' do
-      let(:user) { User.create!(email: 'test@example.com', provider: 'google', uid: '12345', name: 'Test User') }
+    context 'when user is logged in but not admin' do
+      let(:non_admin) { User.create!(email: 'user@example.com', provider: 'google', uid: '123', admin: false) }
 
-      it 'does not halt' do
-        get '/test/protected', {}, { 'rack.session' => { user_id: user.id } }
+      it 'halts with 401 unauthorized' do
+        get '/test/protected', {}, { 'rack.session' => { user_id: non_admin.id } }
+
+        expect(last_response.status).to eq(401)
+        data = JSON.parse(last_response.body)
+        expect(data['error']).to eq('Unauthorized')
+      end
+    end
+
+    context 'when user is logged in and is admin' do
+      let(:admin) { User.create!(email: 'admin@example.com', provider: 'google', uid: '456', admin: true) }
+
+      it 'allows access' do
+        get '/test/protected', {}, { 'rack.session' => { user_id: admin.id } }
 
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)

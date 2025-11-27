@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe 'Posts API Routes' do
-  let(:user) { User.create!(email: 'author@example.com', provider: 'google_oauth2', uid: '12345', name: 'Author') }
+  let(:user) { User.create!(email: 'author@example.com', provider: 'google_oauth2', uid: '12345', name: 'Author', admin: true) }
 
   def login_as_user
     { 'rack.session' => { user_id: user.id } }
