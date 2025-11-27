@@ -1,7 +1,7 @@
 require_relative '../spec_helper'
 
 RSpec.describe 'Pages API', type: :request do
-  let(:user) { User.create!(email: 'test@example.com', name: 'Test User', provider: 'google_oauth2', uid: '12345') }
+  let(:user) { User.create!(email: 'test@example.com', name: 'Test User', provider: 'google_oauth2', uid: '12345', admin: true) }
 
   def app
     CMS
