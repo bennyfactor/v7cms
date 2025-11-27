@@ -158,22 +158,35 @@ class CMS < Sinatra::Base
 
   # OAuth callback (Google, GitHub, etc. all use this)
   get '/auth/:provider/callback' do
-    # Debug logging
-    logger.info "OAuth callback received: provider=#{params[:provider]}, path=#{request.path_info}"
-
     auth = request.env['omniauth.auth']
-    logger.info "OmniAuth data: #{auth.inspect}"
 
+    # Get admin email whitelist from environment
+    admin_emails_raw = ENV['ADMIN_EMAILS']
+
+    # Fail closed: reject if ADMIN_EMAILS not configured
+    if admin_emails_raw.nil? || admin_emails_raw.strip.empty?
+      halt 403, json({ error: 'Admin access not configured. Set ADMIN_EMAILS environment variable.' })
+    end
+
+    # Parse and normalize email list
+    admin_emails = admin_emails_raw.split(',').map(&:strip)
+    user_email = auth['info']['email']
+
+    # Check if email is in whitelist
+    unless admin_emails.include?(user_email)
+      halt 403, json({ error: 'Your email is not authorized to access this admin panel.' })
+    end
+
+    # Email is authorized - create/update user with admin=true
     user = User.from_omniauth(auth)
-    logger.info "User created/found: #{user.inspect}"
 
     if user
+      # Ensure admin flag is set
+      user.update!(admin: true) unless user.admin?
+
       session[:user_id] = user.id
-      logger.info "Session set: user_id=#{session[:user_id]}"
-      # Redirect back to admin page after successful login
       redirect '/admin/'
     else
-      logger.error "User creation failed"
       halt 401, json({ error: 'Authentication failed' })
     end
   end
