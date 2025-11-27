@@ -84,13 +84,15 @@ cd v7cms
 cp .env.example .env
 ```
 
-3. Edit `.env` and add your OAuth credentials:
+3. Edit `.env` and add your OAuth and reCAPTCHA credentials:
 ```
 SESSION_SECRET=<generate-random-string>
 GOOGLE_CLIENT_ID=<your-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-google-client-secret>
 GITHUB_CLIENT_ID=<your-github-client-id>
 GITHUB_CLIENT_SECRET=<your-github-client-secret>
+RECAPTCHA_SITE_KEY=<your-recaptcha-site-key>
+RECAPTCHA_SECRET_KEY=<your-recaptcha-secret-key>
 ```
 
 4. Start the application:
@@ -198,6 +200,31 @@ Important: Changes may take 5 minutes to a few hours to take effect.
    ```
    GITHUB_CLIENT_ID=your-client-id-here
    GITHUB_CLIENT_SECRET=your-client-secret-here
+   ```
+
+### reCAPTCHA Setup
+
+reCAPTCHA v3 is required for spam prevention on comment submissions.
+
+1. Visit Google reCAPTCHA Admin: https://www.google.com/recaptcha/admin/create
+2. Fill in the registration form:
+
+   **Label:** Choose a descriptive name (e.g., "v7cms")
+
+   **reCAPTCHA type:** Select "reCAPTCHA v3"
+
+   **Domains:**
+   - For development: localhost
+   - For production: yourdomain.com
+
+   Note: You can add multiple domains to support both development and production.
+
+3. Accept the reCAPTCHA Terms of Service
+4. Click "Submit" to create the reCAPTCHA site
+5. Copy the Site Key and Secret Key to your `.env` file:
+   ```
+   RECAPTCHA_SITE_KEY=your-site-key-here
+   RECAPTCHA_SECRET_KEY=your-secret-key-here
    ```
 
 ### Security Notes
@@ -340,6 +367,26 @@ Requires authentication. Returns updated settings or validation errors.
 POST /api/settings/reset
 ```
 Requires authentication. Resets all settings to default values.
+
+### Comments API
+
+**Public Endpoints:**
+- `GET /api/posts/:id/comments` - List approved comments for a post
+  - Query params: `limit` (default 20, max 100), `offset` (default 0)
+  - Returns: `{ comments: [], pagination: { total, limit, offset, has_more } }`
+- `POST /api/posts/:id/comments` - Submit a new comment
+  - Requires: `author_name`, `author_email`, `content`, `recaptcha_token`
+  - Optional: `author_url`
+  - Returns: `{ success: true, message: '...' }`
+  - Note: All comments require moderation (approved=false by default)
+
+**Admin Endpoints (authentication required):**
+- `GET /api/comments` - List all comments with filters
+  - Query params: `status` (pending, approved, spam)
+- `GET /api/comments/pending_count` - Get count of pending comments
+- `PUT /api/comments/:id/approve` - Approve a comment
+- `PUT /api/comments/:id/spam` - Mark comment as spam
+- `DELETE /api/comments/:id` - Delete a comment permanently
 
 ## Development
 
