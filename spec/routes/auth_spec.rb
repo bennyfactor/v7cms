@@ -109,7 +109,7 @@ RSpec.describe 'Authentication Routes' do
   end
 
   describe 'POST /api/auth/logout' do
-    let(:user) { User.create!(email: 'test@example.com', provider: 'google', uid: '12345', name: 'Test') }
+    let(:user) { User.create!(email: 'test@example.com', provider: 'google', uid: '12345', name: 'Test', admin: true) }
 
     it 'clears the session' do
       post '/api/auth/logout', {}, { 'rack.session' => { user_id: user.id } }
@@ -122,7 +122,7 @@ RSpec.describe 'Authentication Routes' do
 
   describe 'GET /api/auth/me' do
     context 'when logged in' do
-      let(:user) { User.create!(email: 'test@example.com', provider: 'google', uid: '12345', name: 'Test User', avatar_url: 'http://example.com/avatar.jpg') }
+      let(:user) { User.create!(email: 'test@example.com', provider: 'google', uid: '12345', name: 'Test User', avatar_url: 'http://example.com/avatar.jpg', admin: true) }
 
       it 'returns current user info' do
         get '/api/auth/me', {}, { 'rack.session' => { user_id: user.id } }
