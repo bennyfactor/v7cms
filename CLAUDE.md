@@ -119,9 +119,11 @@ bin/
   - `reset_to_defaults!` - resets all fields to default values
 
 ### app/models/user.rb
-- OAuth user model (email, provider, uid, avatar_url)
+- OAuth user model (email, provider, uid, avatar_url, admin)
+- `admin` boolean field controls admin panel access
 - `from_omniauth` class method for OAuth callback
 - Unique constraint on provider+uid
+- Admin access validated against ADMIN_EMAILS environment variable at login
 
 ### public/admin.html
 - Single-page admin application
