@@ -175,6 +175,21 @@ RSpec.describe 'Posts API Routes' do
       expect(data['error']).to eq('Post not found')
     end
 
+    it 'includes comments_enabled in response' do
+      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: false)
+      get "/api/posts/#{post.id}"
+      json = JSON.parse(last_response.body)
+      expect(json['post']['comments_enabled']).to eq(false)
+    end
+
+    it 'includes comments_allowed computed field in response' do
+      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: true)
+      Setting.instance.update!(allow_comments: false)
+      get "/api/posts/#{post.id}"
+      json = JSON.parse(last_response.body)
+      expect(json['post']['comments_allowed']).to eq(false)
+    end
+
     context 'with draft post' do
       let!(:draft) { Post.create!(title: 'Draft', slug: 'draft', content: 'Draft', published: false) }
 
@@ -258,6 +273,18 @@ RSpec.describe 'Posts API Routes' do
         data = JSON.parse(last_response.body)
         expect(data['errors']).to include('Invalid JSON')
       end
+
+      it 'accepts comments_enabled parameter' do
+        post '/api/posts', {
+          title: 'Test',
+          content: 'Content',
+          comments_enabled: false
+        }.to_json, { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(201)
+        json = JSON.parse(last_response.body)
+        expect(json['post']['comments_enabled']).to eq(false)
+      end
     end
   end
 
@@ -323,6 +350,17 @@ RSpec.describe 'Posts API Routes' do
         expect(last_response.status).to eq(422)
         data = JSON.parse(last_response.body)
         expect(data['errors']).to include('Invalid JSON')
+      end
+
+      it 'accepts comments_enabled parameter' do
+        post = Post.create!(title: 'Test', slug: 'test', comments_enabled: true)
+
+        put "/api/posts/#{post.id}", {
+          comments_enabled: false
+        }.to_json, { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(200)
+        expect(post.reload.comments_enabled).to eq(false)
       end
     end
   end

@@ -82,6 +82,13 @@
                         </svg>
                         Settings
                     </a>
+                    <a @click.prevent="currentView = 'comments'" href="#" :class="currentView === 'comments' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition relative">
+                        <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        Comments
+                        <span x-show="pendingCommentCount > 0" x-text="pendingCommentCount" class="absolute top-1 right-1 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full"></span>
+                    </a>
                     <button @click="logout" class="w-full text-left px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                         <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -241,6 +248,13 @@
                                 <label class="flex items-center">
                                     <input x-model="currentPost.published" type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                                     <span class="ml-2 text-sm font-medium text-gray-700">Published</span>
+                                </label>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="flex items-center">
+                                    <input x-model="currentPost.comments_enabled" type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="ml-2 text-sm font-medium text-gray-700">Enable comments for this post</span>
                                 </label>
                             </div>
 
@@ -943,6 +957,25 @@
                             </div>
                         </div>
 
+                        <!-- Comments Section -->
+                        <div class="border-t pt-4 mt-4">
+                            <h3 class="text-lg font-semibold mb-4">Comments</h3>
+
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        x-model="settings.allow_comments"
+                                        class="rounded border-gray-300"
+                                    >
+                                    <div>
+                                        <span class="text-sm font-medium">Allow comments site-wide</span>
+                                        <p class="text-xs text-gray-500 mt-1">Individual posts can still disable comments even when this is enabled.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="flex gap-2 pt-4 border-t">
                             <button type="submit"
@@ -962,6 +995,85 @@
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Comments View -->
+                <div x-show="currentView === 'comments'" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">Comments</h2>
+                        <div class="space-x-2">
+                            <button @click="commentFilter = 'pending'; fetchComments()"
+                                    :class="commentFilter === 'pending' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded">
+                                Pending (<span x-text="pendingCommentCount"></span>)
+                            </button>
+                            <button @click="commentFilter = 'approved'; fetchComments()"
+                                    :class="commentFilter === 'approved' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded">
+                                Approved
+                            </button>
+                            <button @click="commentFilter = 'spam'; fetchComments()"
+                                    :class="commentFilter === 'spam' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded">
+                                Spam
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div class="space-y-4">
+                        <template x-for="comment in filteredComments" :key="comment.id">
+                            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                                <!-- Comment Header -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <strong x-text="comment.author_name" class="text-gray-900"></strong>
+                                        <span class="text-gray-500 text-sm ml-2" x-text="comment.author_email"></span>
+                                        <a :href="comment.author_url" x-show="comment.author_url"
+                                           class="text-blue-500 text-sm ml-2" target="_blank">🔗</a>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        <span x-text="formatDate(comment.created_at)"></span>
+                                        <span class="ml-3">Score: <span x-text="comment.recaptcha_score?.toFixed(2)"></span></span>
+                                    </div>
+                                </div>
+
+                                <!-- Post Reference -->
+                                <div class="text-sm text-gray-600 mb-3">
+                                    On: <a :href="'/posts/' + comment.post.slug"
+                                           x-text="comment.post.title"
+                                           class="text-blue-500 hover:underline"
+                                           target="_blank"></a>
+                                </div>
+
+                                <!-- Comment Content -->
+                                <div class="text-gray-700 mb-4 whitespace-pre-wrap" x-text="comment.content"></div>
+
+                                <!-- Actions -->
+                                <div class="flex gap-2">
+                                    <button @click="approveComment(comment.id)"
+                                            x-show="!comment.approved"
+                                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                        ✓ Approve
+                                    </button>
+                                    <button @click="markSpam(comment.id)"
+                                            x-show="!comment.spam"
+                                            class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                                        ⚠ Spam
+                                    </button>
+                                    <button @click="deleteComment(comment.id)"
+                                            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                        🗑 Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty State -->
+                        <div x-show="filteredComments.length === 0" class="text-center py-12 text-gray-500">
+                            No <span x-text="commentFilter"></span> comments.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
