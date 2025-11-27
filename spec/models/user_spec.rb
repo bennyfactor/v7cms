@@ -36,6 +36,34 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe 'admin field' do
+    it 'defaults to false for new users' do
+      user = User.create!(
+        email: 'test@example.com',
+        provider: 'google_oauth2',
+        uid: '12345'
+      )
+      expect(user.admin).to be false
+    end
+
+    it 'can be set to true' do
+      user = User.create!(
+        email: 'admin@example.com',
+        provider: 'google_oauth2',
+        uid: '12345',
+        admin: true
+      )
+      expect(user.admin).to be true
+    end
+
+    it 'validates presence (not nil)' do
+      user = User.new(email: 'test@example.com', provider: 'google', uid: '123')
+      user.admin = nil
+      expect(user).not_to be_valid
+      expect(user.errors[:admin]).to include('is not included in the list')
+    end
+  end
+
   describe '.from_omniauth' do
     let(:auth_hash) do
       {
