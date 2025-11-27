@@ -118,21 +118,42 @@ function cmsApp() {
         if (response.ok) {
           this.user = await response.json();
           this.authenticated = true;
+        } else {
+          console.error('Auth check failed:', response.status, response.statusText);
+          this.authenticated = false;
+          this.user = {};
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        this.authenticated = false;
+        this.user = {};
       }
     },
 
     async logout() {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-      window.location.reload();
+      try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (error) {
+        console.error('Error during logout:', error);
+      } finally {
+        window.location.reload();
+      }
     },
 
     // Posts
     async fetchPosts() {
-      const response = await fetch('/api/posts?include_drafts=true', { credentials: 'include' });
-      this.posts = await response.json();
+      try {
+        const response = await fetch('/api/posts?include_drafts=true', { credentials: 'include' });
+        if (!response.ok) {
+          console.error('Failed to fetch posts:', response.status, response.statusText);
+          this.posts = [];
+          return;
+        }
+        this.posts = await response.json();
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        this.posts = [];
+      }
     },
 
     createNewPost() {
@@ -174,15 +195,21 @@ function cmsApp() {
       const url = this.currentPost.id ? `/api/posts/${this.currentPost.id}` : '/api/posts';
 
       try {
-        await fetch(url, {
+        const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(this.currentPost)
         });
+        if (!response.ok) {
+          console.error('Failed to save post:', response.status, response.statusText);
+          alert('Failed to save post: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
         await this.fetchPosts();
         this.cancelEdit();
       } catch (error) {
+        console.error('Error saving post:', error);
         alert('Failed to save post');
       } finally {
         this.saving = false;
@@ -192,11 +219,21 @@ function cmsApp() {
     async deletePost(post) {
       if (!confirm(`Delete "${post.title}"?`)) return;
 
-      await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      await this.fetchPosts();
+      try {
+        const response = await fetch(`/api/posts/${post.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to delete post:', response.status, response.statusText);
+          alert('Failed to delete post: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchPosts();
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Failed to delete post');
+      }
     },
 
     initQuill(content = '') {
@@ -236,8 +273,18 @@ function cmsApp() {
 
     // Pages
     async fetchPages() {
-      const response = await fetch('/api/pages?include_drafts=true', { credentials: 'include' });
-      this.pages = await response.json();
+      try {
+        const response = await fetch('/api/pages?include_drafts=true', { credentials: 'include' });
+        if (!response.ok) {
+          console.error('Failed to fetch pages:', response.status, response.statusText);
+          this.pages = [];
+          return;
+        }
+        this.pages = await response.json();
+      } catch (error) {
+        console.error('Error fetching pages:', error);
+        this.pages = [];
+      }
     },
 
     createNewPage() {
@@ -279,15 +326,21 @@ function cmsApp() {
       const url = this.currentPage.id ? `/api/pages/${this.currentPage.id}` : '/api/pages';
 
       try {
-        await fetch(url, {
+        const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(this.currentPage)
         });
+        if (!response.ok) {
+          console.error('Failed to save page:', response.status, response.statusText);
+          alert('Failed to save page: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
         await this.fetchPages();
         this.cancelPageEdit();
       } catch (error) {
+        console.error('Error saving page:', error);
         alert('Failed to save page');
       } finally {
         this.savingPage = false;
@@ -297,11 +350,21 @@ function cmsApp() {
     async deletePage(page) {
       if (!confirm(`Delete "${page.title}"?`)) return;
 
-      await fetch(`/api/pages/${page.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      await this.fetchPages();
+      try {
+        const response = await fetch(`/api/pages/${page.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to delete page:', response.status, response.statusText);
+          alert('Failed to delete page: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchPages();
+      } catch (error) {
+        console.error('Error deleting page:', error);
+        alert('Failed to delete page');
+      }
     },
 
     getPageTitle(id) {
@@ -346,22 +409,38 @@ function cmsApp() {
 
     // Theme
     async fetchTheme() {
-      const response = await fetch('/api/theme');
-      this.theme = await response.json();
-      this.loadPreview();
+      try {
+        const response = await fetch('/api/theme');
+        if (!response.ok) {
+          console.error('Failed to fetch theme:', response.status, response.statusText);
+          this.theme = {};
+          return;
+        }
+        this.theme = await response.json();
+        this.loadPreview();
+      } catch (error) {
+        console.error('Error fetching theme:', error);
+        this.theme = {};
+      }
     },
 
     async saveTheme() {
       this.savingTheme = true;
       try {
-        await fetch('/api/theme', {
+        const response = await fetch('/api/theme', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(this.theme)
         });
+        if (!response.ok) {
+          console.error('Failed to save theme:', response.status, response.statusText);
+          alert('Failed to save theme: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
         alert('Theme saved successfully!');
       } catch (error) {
+        console.error('Error saving theme:', error);
         alert('Failed to save theme');
       } finally {
         this.savingTheme = false;
@@ -371,11 +450,21 @@ function cmsApp() {
     async resetTheme() {
       if (!confirm('Reset theme to defaults? This will discard all customizations.')) return;
 
-      await fetch('/api/theme/reset', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      await this.fetchTheme();
+      try {
+        const response = await fetch('/api/theme/reset', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to reset theme:', response.status, response.statusText);
+          alert('Failed to reset theme: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchTheme();
+      } catch (error) {
+        console.error('Error resetting theme:', error);
+        alert('Failed to reset theme');
+      }
     },
 
     updatePreview() {
@@ -407,8 +496,18 @@ function cmsApp() {
 
     // Settings
     async loadSettings() {
-      const response = await fetch('/api/settings');
-      this.settings = await response.json();
+      try {
+        const response = await fetch('/api/settings');
+        if (!response.ok) {
+          console.error('Failed to load settings:', response.status, response.statusText);
+          this.settings = {};
+          return;
+        }
+        this.settings = await response.json();
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        this.settings = {};
+      }
     },
 
     async saveSettings() {
@@ -422,14 +521,20 @@ function cmsApp() {
 
       this.savingSettings = true;
       try {
-        await fetch('/api/settings', {
+        const response = await fetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(this.settings)
         });
+        if (!response.ok) {
+          console.error('Failed to save settings:', response.status, response.statusText);
+          alert('Failed to save settings: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
         alert('Settings saved successfully!');
       } catch (error) {
+        console.error('Error saving settings:', error);
         alert('Failed to save settings');
       } finally {
         this.savingSettings = false;
@@ -439,61 +544,118 @@ function cmsApp() {
     async resetToDefaults() {
       if (!confirm('Reset all settings to defaults? This cannot be undone.')) return;
 
-      await fetch('/api/settings/reset', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      await this.loadSettings();
+      try {
+        const response = await fetch('/api/settings/reset', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to reset settings:', response.status, response.statusText);
+          alert('Failed to reset settings: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.loadSettings();
+      } catch (error) {
+        console.error('Error resetting settings:', error);
+        alert('Failed to reset settings');
+      }
     },
 
     // Comments
     async fetchComments() {
-      const status = this.commentFilter || '';
-      const response = await fetch(`/api/comments?status=${status}`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      this.comments = data.comments;
-      await this.updatePendingCount();
+      try {
+        const status = this.commentFilter || '';
+        const response = await fetch(`/api/comments?status=${status}`, {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to fetch comments:', response.status, response.statusText);
+          this.comments = [];
+          return;
+        }
+        const data = await response.json();
+        this.comments = Array.isArray(data.comments) ? data.comments : [];
+        await this.updatePendingCount();
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+        this.comments = [];
+      }
     },
 
     async updatePendingCount() {
-      const response = await fetch('/api/comments/pending_count');
-      const data = await response.json();
-      this.pendingCommentCount = data.count;
+      try {
+        const response = await fetch('/api/comments/pending_count');
+        if (!response.ok) {
+          console.error('Failed to fetch pending count:', response.status, response.statusText);
+          this.pendingCommentCount = 0;
+          return;
+        }
+        const data = await response.json();
+        this.pendingCommentCount = typeof data.count === 'number' ? data.count : 0;
+      } catch (error) {
+        console.error('Error fetching pending count:', error);
+        this.pendingCommentCount = 0;
+      }
     },
 
     async approveComment(id) {
       if (!confirm('Approve this comment?')) return;
 
-      await fetch(`/api/comments/${id}/approve`, {
-        method: 'PUT',
-        credentials: 'include'
-      });
-
-      await this.fetchComments();
+      try {
+        const response = await fetch(`/api/comments/${id}/approve`, {
+          method: 'PUT',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to approve comment:', response.status, response.statusText);
+          alert('Failed to approve comment: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchComments();
+      } catch (error) {
+        console.error('Error approving comment:', error);
+        alert('Failed to approve comment');
+      }
     },
 
     async markSpam(id) {
       if (!confirm('Mark this comment as spam?')) return;
 
-      await fetch(`/api/comments/${id}/spam`, {
-        method: 'PUT',
-        credentials: 'include'
-      });
-
-      await this.fetchComments();
+      try {
+        const response = await fetch(`/api/comments/${id}/spam`, {
+          method: 'PUT',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to mark comment as spam:', response.status, response.statusText);
+          alert('Failed to mark as spam: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchComments();
+      } catch (error) {
+        console.error('Error marking comment as spam:', error);
+        alert('Failed to mark as spam');
+      }
     },
 
     async deleteComment(id) {
       if (!confirm('Delete this comment permanently?\n\nThis action cannot be undone.')) return;
 
-      await fetch(`/api/comments/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      await this.fetchComments();
+      try {
+        const response = await fetch(`/api/comments/${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to delete comment:', response.status, response.statusText);
+          alert('Failed to delete comment: ' + (response.status === 401 || response.status === 403 ? 'Authentication required' : 'Server error'));
+          return;
+        }
+        await this.fetchComments();
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+        alert('Failed to delete comment');
+      }
     },
 
     // Validation
