@@ -94,7 +94,7 @@ function cmsApp() {
     // Initialization
     async init() {
       await this.checkAuth();
-      if (this.authenticated) {
+      if (this.authenticated && this.user.admin) {
         await Promise.all([
           this.fetchPosts(),
           this.fetchPages(),
