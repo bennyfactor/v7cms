@@ -23,6 +23,8 @@ class Theme < ActiveRecord::Base
 
   # Validate enum fields
   validates :layout_width, inclusion: { in: %w[full wide standard narrow] }
+  validates :header_style, inclusion: { in: %w[default minimal prominent] }
+  validates :footer_style, inclusion: { in: %w[default minimal centered] }
 
   # Validate string lengths
   validates :font_heading, :font_body, :font_mono, length: { maximum: 200 }, allow_blank: true
