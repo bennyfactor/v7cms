@@ -71,8 +71,11 @@
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <%
       # Get header/footer styles (support preview mode via params)
-      header_style = params[:theme_preview] ? (params[:header_style] || @theme.header_style) : @theme.header_style
-      footer_style = params[:theme_preview] ? (params[:footer_style] || @theme.footer_style) : @theme.footer_style
+      # Use respond_to? for backward compatibility with databases missing these columns
+      default_header = @theme.respond_to?(:header_style) ? @theme.header_style : 'default'
+      default_footer = @theme.respond_to?(:footer_style) ? @theme.footer_style : 'default'
+      header_style = params[:theme_preview] ? (params[:header_style] || default_header) : default_header
+      footer_style = params[:theme_preview] ? (params[:footer_style] || default_footer) : default_footer
 
       # Header style classes
       header_classes = case header_style
