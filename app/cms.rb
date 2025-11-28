@@ -167,6 +167,17 @@ class CMS < Sinatra::Base
     json status: 'ok', database: db_status
   end
 
+  # API Documentation
+  get '/api/docs' do
+    redirect '/api-docs.html'
+  end
+
+  get '/api-spec.json' do
+    require_relative 'docs/api_docs'
+    content_type :json
+    ApiDocs.generate_spec.to_json
+  end
+
   # OAuth callback (Google, GitHub, etc. all use this)
   get '/auth/:provider/callback' do
     auth = request.env['omniauth.auth']
