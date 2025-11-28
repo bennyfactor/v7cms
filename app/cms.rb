@@ -436,24 +436,51 @@ class CMS < Sinatra::Base
   end
 
   # GET /api/theme/preview - Preview theme with temporary parameters (no auth, public)
+  # Renders an actual page with theme params applied for live preview in iframe
   get '/api/theme/preview' do
-    # Get current theme as base
-    theme = Theme.instance
+    # Set flag so generate_theme_css uses query params instead of database
+    params[:theme_preview] = true
 
-    # Create a new theme object with preview parameters (don't save to DB)
-    preview_theme = Theme.new(theme.attributes.except('id', 'created_at', 'updated_at'))
+    # Get the page to preview (default to homepage)
+    preview_page = params[:page] || '/'
 
-    # Override with query parameters if provided
-    params.each do |key, value|
-      next if ['splat', 'captures'].include?(key)
-      preview_theme.send("#{key}=", value) if preview_theme.respond_to?("#{key}=")
+    # Render the appropriate page based on the path
+    case preview_page
+    when '/'
+      # Homepage
+      @posts = Post.published.recent.limit(5)
+      @title = 'Theme Preview - Home'
+      erb :index
+    when %r{^/posts/(.+)$}
+      # Single post
+      slug = $1
+      @post = Post.published.find_by(slug: slug) || Post.published.first
+      if @post
+        @title = "Theme Preview - #{@post.title}"
+        erb :post
+      else
+        @posts = []
+        @title = 'Theme Preview - Home'
+        erb :index
+      end
+    when %r{^/pages/(.+)$}
+      # Static page
+      slug = $1
+      @page = Page.published.find_by(slug: slug) || Page.published.first
+      if @page
+        @title = "Theme Preview - #{@page.title}"
+        erb :page
+      else
+        @posts = []
+        @title = 'Theme Preview - Home'
+        erb :index
+      end
+    else
+      # Default to homepage for unknown paths
+      @posts = Post.published.recent.limit(5)
+      @title = 'Theme Preview - Home'
+      erb :index
     end
-
-    # Generate CSS without saving
-    css = ThemeGenerator.new(preview_theme).generate_css
-
-    content_type 'text/css'
-    css
   end
 
   # Pages API Routes

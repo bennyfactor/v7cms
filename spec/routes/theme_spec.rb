@@ -226,20 +226,20 @@ RSpec.describe 'Theme Routes' do
   end
 
   describe 'GET /api/theme/preview' do
-    it 'returns CSS content type' do
+    it 'returns HTML content type' do
       get '/api/theme/preview'
 
       expect(last_response).to be_ok
-      expect(last_response.content_type).to include('text/css')
+      expect(last_response.content_type).to include('text/html')
     end
 
-    it 'returns valid CSS' do
+    it 'returns a full HTML page with theme CSS embedded' do
       get '/api/theme/preview'
 
-      css = last_response.body
-      expect(css).to include(':root {')
-      expect(css).to include('--color-primary:')
-      expect(css).to include('body {')
+      html = last_response.body
+      expect(html).to include('<!DOCTYPE html>')
+      expect(html).to include('--color-primary:')
+      expect(html).to include('<body')
     end
 
     it 'works without authentication' do
@@ -254,15 +254,15 @@ RSpec.describe 'Theme Routes' do
 
       get '/api/theme/preview'
 
-      css = last_response.body
-      expect(css).to include('--color-primary: #abcdef;')
+      html = last_response.body
+      expect(html).to include('--color-primary: #abcdef;')
     end
 
     it 'accepts query parameter overrides' do
       get '/api/theme/preview?primary_color=%23ff0000'
 
-      css = last_response.body
-      expect(css).to include('--color-primary: #ff0000;')
+      html = last_response.body
+      expect(html).to include('--color-primary: #ff0000;')
     end
 
     it 'does not save overrides to database' do
@@ -277,9 +277,9 @@ RSpec.describe 'Theme Routes' do
     it 'generates CSS with multiple parameter overrides' do
       get '/api/theme/preview?primary_color=%23ff0000&font_size_base=18'
 
-      css = last_response.body
-      expect(css).to include('--color-primary: #ff0000;')
-      expect(css).to include('--font-size-base: 18px;')
+      html = last_response.body
+      expect(html).to include('--color-primary: #ff0000;')
+      expect(html).to include('--font-size-base: 18px;')
     end
   end
 end
