@@ -301,6 +301,22 @@ module ThemeConfig
     },
 
     # ===== Advanced Customization =====
+    header_style: {
+      css_var: nil, # Applied via template logic, not CSS variable
+      default: 'default',
+      type: :enum,
+      values: ['default', 'minimal', 'prominent'],
+      label: 'Header Style',
+      description: 'Header appearance: default (standard), minimal (compact), prominent (emphasized)'
+    },
+    footer_style: {
+      css_var: nil, # Applied via template logic, not CSS variable
+      default: 'default',
+      type: :enum,
+      values: ['default', 'minimal', 'centered'],
+      label: 'Footer Style',
+      description: 'Footer appearance: default (standard), minimal (simple), centered (compact centered)'
+    },
     custom_css: {
       css_var: nil, # Not a CSS variable, raw CSS injection
       default: nil,
@@ -351,6 +367,11 @@ module ThemeConfig
       label: 'Effects',
       icon: 'box',
       fields: [:radius_sm, :radius_default, :radius_lg, :border_width, :shadow_sm, :shadow_default, :shadow_lg]
+    },
+    advanced: {
+      label: 'Advanced',
+      icon: 'settings',
+      fields: [:header_style, :footer_style, :custom_css]
     }
   }.freeze
 
