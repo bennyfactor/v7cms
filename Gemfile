@@ -29,6 +29,9 @@ gem 'dotenv', '~> 2.8'
 # JSON handling
 gem 'json', '~> 2.6'
 
+# API Documentation
+gem 'swagger-blocks', '~> 3.0'
+
 # XML generation for feeds
 gem 'builder', '~> 3.2'
 gem 'nokogiri', '~> 1.15'

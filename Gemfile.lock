@@ -143,6 +143,7 @@ GEM
     sqlite3 (2.8.0-aarch64-linux-gnu)
     sqlite3 (2.8.0-arm64-darwin)
     sqlite3 (2.8.0-x86_64-linux-gnu)
+    swagger-blocks (3.0.0)
     tilt (2.6.1)
     timeout (0.4.4)
     tzinfo (2.0.6)
@@ -177,6 +178,7 @@ DEPENDENCIES
   sinatra (~> 3.0)
   sinatra-activerecord (~> 2.0)
   sqlite3 (~> 2.1)
+  swagger-blocks (~> 3.0)
 
 RUBY VERSION
    ruby 3.2.9p265
