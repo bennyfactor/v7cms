@@ -1,9 +1,9 @@
 # v7cms Development Roadmap
 
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-28
 **Total Pending Tasks:** 1 (1 feature)
 **Estimated Effort:** ~2 hours
-**Test Status:** ✅ 489 examples, 12 failures (97.5% pass rate - 12 failures in comments system)
+**Test Status:** ✅ 489 examples, 0 failures (100% pass rate)
 
 This roadmap provides a prioritized view of all pending work with clear next steps for developers and AI agents.
 
@@ -229,9 +229,23 @@ All critical issues resolved. Monitor production for new critical bugs.
 
 ## Recently Completed
 
+### ✅ Header/Footer Style Fallback Fix (PR #37)
+**Completed:** 2025-11-28 | **Effort:** 15 min | **Status:** ✅ Complete
+Fixed NoMethodError on production where `header_style` and `footer_style` columns didn't exist. Added `respond_to?` check in layout.erb to gracefully fall back to 'default' style when columns are missing. Enables backward compatibility with databases that haven't run the migration yet.
+
+### ✅ Admin Comment Test Fix
+**Completed:** 2025-11-28 | **Effort:** 5 min | **Status:** ✅ Complete
+Fixed 11 failing comment API tests. Root cause: test user was created without `admin: true` flag, causing all authenticated admin API calls to return 401 Unauthorized.
+
 ### ✅ Commenting System (PR #30)
-**Completed:** 2025-11-25 | **Effort:** ~6-8 hours | **Status:** ✅ Complete (12 known test failures being addressed)
-Implemented self-hosted anonymous commenting system with reCAPTCHA v3 spam prevention, admin moderation interface with badge notification, and lazy loading comment display. Created Comment model with validations, 6 API endpoints (3 public, 3 admin), frontend form with invisible reCAPTCHA v3, admin moderation UI with pending/approved/spam filters, and comprehensive test coverage. Features: score-based bot detection (threshold 0.5), moderation queue (all comments default to approved=false), lazy loading (20 comments per batch), badge notification showing pending count. Test results: 489 examples, **12 failures** in comments system tests (known issue). Added 40 new tests (13 model + 27 routes).
+**Completed:** 2025-11-25 | **Effort:** ~6-8 hours | **Status:** ✅ Complete
+Implemented self-hosted anonymous commenting system with reCAPTCHA v3 spam prevention, admin moderation interface with badge notification, and lazy loading comment display. Created Comment model with validations, 6 API endpoints (3 public, 3 admin), frontend form with invisible reCAPTCHA v3, admin moderation UI with pending/approved/spam filters, and comprehensive test coverage. Features: score-based bot detection (threshold 0.5), moderation queue (all comments default to approved=false), lazy loading (20 comments per batch), badge notification showing pending count, **comment disabling** (global toggle in Settings + per-post toggle). Test results: 489 examples, **0 failures** ✅. Added 40 new tests (13 model + 27 routes).
+
+**Comment Disabling Feature (Verified 2025-11-28):**
+- Admin UI: Settings tab has "Allow comments site-wide" toggle
+- Admin UI: Posts form has "Enable comments for this post" checkbox
+- Public site: Comment form hidden when comments disabled (global or per-post)
+- API: Returns 403 when attempting to submit comment to disabled post
 
 ### ✅ Rate Limiting Middleware (PR #29)
 **Completed:** 2025-11-25 | **Effort:** ~3 hours
