@@ -69,13 +69,31 @@
     <link rel="alternate" type="application/atom+xml" title="<%= @settings.site_title %> Atom Feed" href="/feed/atom">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+    <%
+      # Get header/footer styles (support preview mode via params)
+      header_style = params[:theme_preview] ? (params[:header_style] || @theme.header_style) : @theme.header_style
+      footer_style = params[:theme_preview] ? (params[:footer_style] || @theme.footer_style) : @theme.footer_style
+
+      # Header style classes
+      header_classes = case header_style
+        when 'minimal' then 'bg-white border-b'
+        when 'prominent' then 'bg-white shadow-lg'
+        else 'bg-white shadow-sm'
+      end
+      header_padding = case header_style
+        when 'minimal' then 'py-3'
+        when 'prominent' then 'py-8'
+        else 'py-6'
+      end
+      title_size = header_style == 'prominent' ? 'text-3xl' : 'text-2xl'
+    %>
     <!-- Header -->
-    <header class="bg-white shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-6">
+    <header class="<%= header_classes %>">
+        <div class="max-w-4xl mx-auto px-4 <%= header_padding %>">
             <div class="flex justify-between items-center">
                 <div>
-                    <a href="/" class="text-2xl font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
-                    <% if @settings.site_tagline.present? %>
+                    <a href="/" class="<%= title_size %> font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
+                    <% if @settings.site_tagline.present? && header_style != 'minimal' %>
                     <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                     <% end %>
                 </div>
@@ -95,8 +113,22 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t mt-auto">
-        <div class="max-w-4xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
+    <%
+      # Footer style classes
+      footer_classes = case footer_style
+        when 'minimal' then 'bg-white border-t'
+        when 'centered' then 'bg-white border-t'
+        else 'bg-white border-t'
+      end
+      footer_padding = case footer_style
+        when 'minimal' then 'py-3'
+        when 'centered' then 'py-4'
+        else 'py-6'
+      end
+      footer_text_size = footer_style == 'minimal' ? 'text-xs' : 'text-sm'
+    %>
+    <footer class="<%= footer_classes %> mt-auto">
+        <div class="max-w-4xl mx-auto px-4 <%= footer_padding %> text-center text-gray-600 <%= footer_text_size %>">
             <p>
                 <% if @settings.show_copyright_year %>
                 &copy; <%= Time.now.year %>
