@@ -3,6 +3,7 @@ ENV['RACK_ENV'] = 'test'
 require 'rack/test'
 require 'rspec'
 require 'database_cleaner/active_record'
+require 'webmock/rspec'
 
 # Set up ActiveRecord before loading app
 require 'sinatra/activerecord'
@@ -16,6 +17,9 @@ ActiveRecord::Base.establish_connection(db_config)
 
 # Configure OmniAuth for testing
 OmniAuth.config.test_mode = true
+
+# Configure WebMock to disable real HTTP requests except localhost
+WebMock.disable_net_connect!(allow_localhost: true)
 
 # Load models
 require_relative '../app/models/user'
@@ -42,6 +46,12 @@ RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
+  end
+
+  config.before(:each) do
+    # Stub Gravatar requests by default (return 404 = no profile)
+    # Tests that specifically test Gravatar functionality should override this
+    stub_request(:get, /gravatar\.com/).to_return(status: 404)
   end
 
   config.around(:each) do |example|
