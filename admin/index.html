@@ -1015,6 +1015,30 @@
                             </div>
                         </div>
 
+                        <!-- Redirects Section -->
+                        <div class="border-t pt-4 mt-4">
+                            <h3 class="text-lg font-semibold mb-4">Redirects</h3>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Reserved Redirect Paths</label>
+                                    <input type="text" x-model="settings.reserved_redirect_paths"
+                                           @blur="markTouched('settings', 'reserved_redirect_paths'); validateSettings()"
+                                           @input="touchedFields.settings.has('reserved_redirect_paths') && validateSettings()"
+                                           :class="{
+                                               'border-red-500': validationErrors.settings.reserved_redirect_paths,
+                                               'border-green-500': touchedFields.settings.has('reserved_redirect_paths') && !validationErrors.settings.reserved_redirect_paths && settings.reserved_redirect_paths
+                                           }"
+                                           class="w-full border rounded px-3 py-2" maxlength="1000"
+                                           placeholder="/,/admin,/api,/auth,/feed,/posts,/pages">
+                                    <p class="text-xs text-gray-600 mt-1">Paths that cannot be used as short URLs (comma-separated, e.g., /admin,/api,/imgs)</p>
+                                    <p x-show="validationErrors.settings.reserved_redirect_paths"
+                                       x-text="validationErrors.settings.reserved_redirect_paths"
+                                       class="mt-1 text-sm text-red-600"></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="flex gap-2 pt-4 border-t">
                             <button type="submit"
@@ -1192,6 +1216,13 @@
                     <!-- Add New Redirect Form -->
                     <div class="bg-white rounded-lg shadow p-6 mb-6">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4">Add New Redirect</h3>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                            <p class="text-sm text-blue-800">
+                                <strong>Reserved paths:</strong>
+                                <span x-text="settings.reserved_redirect_paths || '/,/admin,/api,/auth,/feed,/posts,/pages'"></span>
+                            </p>
+                            <p class="text-xs text-blue-600 mt-1">These paths cannot be used as short URLs. You can configure this in Settings.</p>
+                        </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Short Path</label>

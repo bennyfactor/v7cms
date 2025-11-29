@@ -20,7 +20,15 @@ class Redirect < ActiveRecord::Base
   def short_path_not_reserved
     return unless short_path.present?
 
-    if RESERVED_PATHS.any? { |r| short_path == r || short_path.start_with?("#{r}/") }
+    # Get reserved paths from settings, fall back to hardcoded defaults
+    reserved_paths = begin
+      Setting.instance.reserved_paths_array
+    rescue
+      []
+    end
+    reserved_paths = RESERVED_PATHS if reserved_paths.empty?
+
+    if reserved_paths.any? { |r| short_path == r || short_path.start_with?("#{r}/") }
       errors.add(:short_path, "conflicts with reserved path")
     end
   end

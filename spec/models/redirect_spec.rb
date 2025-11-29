@@ -98,6 +98,51 @@ RSpec.describe Redirect, type: :model do
       redirect = Redirect.new(short_path: '/pricing', target_path: '/posts/pricing-page')
       expect(redirect).to be_valid
     end
+
+    context 'with custom reserved paths from settings' do
+      before do
+        # Mock HtaccessGenerator to avoid file operations
+        allow(HtaccessGenerator).to receive(:generate).and_return(true)
+        # Update settings with custom reserved paths
+        Setting.instance.update!(reserved_redirect_paths: '/admin,/api,/custom,/imgs')
+      end
+
+      it 'rejects custom reserved path /custom' do
+        redirect = Redirect.new(short_path: '/custom', target_path: '/posts/test')
+        expect(redirect).not_to be_valid
+        expect(redirect.errors[:short_path]).to include('conflicts with reserved path')
+      end
+
+      it 'rejects custom reserved path /imgs' do
+        redirect = Redirect.new(short_path: '/imgs', target_path: '/posts/test')
+        expect(redirect).not_to be_valid
+        expect(redirect.errors[:short_path]).to include('conflicts with reserved path')
+      end
+
+      it 'still rejects default reserved paths' do
+        redirect = Redirect.new(short_path: '/admin', target_path: '/posts/test')
+        expect(redirect).not_to be_valid
+        expect(redirect.errors[:short_path]).to include('conflicts with reserved path')
+      end
+
+      it 'allows paths that were previously reserved but removed from settings' do
+        redirect = Redirect.new(short_path: '/feed', target_path: '/posts/test')
+        expect(redirect).to be_valid
+      end
+    end
+
+    context 'when settings table does not exist' do
+      before do
+        # Mock Setting.instance to raise an error (simulating missing table)
+        allow(Setting).to receive(:instance).and_raise(StandardError)
+      end
+
+      it 'falls back to hardcoded defaults' do
+        redirect = Redirect.new(short_path: '/admin', target_path: '/posts/test')
+        expect(redirect).not_to be_valid
+        expect(redirect.errors[:short_path]).to include('conflicts with reserved path')
+      end
+    end
   end
 
   describe '#regenerate_htaccess callback' do
