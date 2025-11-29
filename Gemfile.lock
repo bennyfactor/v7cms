@@ -20,12 +20,17 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
+    addressable (2.8.8)
+      public_suffix (>= 2.0.2, < 8.0)
     base64 (0.3.0)
     bigdecimal (3.3.1)
     builder (3.3.0)
     coderay (1.1.3)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.4)
+    crack (1.0.1)
+      bigdecimal
+      rexml
     database_cleaner-active_record (2.2.2)
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0)
@@ -45,6 +50,7 @@ GEM
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-arm64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
+    hashdiff (1.2.1)
     hashie (5.0.0)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
@@ -97,6 +103,7 @@ GEM
     pry (0.15.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
+    public_suffix (7.0.0)
     puma (6.6.1)
       nio4r (~> 2.0)
     racc (1.8.1)
@@ -114,6 +121,7 @@ GEM
       ffi (~> 1.0)
     rerun (0.14.0)
       listen (~> 3.0)
+    rexml (3.4.4)
     rspec (3.13.2)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -150,6 +158,10 @@ GEM
       concurrent-ruby (~> 1.0)
     uri (1.1.1)
     version_gem (1.1.9)
+    webmock (3.26.1)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
 
 PLATFORMS
   aarch64-linux
@@ -179,6 +191,7 @@ DEPENDENCIES
   sinatra-activerecord (~> 2.0)
   sqlite3 (~> 2.1)
   swagger-blocks (~> 3.0)
+  webmock (~> 3.18)
 
 RUBY VERSION
    ruby 3.2.9p265

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'webmock/rspec'
 
 RSpec.describe User, type: :model do
   describe 'validations' do
@@ -102,6 +103,154 @@ RSpec.describe User, type: :model do
         user = User.from_omniauth(auth_hash)
         expect(user.id).to eq(existing.id)
       }.not_to change(User, :count)
+    end
+  end
+
+  describe '#fetch_gravatar_if_missing' do
+    let(:email) { 'test@example.com' }
+    let(:email_hash) { Digest::MD5.hexdigest(email.downcase) }
+    let(:gravatar_json_url) { "https://www.gravatar.com/#{email_hash}.json" }
+
+    context 'when avatar_url and name are missing' do
+      let(:gravatar_response) do
+        {
+          'entry' => [{ 'displayName' => 'Gravatar User' }]
+        }
+      end
+
+      before do
+        stub_request(:get, gravatar_json_url)
+          .to_return(status: 200, body: gravatar_response.to_json)
+      end
+
+      it 'fetches both from Gravatar on create' do
+        user = User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345'
+        )
+
+        user.reload
+        expect(user.avatar_url).to include('gravatar.com/avatar/')
+        expect(user.name).to eq('Gravatar User')
+      end
+    end
+
+    context 'when only avatar_url is missing' do
+      let(:gravatar_response) do
+        {
+          'entry' => [{ 'displayName' => 'Gravatar User' }]
+        }
+      end
+
+      before do
+        stub_request(:get, gravatar_json_url)
+          .to_return(status: 200, body: gravatar_response.to_json)
+      end
+
+      it 'fetches only avatar_url from Gravatar' do
+        user = User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345',
+          name: 'Existing Name'
+        )
+
+        user.reload
+        expect(user.avatar_url).to include('gravatar.com/avatar/')
+        expect(user.name).to eq('Existing Name')
+      end
+    end
+
+    context 'when only name is missing' do
+      let(:gravatar_response) do
+        {
+          'entry' => [{ 'displayName' => 'Gravatar User' }]
+        }
+      end
+
+      before do
+        stub_request(:get, gravatar_json_url)
+          .to_return(status: 200, body: gravatar_response.to_json)
+      end
+
+      it 'fetches only name from Gravatar' do
+        user = User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345',
+          avatar_url: 'https://example.com/avatar.jpg'
+        )
+
+        user.reload
+        expect(user.avatar_url).to eq('https://example.com/avatar.jpg')
+        expect(user.name).to eq('Gravatar User')
+      end
+    end
+
+    context 'when both avatar_url and name are present' do
+      it 'does not call GravatarService' do
+        expect(GravatarService).not_to receive(:fetch_profile)
+
+        User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345',
+          name: 'Existing Name',
+          avatar_url: 'https://example.com/avatar.jpg'
+        )
+      end
+    end
+
+    context 'when Gravatar has no profile' do
+      before do
+        stub_request(:get, gravatar_json_url)
+          .to_return(status: 404)
+      end
+
+      it 'does not update user' do
+        user = User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345'
+        )
+
+        user.reload
+        expect(user.avatar_url).to be_nil
+        expect(user.name).to be_nil
+      end
+    end
+
+    context 'when called manually on existing user' do
+      let(:gravatar_response) do
+        {
+          'entry' => [{ 'displayName' => 'Gravatar User' }]
+        }
+      end
+
+      before do
+        stub_request(:get, gravatar_json_url)
+          .to_return(status: 200, body: gravatar_response.to_json)
+      end
+
+      it 'can backfill missing data' do
+        user = User.create!(
+          email: email,
+          provider: 'google',
+          uid: '12345'
+        )
+
+        # Stub to prevent callback during create
+        allow(GravatarService).to receive(:fetch_profile).and_return({})
+
+        # Manually call to simulate rake task
+        allow(GravatarService).to receive(:fetch_profile).and_call_original
+        user.fetch_gravatar_if_missing
+
+        user.reload
+        expect(user.avatar_url).to include('gravatar.com/avatar/')
+        expect(user.name).to eq('Gravatar User')
+      end
     end
   end
 end
