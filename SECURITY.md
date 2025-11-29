@@ -17,7 +17,7 @@ We recommend always running the latest version from the `main` branch.
 
 To report a security vulnerability:
 
-1. **Email**: Send details to [your-security-email@example.com]
+1. **Email**: Send details to [security@iaatb.net](mailto:security@iaatb.net)
 2. **Subject**: "v7cms Security Vulnerability Report"
 3. **Include**:
    - Description of the vulnerability
@@ -221,7 +221,7 @@ Security advisories will be published:
 
 ## Contact
 
-For security concerns, contact: [your-security-email@example.com]
+For security concerns, contact: [security@iaatb.net](mailto:security@iaatb.net)
 
 For general questions, open a GitHub issue.
 

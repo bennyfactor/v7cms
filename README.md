@@ -1,5 +1,12 @@
 # v7cms
 
+[![Ruby](https://img.shields.io/badge/Ruby-3.2-red?logo=ruby)](https://www.ruby-lang.org/)
+[![Sinatra](https://img.shields.io/badge/Sinatra-3.0-lightgrey?logo=ruby)](https://sinatrarb.com/)
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
+[![Tests](https://img.shields.io/badge/Tests-500%2B%20passing-brightgreen)](spec/)
+[![RSpec](https://img.shields.io/badge/Tested%20with-RSpec-red?logo=ruby)](https://rspec.info/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A minimal content management system built with Ruby and Sinatra. This project provides a straightforward approach to managing and publishing content with modern authentication and a clean interface.
 
 ## Overview
@@ -669,7 +676,7 @@ Contributions are welcome. Please follow these guidelines:
 
 ## Testing
 
-The project maintains comprehensive test coverage with **489 tests** (489 examples, 12 failures in comments system):
+The project maintains comprehensive test coverage with **500 tests** (500 examples, 0 failures):
 
 - Model tests for validations and business logic
 - Route tests for all endpoints
