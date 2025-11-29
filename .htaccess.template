@@ -1,0 +1,182 @@
+# Disable directory browsing
+Options -Indexes
+
+# Enable RewriteEngine for FastCGI routing
+RewriteEngine On
+
+# ============================================================================
+# ALLOW OAuth routes before security rules
+# ============================================================================
+# Allow all /auth/ paths to pass through to the application
+RewriteCond %{REQUEST_URI} ^/index\.fcgi/auth/
+RewriteRule .* - [L]
+
+# ============================================================================
+# SECURITY: Block access to sensitive files and directories
+# Returns 404 to hide existence rather than 403 which reveals the file exists
+# ============================================================================
+
+# Block ALL dotfiles and dot-directories (.env, .git, .gitignore, .htaccess, etc.)
+# This is the primary defense against config/secret leaks
+RedirectMatch 404 /\.
+
+# Block access to any potential secrets/credential files by name pattern
+# This matches files like secrets.txt, credentials.json but NOT /auth/ paths
+RedirectMatch 404 /(secret|credential|password|token|key)s?\.(txt|json|yml|yaml|xml|ini|conf)$
+
+# Block Ruby source files - return 404 for .rb, .ru, .rake files
+RedirectMatch 404 \.(rb|ru|rake)$
+
+# Block configuration files - YAML, JSON, INI, CONF
+# BUT allow feed.xml and atom.xml (RSS/Atom feeds)
+RedirectMatch 404 \.(yml|yaml|json|ini|conf|config)$
+# Block XML files in subdirectories or with specific names (but not feed.xml/atom.xml in root)
+RedirectMatch 404 /.+/.+\.xml$
+RedirectMatch 404 ^/(config|database|settings|credentials|secret).*\.xml$
+
+# Block database files - SQLite and related files
+RedirectMatch 404 \.(db|sqlite|sqlite3|db-shm|db-wal|sql)$
+
+# Block backup and temporary files
+RedirectMatch 404 (\.(bak|backup|swp|swo|orig|tmp|old|save)|~)$
+
+# Block log files
+RedirectMatch 404 \.(log|logs)$
+
+# Block common non-compiled source files
+RedirectMatch 404 \.(md|markdown|txt|rst)$
+
+# Block lock files
+RedirectMatch 404 \.(lock)$
+
+# Block sensitive files by exact name (case-insensitive)
+RedirectMatch 404 /(?i)(gemfile|rakefile|dockerfile|docker-compose|readme|license|changelog|makefile)
+
+# Block entire sensitive directories (db/, spec/, config/, app/, lib/, test/, bin/)
+RedirectMatch 404 ^/(db|spec|config|app|lib|test|bin|tmp|log|vendor)/
+
+# Block editor/IDE files
+RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
+
+# ============================================================================
+# FALLBACK: Additional protection using FilesMatch (Apache 2.2/2.4 compatible)
+# In case RedirectMatch rules don't catch everything
+# ============================================================================
+
+# Protect database files (double protection)
+<FilesMatch "\.(db|sqlite|sqlite3|db-shm|db-wal|sql)$">
+    # Apache 2.4
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    # Apache 2.2
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect Ruby source files (double protection)
+<FilesMatch "\.(rb|ru|rake)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect configuration files (double protection)
+# BUT allow feed.xml and atom.xml (RSS/Atom feeds)
+<FilesMatch "\.(yml|yaml|json|ini|conf|config)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Note: XML file blocking removed because feeds are served dynamically through
+# the application, not as static files. Config XML files in subdirectories
+# are still blocked by RedirectMatch rules above.
+
+# Protect documentation and source files
+<FilesMatch "\.(md|markdown|txt|rst)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect backup files (double protection)
+<FilesMatch "(\.(bak|backup|swp|swo|orig|tmp|old|save|log)|~)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ============================================================================
+# CACHE CONTROL
+# ============================================================================
+
+# Cache static post HTML files (served from public/posts/)
+# These are pre-generated and updated when posts change
+<FilesMatch "^posts/.*\.html$">
+    Header set Cache-Control "public, max-age=3600"
+</FilesMatch>
+
+# Disable caching for dynamic HTML, JavaScript, and CSS files
+# Exclude static posts directory from no-cache rule
+<FilesMatch "\.(html|js|css)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Disable caching for all dynamic content (API routes and application routes)
+# Mark API requests with an environment variable
+SetEnvIf Request_URI "^/api/" is_dynamic_route
+SetEnvIf Request_URI "^/auth/" is_dynamic_route
+SetEnvIf Request_URI "^/posts/" is_dynamic_route
+SetEnvIf Request_URI "^/admin/" is_dynamic_route
+SetEnvIf Request_URI "^/$" is_dynamic_route
+
+# Apply no-cache headers to all dynamic routes
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_dynamic_route
+Header always set Pragma "no-cache" env=is_dynamic_route
+Header always set Expires "0" env=is_dynamic_route
+
+# Apply no-cache headers to all responses processed through FastCGI
+SetEnvIf Request_URI "\.fcgi" is_fcgi_request
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_fcgi_request
+Header always set Pragma "no-cache" env=is_fcgi_request
+Header always set Expires "0" env=is_fcgi_request
+
+# ============================================================================
+# CUSTOM REDIRECTS (auto-generated - do not edit manually)
+# ============================================================================
+{{REDIRECTS}}
+
+# ============================================================================
+# APPLICATION ROUTING: FastCGI handler
+# ============================================================================
+
+# Set directory index files - try index.html first, then index.fcgi
+DirectoryIndex index.html index.fcgi
+
+# Don't rewrite requests for existing files (CSS, JS, HTML, images, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+# Don't rewrite requests for existing directories
+RewriteCond %{REQUEST_FILENAME} !-d
+# Route everything else through index.fcgi (including /feed/rss and /feed/atom)
+RewriteRule ^(.*)$ /index.fcgi/$1 [QSA,L]
