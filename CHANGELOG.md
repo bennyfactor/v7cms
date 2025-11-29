@@ -1,386 +1,257 @@
 # Changelog
 
-## 2025-11-25 - Commenting System
+## 2025-11-29 - User Management UI
 
-### Added (PR #[TBD] - Commenting System)
+### Added (PR #39 - User Management UI)
+- **Users Admin Tab**: New tab in admin interface for viewing and managing user accounts
+  - User list displays avatar, name, email, provider badge, admin status, last login
+  - Relative time formatting ("2 days ago", "Just now")
+  - Search and filter capabilities
+- **Admin Privilege Management**: Toggle switches to grant/revoke admin access
+  - Safety guard: Cannot revoke your own admin access
+  - Safety guard: Must maintain at least one admin at all times
+- **Last Login Tracking**: New `last_login_at` column tracks user login timestamps
+  - Updated on each OAuth callback
+  - Displayed in admin user list
+- **Users API**: 2 new endpoints
+  - `GET /api/users` - List all users (admin only)
+  - `PUT /api/users/:id` - Update user admin status (admin only)
+- **Tests**: 11 new route tests for user management
+
+### Changed (PR #39)
+- Modified 5 files (+411 lines):
+  - Migration: Add `last_login_at` to users table
+  - app/cms.rb: User API endpoints with safety validations
+  - admin/index.html: Users tab and user table UI
+  - public/js/admin.js: fetchUsers, toggleUserAdmin, formatRelativeTime
+  - spec/routes/users_spec.rb: New test file
+- Test results: **500 examples, 0 failures** ✅
+
+---
+
+## 2025-11-28 - API Documentation and Theme Enhancements
+
+### Added (PR #38 - OpenAPI/Swagger API Documentation)
+- **Swagger UI**: Interactive API documentation at `/api/docs`
+- **OpenAPI 3.0 Spec**: Dynamic specification at `/api-spec.json`
+- **Documentation Coverage**: All 25+ API endpoints across 7 categories
+  - Posts, Pages, Comments, Settings, Theme, Auth, Feeds
+- **Schema Definitions**: Complete request/response schemas for all endpoints
+- **New Files**: 20 files added
+  - `app/docs/swagger_root.rb` - API metadata
+  - `app/docs/schemas/*.rb` - Schema definitions (7 files)
+  - `app/docs/paths/*.rb` - Path definitions (7 files)
+  - `app/docs/api_docs.rb` - Main assembler module
+  - `public/api-docs.html` - Swagger UI interface
+
+### Changed (PR #38)
+- Added swagger-blocks gem (~> 3.0) to Gemfile
+- Added `/api/docs` and `/api-spec.json` routes to cms.rb
+- Total: +1978 lines across 20 files
+- Test results: **489 examples, 0 failures** ✅
+
+### Added (PR #36 - Header and Footer Style Customization)
+- **Header Styles**: 3 options (default, minimal, prominent)
+  - `default`: Standard header with subtle shadow
+  - `minimal`: Compact header with border, hides tagline
+  - `prominent`: Larger header with emphasized shadow
+- **Footer Styles**: 3 options (default, minimal, centered)
+- **Database**: New columns `header_style` and `footer_style` in themes table
+- **Live Preview**: Styles update in real-time via theme preview
+
+### Changed (PR #36)
+- Added fields to ThemeConfig with enum validation
+- Updated layout.erb to apply dynamic classes
+- Total: +67 lines, -6 lines
+
+### Fixed (PR #37 - Header/Footer Style Fallback)
+- Added fallback for missing `header_style`/`footer_style` columns
+- Prevents errors when database hasn't been migrated yet
+
+### Fixed (PR #35 - Theme Preview Rendering)
+- Theme preview endpoint now renders actual HTML page
+- Preview iframe displays correctly in admin interface
+
+### Fixed (PR #34 - API Response Parsing)
+- Fixed nested data extraction from API responses in admin.js
+- Properly handles wrapped response objects
+
+---
+
+## 2025-11-27 - Admin Security and Error Handling
+
+### Added (PR #31 - Admin Email Whitelist Security)
+- **Email Whitelist**: `ADMIN_EMAILS` environment variable controls admin access
+  - Comma-separated list of authorized email addresses
+  - Validated at OAuth login (not just authorization)
+- **Admin Field**: Boolean `admin` column on users table
+  - Stored in database for fast authorization checks
+  - Backfill migration sets existing users based on whitelist
+- **Fail-Closed Security**: Application rejects all logins if `ADMIN_EMAILS` not configured
+- **Access Denied Screen**: Clear UI for unauthorized login attempts
+- **Startup Warning**: Console warning if `ADMIN_EMAILS` not set
+- **Setup Validation**: setup.php displays configured admin emails
+
+### Changed (PR #31)
+- OAuth callback validates email against whitelist before creating session
+- `require_login` helper checks admin field
+- Updated .env.example to mark `ADMIN_EMAILS` as REQUIRED
+- Total: +194 lines, -69 lines across 15 files
+- Test results: **443 examples, 0 failures** ✅
+
+### Fixed (PR #33 - Auth API User Object Extraction)
+- Correctly extracts user object from nested auth API response
+- Prevents undefined errors in admin.js
+
+### Fixed (PR #32 - Admin API Error Handling)
+- Added comprehensive error handling to all admin API calls
+- Prevents Alpine.js crashes on API failures
+- Graceful error messages for users
+
+---
+
+## 2025-11-27 - Commenting System
+
+### Added (PR #30 - Commenting System + Comment Disabling)
 - **Comment Model**: Self-hosted anonymous commenting with moderation queue
-  - Created comments table with post_id FK, author fields, content, IP, reCAPTCHA score
+  - Database: comments table with post_id FK, author fields, content, IP, reCAPTCHA score
   - Validations: author_name/email required, email format, content max 5000 chars
   - Scopes: approved, pending, spam
-  - Post association: has_many :comments, dependent: :destroy
-- **Public Comments API**: 2 endpoints for public comment viewing and submission
-  - GET /api/posts/:id/comments - List approved comments with pagination (limit/offset)
-  - POST /api/posts/:id/comments - Submit comment with reCAPTCHA v3 verification
+- **reCAPTCHA v3 Integration**: Invisible bot protection
   - Score threshold: 0.5 (rejects likely bots)
-  - All comments default to approved=false (requires moderation)
-- **Admin Comments API**: 4 endpoints for moderation
-  - GET /api/comments - List all comments with status filter (pending/approved/spam)
-  - GET /api/comments/pending_count - Get pending comment count for badge
-  - PUT /api/comments/:id/approve - Approve comment
-  - PUT /api/comments/:id/spam - Mark as spam
-  - DELETE /api/comments/:id - Delete permanently
-- **Frontend Comment Display**: Lazy loading with reCAPTCHA v3 integration
-  - Comment form with name, email, optional website, content fields
-  - Invisible reCAPTCHA v3 (no user friction)
-  - Lazy loading: 20 comments per batch with "Load More" button
-  - Oldest-first ordering
+  - Environment variables: RECAPTCHA_SITE_KEY, RECAPTCHA_SECRET_KEY
+- **Public Comments API**:
+  - `GET /api/posts/:id/comments` - List approved comments with pagination
+  - `POST /api/posts/:id/comments` - Submit comment with reCAPTCHA verification
+- **Admin Comments API**:
+  - `GET /api/comments` - List all comments with status filter
+  - `GET /api/comments/pending_count` - Pending count for badge
+  - `PUT /api/comments/:id/approve` - Approve comment
+  - `PUT /api/comments/:id/spam` - Mark as spam
+  - `DELETE /api/comments/:id` - Delete permanently
+- **Frontend Comment Display**:
+  - Lazy loading: 20 comments per batch with "Load More"
+  - Comment form with name, email, optional website
   - Success/error messaging
-- **Admin Moderation Interface**: Comments tab with badge notification
-  - Badge shows pending count (red bubble on tab)
+- **Admin Moderation Interface**:
+  - Comments tab with pending count badge
   - Filter buttons: Pending, Approved, Spam
   - Actions: Approve, Mark as Spam, Delete
-  - Shows comment metadata: author, email, website, post reference, reCAPTCHA score
-  - Auto-refresh pending count every 60 seconds
-- **reCAPTCHA v3 Integration**: Invisible spam prevention
-  - Environment variables: RECAPTCHA_SITE_KEY, RECAPTCHA_SECRET_KEY
-  - Server-side verification with Google API
-  - Score displayed in admin interface
-- **Comprehensive Tests**: 40 new tests for models and routes
-  - Comment model: validations, associations, scopes, pending_count (13 tests)
-  - Public API: GET with pagination, POST with reCAPTCHA, error handling (11 tests)
-  - Admin API: authentication, approve/spam/delete, filters (16 tests)
+  - Shows metadata: author, email, website, reCAPTCHA score
+- **Comment Disabling Controls**:
+  - Global toggle: `settings.allow_comments` (site-wide)
+  - Per-post toggle: `posts.comments_enabled`
+  - AND logic: both must be true for comments to display
+  - "Comments are closed" message when disabled
+  - Existing approved comments remain visible
 
-### Changed (PR #[TBD])
-- Modified 10 files, created 5 files:
-  - db/migrate/*_create_comments.rb: New migration (34 lines)
-  - app/models/comment.rb: New model (17 lines)
-  - app/models/post.rb: Added has_many :comments (1 line)
-  - app/cms.rb: Added 6 comment endpoints, 2 helper methods (150+ lines)
-  - app/views/post.erb: Added comment form and display section (60+ lines)
-  - public/js/comments.js: New frontend logic (120+ lines)
-  - public/admin/index.html: Added Comments tab (70+ lines)
-  - public/js/admin.js: Added moderation logic (80+ lines)
-  - .env.example: Added reCAPTCHA keys
-  - README.md: Added Comments API documentation
-  - CLAUDE.md: Updated schema and features
-  - spec/models/comment_spec.rb: New model tests (118 lines)
-  - spec/routes/comments_spec.rb: New route tests (712 lines)
-  - spec/spec_helper.rb: Updated for Comment test support
-- Test results: 425 → 465 examples, **1 failure** (pre-existing, unrelated - 99.8% pass rate maintained)
-
-### Fixed (PR #[TBD])
-- **Spam Prevention**: Comments now protected by reCAPTCHA v3 with score-based filtering
-- **Moderation**: All comments require admin approval before appearing on site
-- **UX**: Lazy loading minimizes API load for posts with many comments
-
-### Impact (PR #[TBD])
-- **User Engagement**: Visitors can now comment on posts with low friction (no CAPTCHA challenge)
-- **Spam Protection**: Invisible bot detection with 0.5 score threshold
-- **Admin Control**: Full moderation interface with approve/spam/delete actions
-- **Performance**: Lazy loading prevents large comment threads from slowing page loads
-- **Monitoring**: Badge notification alerts admin to pending comments
-- Test count increased from 425 to 465 examples (40 new tests: 13 model + 27 routes)
+### Changed (PR #30)
+- Total: +2108 lines, -927 lines
+- New files: comment.rb, comments.js, comment specs
+- Test results: **477 examples, 0 failures** ✅
 
 ---
 
 ## 2025-11-25 - Rate Limiting and Security Hardening
 
 ### Added (PR #29 - Rate Limiting Middleware)
-- **Rack::Attack Middleware**: Implemented rate limiting with FastCGI multi-process compatibility
-  - Added rack-attack gem (~> 6.7) to Gemfile
-  - Created config/rate_limit.rb with FileStore cache for shared state across processes
-  - Cache directory: ./tmp/rack-attack-cache (auto-created, shared across all FastCGI workers)
-  - General traffic throttle: 100 requests/minute per IP (excludes /admin paths)
-  - API write throttle: 20 requests/minute per IP for POST/PUT/DELETE operations
-  - Login throttle: 5 requests/minute per IP for /auth/* endpoints
-  - IP blocklist: Configurable via BLOCKED_IPS environment variable (comma-separated)
-  - Custom 429 response with Retry-After header in JSON format
-- **Rate Limiting Tests**: Added 11 comprehensive tests in spec/middleware/rate_limiter_spec.rb
-  - General traffic throttle tests (under limit, over limit, excludes /admin)
-  - API writes throttle tests (under limit, over limit, GET requests not throttled)
-  - Login throttle tests (under limit, over limit)
-  - IP blocklist tests
-  - Custom error response format test
-- **Dockerfile.apache Enhancements**: Fixed FastCGI compatibility issues
-  - Added libfcgi-dev dependency for fcgi gem compilation
-  - Configured bundle install in deployment mode (creates vendor/bundle)
-  - Moved .htaccess to public directory (DocumentRoot location)
-  - Added FcgidInitialEnv directives to pass Bundler environment variables (BUNDLE_PATH, BUNDLE_GEMFILE, GEM_HOME, GEM_PATH)
-  - Configured ScriptAlias to execute index.fcgi from parent directory
-  - Added directory permissions for /var/www/v7cms with +ExecCGI
+- **Rack::Attack Middleware**: Rate limiting with FastCGI multi-process compatibility
+  - rack-attack gem (~> 6.7)
+  - FileStore cache for shared state across processes
+  - Cache directory: ./tmp/rack-attack-cache
+- **Rate Limits**:
+  - General traffic: 100 requests/minute per IP (excludes /admin)
+  - API writes: 20 requests/minute per IP for POST/PUT/DELETE
+  - Login: 5 requests/minute per IP for /auth/* endpoints
+- **IP Blocklist**: Configurable via BLOCKED_IPS environment variable
+- **Custom 429 Response**: JSON format with Retry-After header
+- **Rate Limiting Tests**: 11 comprehensive tests
 
 ### Changed (PR #29)
-- Modified 6 files:
-  - Gemfile: Added rack-attack gem
-  - Gemfile.lock: Locked dependencies
-  - app/cms.rb: Added Rack::Attack middleware (disabled in test env)
-  - config/rate_limit.rb: Created new rate limiting configuration (55 lines)
-  - spec/middleware/rate_limiter_spec.rb: Created new test file (143 lines)
-  - Dockerfile.apache: Updated for FastCGI compatibility (28 insertions, 5 deletions)
-- Test results: **425 examples, 0 failures** ✅ (100% pass rate maintained)
-
-### Fixed (PR #29)
-- **Security**: API endpoints now protected against abuse and DoS attacks
-- **FastCGI Compatibility**: Dockerfile.apache now properly runs application with Bundler gem resolution
-- **Multi-Process Rate Limiting**: FileStore cache enables rate limiting across 8+ concurrent FastCGI worker processes
-
-### Impact (PR #29)
-- **Security Hardening**: Prevents automated attacks and abuse via rate limiting
-- **Production Ready**: Tested successfully with Apache FastCGI spawning 8 worker processes
-- **Thread-Safe**: File locking ensures safe concurrent access to rate limit counters
-- **Flexible Configuration**: IP blocklist allows quick response to malicious actors
-- Test count increased from 414 to 425 examples (11 new middleware tests)
+- Modified 6 files
+- Dockerfile.apache: Fixed FastCGI compatibility issues
+- Test results: **425 examples, 0 failures** ✅
 
 ---
 
 ## 2025-11-24 - Performance Optimization and Testing Improvements
 
 ### Added (PR #28 - Setting.instance Caching)
-- **Thread-Safe In-Memory Caching**: Implemented caching for Setting.instance to reduce database queries
-  - Added `@@instance_cache` and `@@cache_mutex` class variables
-  - Double-checked locking pattern for thread safety
-  - `Setting.clear_cache!` method for explicit cache clearing
-  - `after_save` callback for automatic cache invalidation on updates
-- **Caching Tests**: Added 3 comprehensive tests for caching behavior
-  - Test 1: Verifies instance cached in memory after first load (no DB query on second call)
-  - Test 2: Verifies cache clears when settings are updated (fresh object loaded)
-  - Test 3: Verifies thread-safe cache access (10 concurrent threads get same instance)
-- **Test Infrastructure**: Global cache clearing in spec_helper before each test
+- **Thread-Safe In-Memory Caching**: Caching for Setting.instance
+  - Double-checked locking pattern
+  - `Setting.clear_cache!` method
+  - `after_save` callback for automatic invalidation
+- **Caching Tests**: 3 tests for caching behavior
 
 ### Changed (PR #28)
-- Modified 3 files:
-  - app/models/setting.rb: Added caching implementation (17 lines)
-  - spec/models/setting_spec.rb: Added caching tests and clean state handling (67 lines)
-  - spec/spec_helper.rb: Added cache clearing to prevent test pollution (2 lines)
-- Test results: **414 examples, 0 failures** ✅ (100% pass rate maintained)
-
-### Fixed (PR #28)
-- **Query Performance**: Setting.instance now O(1) instead of O(n) for repeated calls
-- **Test Isolation**: Cache clearing prevents cached Setting from polluting other tests
-- **Deadlock Prevention**: first_or_create! called outside mutex to avoid recursive locking
-
-### Impact (PR #28)
-- **Performance**: First call queries database, all subsequent calls use in-memory cache
-- **Thread Safety**: Mutex protection ensures safe concurrent access
-- **Auto-Invalidation**: Cache automatically cleared when settings updated
-- Test count increased from 411 to 414 examples (3 new caching tests)
+- Modified 3 files
+- Test results: **414 examples, 0 failures** ✅
 
 ---
 
 ## 2025-11-24 - Admin Form Enhancements, Bug Fixes, and Complete Test Suite Fix
 
-### Added (PR #27 - Remaining Test Fixes)
-- **custom_css Field Integration**: Added custom_css to ThemeConfig::FIELDS with proper metadata
-  - Added to app/config/theme_fields.rb with `css_var: nil`, `default: nil`, `type: :text`
-  - Added validation in Theme model: `validates :custom_css, length: { maximum: 10000 }, allow_blank: true`
-  - Updated ThemeGenerator to skip fields without CSS variables
-- **Test Suite Completion**: Fixed all 17 remaining test failures using systematic debugging
-  - Pattern 1 (5 failures): custom_css missing from ThemeConfig
-  - Pattern 2 (11 failures): ThemeGenerator tests outdated
-  - Pattern 3 (1 failure): PostRenderer callback side effect
-
-### Changed (PR #27)
-- Modified 6 test files:
-  - app/config/theme_fields.rb: Added custom_css field
-  - app/models/theme.rb: Added custom_css validation
-  - app/services/theme_generator.rb: Skip nil css_var fields
-  - spec/routes/theme_spec.rb: Fixed variable name typo
-  - spec/services/theme_generator_spec.rb: Updated 11 tests for simplified CSS generation
-  - spec/services/post_renderer_spec.rb: Added file cleanup for callback handling
+### Fixed (PR #27 - Remaining Test Failures)
+- **custom_css Field Integration**: Added to ThemeConfig::FIELDS
+- **Test Suite Completion**: Fixed all 17 remaining test failures
 - Test results: **411 examples, 0 failures** ✅ (100% pass rate achieved)
 
-### Fixed (PR #27)
-- **custom_css Serialization**: Now properly included in API responses via theme_json
-- **custom_css Validation**: Length limit (10000 chars) now enforced
-- **custom_css Reset**: Now properly reset to nil by reset_to_defaults!
-- **ThemeGenerator Tests**: Aligned with current simplified implementation
-- **PostRenderer Test**: Fixed callback side effect in test setup
+### Fixed (PR #26 - Theme Test Updates)
+- Updated field names: `line_height` → `line_height_base`, etc.
+- Updated validation ranges and CSS variable names
+- 51 test failures fixed (down from 67)
 
-### Impact (PR #27)
-- **Test Stability**: 100% test pass rate achieved (was 96% after PR #26)
-- **API Completeness**: custom_css now fully functional in theme API
-- **Maintainability**: All tests aligned with current implementations
-- Net code reduction: 24 insertions, 33 deletions (removed obsolete tests)
-
----
-
-## 2025-11-24 - Admin Form Enhancements, Bug Fixes, and Test Fixes
-
-### Added (PR #26 - Theme Test Fixes)
-- **Test Suite Improvements**: Fixed 51 test failures caused by Theme schema expansion migration
-- **Updated Field Names**: Changed all test references from old to new field names:
-  - `line_height` → `line_height_base`
-  - `spacing_scale` → `spacing_unit`
-  - `border_radius` → `radius_default`
-- **Updated Validation Ranges**: Aligned test assertions with new field semantics
-  - `line_height_base`: 1.0-2.5 (was 1.4-2.0)
-  - `font_size_base`: 12-24 (unchanged)
-  - `spacing_unit`: 0.25-10.0 (new range)
-- **Updated CSS Variable Names**: Changed test assertions to match generated CSS
-  - `--line-height` → `--line-height-base`
-  - `--spacing-scale` → `--spacing-unit`
-  - `--border-radius` → `--radius-default`
-  - `--container-width` → `--container-max`
-
-### Changed (PR #26)
-- Modified 3 test files (273 lines changed):
-  - spec/models/theme_spec.rb: Default values, validations, removed obsolete field tests
-  - spec/routes/theme_spec.rb: API endpoint tests with new field names
-  - spec/services/theme_generator_spec.rb: Theme.new() calls, CSS assertions, removed obsolete helper tests
-- Test results: 411 examples, 16 failures (down from 67)
-
-### Removed (PR #26)
-- Tests for deleted Theme fields: `layout_style`, `header_style`, `footer_style`
-- Tests for obsolete helper methods: `container_width_px`, `border_radius_px`
-
-### Impact (PR #26)
-- **Test Stability**: 76% of failing tests now pass (51 out of 67 fixed)
-- **Test Suite Health**: Improved from 368 passing to 395 passing tests
-- **Remaining Work**: 16 failures fixed in PR #27
-
----
-
-## 2025-11-24 - Admin Form Enhancements and Bug Fixes
-
-### Added (PR #25 - Quill Content Validation Hotfix)
-- **Quill Text-Change Event Listeners**: Added native 'text-change' event listeners to both Quill editors
-  - initQuill() for posts content validation (public/js/admin.js lines 149-155)
-  - initPageQuill() for pages content validation (public/js/admin.js lines 767-773)
-- **Hybrid Validation Pattern**: Listeners mark field as touched on first change, then validate on subsequent changes
-- 16 lines added to admin.js
-
-### Fixed (PR #25)
-- **Content Validation Bug**: "Content is required" error no longer persists after adding content to Quill editor
-- Posts and pages can now be saved when valid content is present
-- Validation behaves consistently across all form fields (title, slug, content)
+### Fixed (PR #25 - Quill Content Validation)
+- Added Quill 'text-change' event listeners
+- "Content is required" error no longer persists after adding content
 
 ### Added (PR #24 - Confirmation Dialogs)
-- **Enhanced Confirmation Dialogs**: Multi-line native confirm() dialogs for destructive actions
-  - Posts deletion: "This action cannot be undone" message
-  - Pages deletion without children: Same enhanced warning
-  - Pages deletion with children: CASCADE WARNING with child count
-- **Client-Side Child Counting**: Uses array filter to count child pages before deletion
-- **Proper Grammar Handling**: Singular/plural formatting for child page counts
-
-### Changed (PR #24)
-- Modified deletePost() method in admin.js (5 lines)
-- Modified deletePage() method in admin.js (17 lines)
-- Total: 22 lines modified in public/js/admin.js
+- Enhanced multi-line confirmation dialogs for deletions
+- Child page count warning for cascade deletes
 
 ### Added (PR #23 - Admin Form Validation)
-- **Comprehensive Client-Side Validation**: Alpine.js validation for all admin forms
-  - Posts form: 3 fields (title, slug, content)
-  - Pages form: 4 fields (title, slug, content, parent_id)
-  - Settings form: 12 fields (site_title, site_tagline, contact_email, etc.)
-- **Validation Infrastructure** (public/js/admin.js - 350+ lines):
-  - validationErrors reactive state (post, page, settings)
-  - touchedFields tracking with JavaScript Sets
-  - validatePost(), validatePage(), validateSettings() methods
-  - markTouched() helper method
-  - clearValidationErrors() helper method
-  - validateField() for individual field validation
-  - checkSlugUniqueness() with debouncing (1 second) and caching
-- **HTML Validation Bindings** (admin/index.html - 275+ lines):
-  - Validation summary banners with error counts and clickable error links
-  - Field-level @blur and @input bindings for hybrid validation timing
-  - Red/green border feedback using :class bindings
-  - Error message displays below each field
-  - Save button disabled state when validation errors exist
-- **Backend Slug Filtering**: API endpoints filter out current record when checking slug uniqueness (cms.rb)
-- **Hybrid Validation Timing**: No validation on fresh fields → validate on blur → real-time after touched
-- **Debounced Slug Uniqueness**: 1-second debounce with caching to reduce API calls
-- **Graceful Error Handling**: Network errors during slug checks don't block saving
-- Testing checklist created: docs/TESTING_CHECKLIST.md
-
-### Changed (PR #23)
-- Total: 625+ lines added, 13 lines modified across 3 files
-- 12 commits merged to main
-- Test count: 427 → 435 examples
-
-### Impact
-- **PR #25**: Fixes critical blocker preventing posts/pages from being saved
-- **PR #24**: Prevents accidental data loss with clear deletion warnings
-- **PR #23**: Prevents invalid submissions, provides immediate user feedback, reduces server load, improves UX
+- Client-side validation for all admin forms
+- Debounced slug uniqueness checking
+- Real-time validation feedback
 
 ---
 
 ## 2025-11-23 - Service Error Handling
 
 ### Added
-- **Error Handling in Service Classes**: Comprehensive error handling for all 4 service classes
-  - PostRenderer: try/catch for file write/delete operations
-  - PageRenderer: try/catch for file write/delete operations
-  - FeedGenerator: try/catch for RSS and Atom feed generation
-  - ThemeGenerator: try/catch for CSS generation and file write
-- **Logger Integration**: All services use Logger.new(STDOUT) for structured error logging
-- **Error Logging**: Detailed error messages with full stack traces on failure
-- **Boolean Return Values**: Services return true/false for success/failure instead of raising exceptions
-- **31 Error Scenario Tests**: Comprehensive test coverage for all error paths
-  - PostRenderer: 10 error handling tests
-  - PageRenderer: 9 error handling tests (new test file created)
-  - FeedGenerator: 7 error handling tests
-  - ThemeGenerator: 5 error handling tests
-
-### Changed
-- FeedGenerator.write_feeds now attempts both RSS and Atom writes even if one fails
-- Split FeedGenerator into write_rss_feed and write_atom_feed private methods
-- All service methods now log success messages on completion
-- ThemeGenerator.generate_and_write returns nil on error (was raising exception)
-
-### Technical Details
-- Error handling pattern: begin/rescue/end blocks with structured logging
-- Logger outputs to STDOUT for visibility in production logs
-- Tests use instance_double(Logger) for mock verification
-- All error tests verify both return values and log messages
-- Total test count: 396 → 427 examples (31 new tests, all passing)
+- **Error Handling**: Comprehensive try/catch in all 4 service classes
+- **Logger Integration**: Structured error logging with stack traces
+- **Boolean Return Values**: Success/failure instead of exceptions
+- **31 Error Scenario Tests**
 
 ---
 
 ## 2025-11-22 - Theme Customization Complete
 
 ### Added
-- **Theme Model**: Singleton theme model with 40+ configurable fields across 8 semantic categories
-- **ThemeConfig Module**: Centralized field definitions and metadata (382 lines)
+- **Theme Model**: Singleton with 40+ configurable fields
+- **ThemeConfig Module**: Centralized field definitions (382 lines)
 - **ThemeGenerator Service**: CSS generation with custom properties
 - **Theme API**: GET, PUT, POST reset, GET preview endpoints
-- **Admin UI**: Theme tab with color pickers and category organization
-- **Tailwind v4 Integration**: CDN with @theme directive support
-- Theme CSS auto-generated at `public/css/theme.css`
-- Two migrations for theme tables (create + expand fields)
-- Comprehensive tests for theme model, routes, and service
+- **Admin UI**: Theme tab with color pickers
+- **Tailwind v4 Integration**: CDN with @theme directive
 
 ### Changed
-- **Tailwind CSS**: Switched from standalone CLI to v4 CDN with @theme directive
-- No CSS build step required anymore
-- Admin interface path: `/admin/index.html` → `/admin/`
-- Total test count: 252 → 396 examples (all passing)
-
-### Technical Details
-- Theme system uses semantic color naming (primary, accent, etc.)
-- CSS custom properties for browser-side theming
-- Auto-regeneration of theme.css and static HTML on save
-- Granular controls approach (not pre-built themes)
+- Switched from Tailwind CLI to v4 CDN
+- Test count: 252 → 396 examples
 
 ---
 
 ## 2025-11-18 - Critical Fixes
 
 ### Fixed
-- Feed route tests updated for dynamic generation (was expecting static files)
-- Test expectations now match dynamic routes `/feed/rss` and `/feed/atom`
-- Legacy feed URLs (`/feed.xml`, `/atom.xml`) now correctly test for redirects instead of 404s
+- Feed route tests updated for dynamic generation
+- Legacy feed URL redirect tests
 
 ### Added
-- Foreign key constraint on `pages.parent_id` → `pages.id`
+- Foreign key constraint on `pages.parent_id`
 - Circular reference validation in Page model
-- Database-level orphan prevention for pages
-- Tests for foreign key constraint behavior (3 tests)
-- Tests for circular reference prevention (3 tests)
+- N+1 query optimization for `Page#ancestors` using recursive CTE
 
 ### Changed
-- Pages table now enforces referential integrity at database level
-- Parent pages with children cannot be deleted via direct SQL (on_delete: :restrict)
-- ActiveRecord `dependent: :destroy` still cascades deletes through the model layer
-- Feed tests restructured to test dynamic generation and legacy redirects separately
-
-### Performance
-- **N+1 Query Optimization**: `Page#ancestors` method now uses recursive CTE (Common Table Expression)
-- Query complexity reduced from O(n) to O(1) for hierarchy depth
-- Single database query loads all ancestors regardless of nesting level
-- Performance test added verifying single-query execution (spec/models/page_spec.rb:328)
-- SQLite 3.8.3+ required for recursive CTE support
-
-### Technical Details
-- Migration `20251118030929_add_foreign_key_to_pages.rb` cleans up orphaned references before adding constraint
-- Page model validation prevents circular hierarchies (self-parent or ancestor-as-child)
-- Total test count increased from 246 to 252 examples (all passing)
+- Test count: 246 → 252 examples
