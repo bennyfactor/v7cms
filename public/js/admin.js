@@ -36,6 +36,10 @@ function cmsApp() {
     pendingCommentCount: 0,
     commentFilter: 'pending',
 
+    // Users
+    users: [],
+    togglingUserId: null,
+
     // Validation
     validationErrors: {
       post: {},
@@ -663,6 +667,63 @@ function cmsApp() {
       }
     },
 
+    // Users
+    async fetchUsers() {
+      try {
+        const response = await fetch('/api/users', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to fetch users:', response.status, response.statusText);
+          return;
+        }
+        const data = await response.json();
+        this.users = data.users || [];
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    },
+
+    async toggleUserAdmin(user) {
+      const newAdminValue = !user.admin;
+      const action = newAdminValue ? 'grant admin access to' : 'revoke admin access from';
+
+      if (!newAdminValue && !confirm(`${action} ${user.name || user.email}?\n\nThis will ${newAdminValue ? 'allow' : 'prevent'} them from accessing the admin panel.`)) {
+        return;
+      }
+
+      this.togglingUserId = user.id;
+
+      try {
+        const response = await fetch(`/api/users/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ admin: newAdminValue })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          alert(data.error || 'Failed to update user');
+          return;
+        }
+
+        const data = await response.json();
+        const index = this.users.findIndex(u => u.id === user.id);
+        if (index !== -1) {
+          this.users[index] = data.user;
+        }
+      } catch (error) {
+        console.error('Error updating user:', error);
+        alert('Failed to update user');
+      } finally {
+        this.togglingUserId = null;
+      }
+    },
+
     // Validation
     markTouched(form, field) {
       this.touchedFields[form].add(field);
@@ -790,6 +851,23 @@ function cmsApp() {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    formatRelativeTime(dateString) {
+      if (!dateString) return 'Never';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSecs < 60) return 'Just now';
+      if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+      if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+      return this.formatDate(dateString);
     }
   };
 }
