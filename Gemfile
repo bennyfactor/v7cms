@@ -42,6 +42,7 @@ group :development, :test do
   gem 'rack-test', '~> 2.1'
   gem 'database_cleaner-active_record', '~> 2.1'
   gem 'factory_bot', '~> 6.2'
+  gem 'webmock', '~> 3.18'
 end
 
 group :development do
