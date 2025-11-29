@@ -203,6 +203,9 @@ class CMS < Sinatra::Base
     user = User.from_omniauth(auth)
 
     if user
+      # Track last login time
+      user.update!(last_login_at: Time.current)
+
       # Ensure admin flag is set
       user.update!(admin: true) unless user.admin?
 
@@ -242,6 +245,49 @@ class CMS < Sinatra::Base
     else
       json({ logged_in: false })
     end
+  end
+
+  # Users API Routes
+
+  # GET /api/users - List all users
+  get '/api/users' do
+    require_login
+    users = User.order(created_at: :desc)
+    json({ users: users.map { |u| user_json(u) } })
+  end
+
+  # PUT /api/users/:id - Update user (admin status)
+  put '/api/users/:id' do
+    require_ajax_header
+    require_login
+
+    user = User.find_by(id: params[:id])
+    halt 404, json({ error: 'User not found' }) unless user
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    # Only allow updating admin field
+    if data.key?('admin')
+      new_admin_value = data['admin']
+
+      # Safety: Can't revoke own admin access
+      if user.id == current_user.id && new_admin_value == false
+        halt 400, json({ error: 'Cannot revoke your own admin access' })
+      end
+
+      # Safety: Must keep at least one admin
+      if new_admin_value == false && User.where(admin: true).count == 1 && user.admin?
+        halt 400, json({ error: 'Cannot revoke - at least one admin must remain' })
+      end
+
+      user.update!(admin: new_admin_value)
+    end
+
+    json({ user: user_json(user) })
   end
 
   # Posts API Routes
@@ -795,6 +841,20 @@ class CMS < Sinatra::Base
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format,
       allow_comments: setting.allow_comments
+    }
+  end
+
+  # User serialization helper
+  def user_json(user)
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      provider: user.provider,
+      avatar_url: user.avatar_url,
+      admin: user.admin,
+      created_at: user.created_at,
+      last_login_at: user.last_login_at
     }
   end
 
