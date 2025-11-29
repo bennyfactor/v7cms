@@ -11,7 +11,7 @@ This project follows standard open source community guidelines. Be respectful, c
 ### Reporting Bugs
 
 Before creating a bug report:
-- Check the [existing issues](https://github.com/your-repo/v7cms/issues) to avoid duplicates
+- Check the [existing issues](https://github.com/bennyfactor/v7cms/issues) to avoid duplicates
 - Test with the latest version from the `main` branch
 - Verify the issue occurs in a clean environment (fresh database, no custom modifications)
 
