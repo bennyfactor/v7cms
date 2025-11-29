@@ -540,6 +540,68 @@ class CMS < Sinatra::Base
     end
   end
 
+  # Redirects API Routes
+
+  # GET /api/redirects - List all redirects
+  get '/api/redirects' do
+    require_ajax_header
+    require_login
+    json({ redirects: Redirect.order(:short_path).map { |r| redirect_json(r) } })
+  end
+
+  # POST /api/redirects - Create redirect
+  post '/api/redirects' do
+    require_ajax_header
+    require_login
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    redirect = Redirect.new(short_path: data['short_path'], target_path: data['target_path'])
+
+    if redirect.save
+      json({ redirect: redirect_json(redirect) })
+    else
+      halt 422, json({ errors: redirect.errors.full_messages })
+    end
+  end
+
+  # PUT /api/redirects/:id - Update redirect
+  put '/api/redirects/:id' do
+    require_ajax_header
+    require_login
+
+    redirect = Redirect.find_by(id: params[:id])
+    halt 404, json({ error: 'Redirect not found' }) unless redirect
+
+    begin
+      data = JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
+    end
+
+    if redirect.update(short_path: data['short_path'], target_path: data['target_path'])
+      json({ redirect: redirect_json(redirect) })
+    else
+      halt 422, json({ errors: redirect.errors.full_messages })
+    end
+  end
+
+  # DELETE /api/redirects/:id - Delete redirect
+  delete '/api/redirects/:id' do
+    require_ajax_header
+    require_login
+
+    redirect = Redirect.find_by(id: params[:id])
+    halt 404, json({ error: 'Redirect not found' }) unless redirect
+
+    redirect.destroy
+    json({ success: true })
+  end
+
   # Pages API Routes
 
   # GET /api/pages - List pages
@@ -840,7 +902,8 @@ class CMS < Sinatra::Base
       social_url: setting.social_url,
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format,
-      allow_comments: setting.allow_comments
+      allow_comments: setting.allow_comments,
+      reserved_redirect_paths: setting.reserved_redirect_paths
     }
   end
 
@@ -855,6 +918,17 @@ class CMS < Sinatra::Base
       admin: user.admin,
       created_at: user.created_at,
       last_login_at: user.last_login_at
+    }
+  end
+
+  # Redirect serialization helper
+  def redirect_json(redirect)
+    {
+      id: redirect.id,
+      short_path: redirect.short_path,
+      target_path: redirect.target_path,
+      created_at: redirect.created_at,
+      updated_at: redirect.updated_at
     }
   end
 
