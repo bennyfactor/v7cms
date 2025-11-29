@@ -995,6 +995,7 @@ class CMS < Sinatra::Base
     css_lines = ThemeConfig::FIELDS.map do |field, config|
       value = theme_values[field]
       next if value.nil?
+      next if config[:css_var].nil? # Skip fields without CSS variables (e.g., header_style, footer_style, custom_css)
 
       formatted_value = ThemeConfig.format_value(field, value)
       "  #{config[:css_var]}: #{formatted_value};"
