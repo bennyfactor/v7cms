@@ -227,7 +227,7 @@ RSpec.describe 'Comments API' do
   end
 
   describe 'Admin Comments API' do
-    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '12345') }
+    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '12345', admin: true) }
 
     def login_as(user)
       env 'rack.session', { user_id: user.id }
