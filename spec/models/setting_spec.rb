@@ -267,6 +267,24 @@ RSpec.describe Setting do
         expect(setting.errors[:allow_comments]).to include('is not included in the list')
       end
     end
+
+    describe 'reserved_redirect_paths' do
+      it 'validates maximum length of 1000 characters' do
+        setting.reserved_redirect_paths = 'a' * 1001
+        expect(setting).not_to be_valid
+        expect(setting.errors[:reserved_redirect_paths]).to include('is too long (maximum is 1000 characters)')
+      end
+
+      it 'allows blank value' do
+        setting.reserved_redirect_paths = ''
+        expect(setting).to be_valid
+      end
+
+      it 'allows valid comma-separated paths' do
+        setting.reserved_redirect_paths = '/admin,/api,/custom'
+        expect(setting).to be_valid
+      end
+    end
   end
 
   describe 'defaults' do
@@ -295,6 +313,39 @@ RSpec.describe Setting do
     it 'has default date_format' do
       expect(setting.date_format).to eq('%B %d, %Y')
     end
+
+    it 'has default reserved_redirect_paths' do
+      expect(setting.reserved_redirect_paths).to eq('/,/admin,/api,/auth,/feed,/posts,/pages')
+    end
+  end
+
+  describe '#reserved_paths_array' do
+    let(:setting) { Setting.instance }
+
+    it 'returns array of paths from comma-separated string' do
+      setting.update!(reserved_redirect_paths: '/admin,/api,/custom')
+      expect(setting.reserved_paths_array).to eq(['/admin', '/api', '/custom'])
+    end
+
+    it 'strips whitespace from paths' do
+      setting.update!(reserved_redirect_paths: '/admin, /api , /custom')
+      expect(setting.reserved_paths_array).to eq(['/admin', '/api', '/custom'])
+    end
+
+    it 'removes empty paths' do
+      setting.update!(reserved_redirect_paths: '/admin,,/api,')
+      expect(setting.reserved_paths_array).to eq(['/admin', '/api'])
+    end
+
+    it 'returns empty array when value is blank' do
+      setting.update!(reserved_redirect_paths: '')
+      expect(setting.reserved_paths_array).to eq([])
+    end
+
+    it 'returns empty array when value is nil' do
+      setting.update!(reserved_redirect_paths: nil)
+      expect(setting.reserved_paths_array).to eq([])
+    end
   end
 
   describe '#reset_to_defaults!' do
@@ -320,6 +371,13 @@ RSpec.describe Setting do
       setting.update!(allow_comments: false)
       setting.reset_to_defaults!
       expect(setting.allow_comments).to be true
+    end
+
+    it 'resets reserved_redirect_paths to defaults' do
+      setting = Setting.instance
+      setting.update!(reserved_redirect_paths: '/custom,/other')
+      setting.reset_to_defaults!
+      expect(setting.reserved_redirect_paths).to eq('/,/admin,/api,/auth,/feed,/posts,/pages')
     end
   end
 end

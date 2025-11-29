@@ -81,6 +81,9 @@ public/posts/*.html
 public/pages/*.html
 !public/pages/.gitkeep
 
+# .htaccess (auto-generated from template with redirects)
+.htaccess
+
 # Docker
 .dockerignore
 
