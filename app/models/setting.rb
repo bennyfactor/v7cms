@@ -39,6 +39,8 @@ class Setting < ActiveRecord::Base
 
   validates :allow_comments, inclusion: { in: [true, false] }
 
+  validates :reserved_redirect_paths, length: { maximum: 1000 }
+
   # Callbacks
   after_commit :regenerate_feeds
   after_save :clear_instance_cache
@@ -72,6 +74,12 @@ class Setting < ActiveRecord::Base
     instance.send(key) if instance.respond_to?(key)
   end
 
+  # Get reserved redirect paths as an array
+  def reserved_paths_array
+    return [] if reserved_redirect_paths.blank?
+    reserved_redirect_paths.split(',').map(&:strip).reject(&:empty?)
+  end
+
   # Reset to default values
   def reset_to_defaults!
     update!(
@@ -89,7 +97,8 @@ class Setting < ActiveRecord::Base
       social_url: '',
       posts_per_page: 10,
       date_format: '%B %d, %Y',
-      allow_comments: true
+      allow_comments: true,
+      reserved_redirect_paths: '/,/admin,/api,/auth,/feed,/posts,/pages'
     )
   end
 

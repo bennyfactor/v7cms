@@ -902,7 +902,8 @@ class CMS < Sinatra::Base
       social_url: setting.social_url,
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format,
-      allow_comments: setting.allow_comments
+      allow_comments: setting.allow_comments,
+      reserved_redirect_paths: setting.reserved_redirect_paths
     }
   end
 
