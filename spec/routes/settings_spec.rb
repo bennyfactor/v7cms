@@ -47,6 +47,13 @@ RSpec.describe 'Settings Routes' do
       json = JSON.parse(last_response.body)
       expect(json['settings']['allow_comments']).to eq(false)
     end
+
+    it 'includes reserved_redirect_paths in response' do
+      Setting.instance.update!(reserved_redirect_paths: '/admin,/api,/custom')
+      get '/api/settings'
+      json = JSON.parse(last_response.body)
+      expect(json['settings']['reserved_redirect_paths']).to eq('/admin,/api,/custom')
+    end
   end
 
   describe 'PUT /api/settings' do
@@ -142,6 +149,17 @@ RSpec.describe 'Settings Routes' do
 
         expect(last_response.status).to eq(200)
         expect(Setting.instance.allow_comments).to eq(false)
+      end
+
+      it 'updates reserved_redirect_paths' do
+        put '/api/settings', {
+          reserved_redirect_paths: '/admin,/api,/custom,/imgs'
+        }.to_json, { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(200)
+        data = JSON.parse(last_response.body)
+        expect(data['settings']['reserved_redirect_paths']).to eq('/admin,/api,/custom,/imgs')
+        expect(Setting.instance.reload.reserved_redirect_paths).to eq('/admin,/api,/custom,/imgs')
       end
     end
   end
