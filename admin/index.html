@@ -109,6 +109,12 @@
                         </svg>
                         Settings
                     </a>
+                    <a @click.prevent="currentView = 'redirects'; fetchRedirects()" href="#" :class="currentView === 'redirects' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition">
+                        <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Redirects
+                    </a>
                     <a @click.prevent="currentView = 'users'; fetchUsers()" href="#" :class="currentView === 'users' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition">
                         <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -1173,6 +1179,95 @@
                         <!-- Empty State -->
                         <div x-show="filteredComments.length === 0" class="text-center py-12 text-gray-500">
                             No <span x-text="commentFilter"></span> comments.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Redirects View -->
+                <div x-show="currentView === 'redirects'" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">URL Redirects</h2>
+                    </div>
+
+                    <!-- Add New Redirect Form -->
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Add New Redirect</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Short Path</label>
+                                <input x-model="redirectForm.short_path" type="text" placeholder="/example"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">The short vanity URL (e.g., /pricing, /contact)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Target Path</label>
+                                <input x-model="redirectForm.target_path" type="text" placeholder="/posts/full-slug-here"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">The internal path to redirect to</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button @click="createRedirect" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition">
+                                Add Redirect
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Redirects List -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Short Path</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Path</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="redirect in redirects" :key="redirect.id">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <template x-if="editingRedirect && editingRedirect.id === redirect.id">
+                                                <input x-model="editingRedirect.short_path" type="text" class="w-full px-2 py-1 border border-gray-300 rounded">
+                                            </template>
+                                            <template x-if="!editingRedirect || editingRedirect.id !== redirect.id">
+                                                <code class="text-sm font-mono bg-gray-100 px-2 py-1 rounded" x-text="redirect.short_path"></code>
+                                            </template>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <template x-if="editingRedirect && editingRedirect.id === redirect.id">
+                                                <input x-model="editingRedirect.target_path" type="text" class="w-full px-2 py-1 border border-gray-300 rounded">
+                                            </template>
+                                            <template x-if="!editingRedirect || editingRedirect.id !== redirect.id">
+                                                <code class="text-sm font-mono text-gray-600" x-text="redirect.target_path"></code>
+                                            </template>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <span x-text="new Date(redirect.created_at).toLocaleDateString()"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <template x-if="editingRedirect && editingRedirect.id === redirect.id">
+                                                <div class="space-x-2">
+                                                    <button @click="updateRedirect(redirect.id)" class="text-green-600 hover:text-green-900">Save</button>
+                                                    <button @click="cancelEditRedirect()" class="text-gray-600 hover:text-gray-900">Cancel</button>
+                                                </div>
+                                            </template>
+                                            <template x-if="!editingRedirect || editingRedirect.id !== redirect.id">
+                                                <div class="space-x-2">
+                                                    <button @click="editRedirect(redirect)" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                                    <button @click="deleteRedirect(redirect.id)" class="text-red-600 hover:text-red-900">Delete</button>
+                                                </div>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                        <!-- Empty State -->
+                        <div x-show="redirects.length === 0" class="text-center py-12 text-gray-500">
+                            No redirects configured. Add your first redirect above.
                         </div>
                     </div>
                 </div>
