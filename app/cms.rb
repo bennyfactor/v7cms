@@ -903,7 +903,8 @@ class CMS < Sinatra::Base
       posts_per_page: setting.posts_per_page,
       date_format: setting.date_format,
       allow_comments: setting.allow_comments,
-      reserved_redirect_paths: setting.reserved_redirect_paths
+      reserved_redirect_paths: setting.reserved_redirect_paths,
+      layout_homepage: setting.layout_homepage
     }
   end
 

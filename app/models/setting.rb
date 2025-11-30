@@ -41,6 +41,13 @@ class Setting < ActiveRecord::Base
 
   validates :reserved_redirect_paths, length: { maximum: 1000 }
 
+  HOMEPAGE_LAYOUTS = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].freeze
+
+  validates :layout_homepage, inclusion: {
+    in: HOMEPAGE_LAYOUTS,
+    message: 'must be a valid layout option'
+  }
+
   # Callbacks
   after_commit :regenerate_feeds
   after_save :clear_instance_cache
@@ -98,7 +105,8 @@ class Setting < ActiveRecord::Base
       posts_per_page: 10,
       date_format: '%B %d, %Y',
       allow_comments: true,
-      reserved_redirect_paths: '/,/admin,/api,/auth,/feed,/posts,/pages'
+      reserved_redirect_paths: '/,/admin,/api,/auth,/feed,/posts,/pages',
+      layout_homepage: 'blog_list'
     )
   end
 
