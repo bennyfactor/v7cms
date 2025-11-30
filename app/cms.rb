@@ -91,7 +91,13 @@ class CMS < Sinatra::Base
   end
 
   # Custom error pages - check /error/ folder for static HTML files
+  # Only serve custom HTML for non-API routes (preserve JSON responses for API)
   error 404 do
+    # If response is already JSON (from API routes), don't override
+    if response['Content-Type']&.include?('application/json')
+      return response.body.join
+    end
+
     error_file = File.join(settings.public_folder, 'error', '404.html')
     if File.exist?(error_file)
       content_type :html
@@ -103,6 +109,11 @@ class CMS < Sinatra::Base
   end
 
   error 403 do
+    # If response is already JSON (from API routes), don't override
+    if response['Content-Type']&.include?('application/json')
+      return response.body.join
+    end
+
     error_file = File.join(settings.public_folder, 'error', '403.html')
     if File.exist?(error_file)
       content_type :html
@@ -113,6 +124,11 @@ class CMS < Sinatra::Base
   end
 
   error 500 do
+    # If response is already JSON (from API routes), don't override
+    if response['Content-Type']&.include?('application/json')
+      return response.body.join
+    end
+
     error_file = File.join(settings.public_folder, 'error', '500.html')
     if File.exist?(error_file)
       content_type :html
@@ -126,7 +142,7 @@ class CMS < Sinatra::Base
   # Apache handles these via .htaccess, but we need Sinatra fallback for Rack/Puma
   before do
     # Skip reserved paths - let them be handled by their respective routes
-    return if request.path_info.start_with?('/api', '/auth', '/admin', '/feed', '/health')
+    return if request.path_info.start_with?('/api', '/auth', '/admin', '/feed', '/health', '/posts', '/pages')
     return if request.path_info == '/'
     return if request.path_info.include?('.')  # Skip static files
 
