@@ -3,7 +3,7 @@
 [![Ruby](https://img.shields.io/badge/Ruby-3.2-red?logo=ruby)](https://www.ruby-lang.org/)
 [![Sinatra](https://img.shields.io/badge/Sinatra-3.0-lightgrey?logo=ruby)](https://sinatrarb.com/)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
-[![Tests](https://img.shields.io/badge/Tests-500%2B%20passing-brightgreen)](spec/)
+[![Tests](https://img.shields.io/badge/Tests-583%20passing-brightgreen)](spec/)
 [![RSpec](https://img.shields.io/badge/Tested%20with-RSpec-red?logo=ruby)](https://rspec.info/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -26,6 +26,8 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 - Comment moderation with spam detection
 - Site settings customization
 - Theme customization (40+ CSS properties)
+- URL redirect management with .htaccess generation
+- Gravatar integration for user avatars
 
 **Performance**
 - Static HTML generation for posts and pages
@@ -35,7 +37,7 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 
 **Developer Experience**
 - RESTful JSON API with OpenAPI documentation
-- Comprehensive test suite (500+ tests)
+- Comprehensive test suite (583 tests)
 - Docker development environment
 - Rake tasks for common operations
 
@@ -180,6 +182,7 @@ Required for comment spam prevention:
    - **Pages**: Create hierarchical static pages
    - **Comments**: Moderate user comments
    - **Users**: Manage admin privileges
+   - **Redirects**: Manage URL redirects
    - **Settings**: Configure site metadata
    - **Theme**: Customize colors, typography, and layout
 
@@ -254,6 +257,14 @@ Interactive API documentation is available at `/api/docs` (Swagger UI).
 | `PUT /api/theme` | Yes | Update theme |
 | `POST /api/theme/reset` | Yes | Reset to defaults |
 | `GET /api/theme/preview` | No | Preview with query params |
+
+### Redirects
+| Endpoint | Auth | Description |
+|----------|------|-------------|
+| `GET /api/redirects` | Yes | List all redirects |
+| `POST /api/redirects` | Yes | Create redirect |
+| `PUT /api/redirects/:id` | Yes | Update redirect |
+| `DELETE /api/redirects/:id` | Yes | Delete redirect |
 
 ## Development
 
@@ -338,45 +349,46 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 ```
 v7cms/
 ├── app/
-│   ├── cms.rb                 # Main Sinatra application
-│   ├── config/
-│   │   └── theme_fields.rb    # Theme configuration
-│   ├── docs/                  # OpenAPI documentation
+│   ├── cms.rb                    # Main Sinatra application
+│   ├── docs/                     # OpenAPI documentation
 │   ├── helpers/
-│   │   └── auth_helper.rb     # Authentication helpers
+│   │   └── auth_helper.rb        # Authentication helpers
 │   ├── models/
-│   │   ├── comment.rb         # Comment with moderation
-│   │   ├── page.rb            # Hierarchical pages
-│   │   ├── post.rb            # Blog posts
-│   │   ├── setting.rb         # Site settings (singleton)
-│   │   ├── theme.rb           # Theme settings (singleton)
-│   │   └── user.rb            # OAuth users
+│   │   ├── comment.rb            # Comment with moderation
+│   │   ├── page.rb               # Hierarchical pages
+│   │   ├── post.rb               # Blog posts
+│   │   ├── redirect.rb           # URL redirects
+│   │   ├── setting.rb            # Site settings (singleton)
+│   │   ├── theme.rb              # Theme settings (singleton)
+│   │   └── user.rb               # OAuth users
 │   ├── services/
-│   │   ├── feed_generator.rb  # RSS/Atom generation
-│   │   ├── page_renderer.rb   # Static page HTML
-│   │   ├── post_renderer.rb   # Static post HTML
-│   │   └── theme_generator.rb # CSS generation
-│   └── views/                 # ERB templates
+│   │   ├── feed_generator.rb     # RSS/Atom generation
+│   │   ├── gravatar_service.rb   # Gravatar profile integration
+│   │   ├── htaccess_generator.rb # Apache rewrite rules
+│   │   ├── page_renderer.rb      # Static page HTML
+│   │   ├── post_renderer.rb      # Static post HTML
+│   │   └── theme_generator.rb    # CSS generation
+│   └── views/                    # ERB templates
 │       ├── layout.erb
 │       ├── index.erb
 │       ├── post.erb
 │       ├── page.erb
 │       └── 404.erb
-├── admin/
-│   └── index.html             # Admin SPA
 ├── config/
-│   └── database.yml
+│   ├── database.yml
+│   └── theme_fields.rb           # Theme field definitions
 ├── db/
 │   ├── migrate/
 │   └── seed.rb
 ├── public/
-│   ├── admin -> ../admin      # Symlink to admin
+│   ├── admin/
+│   │   └── index.html            # Admin SPA
 │   ├── css/
 │   │   └── input.css
 │   └── js/
 │       ├── admin.js
 │       └── comments.js
-├── spec/                      # Test suite (500+ tests)
+├── spec/                         # Test suite (583 tests)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Gemfile
@@ -437,6 +449,15 @@ Site configuration: title, tagline, author, welcome text, footer, SEO metadata, 
 
 ### themes (singleton)
 40+ CSS properties: colors, typography, spacing, shadows, border radius, custom CSS.
+
+### redirects
+| Column | Type | Description |
+|--------|------|-------------|
+| id | integer | Primary key |
+| short_path | string | URL path (unique) |
+| target_path | string | Redirect destination |
+| created_at | datetime | Creation timestamp |
+| updated_at | datetime | Last update timestamp |
 
 ## Security
 
