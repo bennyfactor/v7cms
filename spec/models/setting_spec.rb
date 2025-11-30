@@ -285,6 +285,26 @@ RSpec.describe Setting do
         expect(setting).to be_valid
       end
     end
+
+    describe 'layout_homepage' do
+      it 'accepts valid layout values' do
+        Setting::HOMEPAGE_LAYOUTS.each do |layout|
+          setting.layout_homepage = layout
+          expect(setting).to be_valid, "Expected #{layout} to be valid"
+        end
+      end
+
+      it 'rejects invalid layout values' do
+        setting.layout_homepage = 'invalid_layout'
+        expect(setting).not_to be_valid
+        expect(setting.errors[:layout_homepage]).to include('must be a valid layout option')
+      end
+
+      it 'defines all expected layouts' do
+        expected_layouts = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing]
+        expect(Setting::HOMEPAGE_LAYOUTS).to match_array(expected_layouts)
+      end
+    end
   end
 
   describe 'defaults' do
@@ -316,6 +336,10 @@ RSpec.describe Setting do
 
     it 'has default reserved_redirect_paths' do
       expect(setting.reserved_redirect_paths).to eq('/,/admin,/api,/auth,/feed,/posts,/pages')
+    end
+
+    it 'has default layout_homepage' do
+      expect(setting.layout_homepage).to eq('blog_list')
     end
   end
 
@@ -378,6 +402,13 @@ RSpec.describe Setting do
       setting.update!(reserved_redirect_paths: '/custom,/other')
       setting.reset_to_defaults!
       expect(setting.reserved_redirect_paths).to eq('/,/admin,/api,/auth,/feed,/posts,/pages')
+    end
+
+    it 'resets layout_homepage to defaults' do
+      setting = Setting.instance
+      setting.update!(layout_homepage: 'magazine')
+      setting.reset_to_defaults!
+      expect(setting.layout_homepage).to eq('blog_list')
     end
   end
 end

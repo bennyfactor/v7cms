@@ -1,0 +1,101 @@
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 py-20 md:py-32">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <h1 class="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+      <%= @settings.welcome_title %>
+    </h1>
+    <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+      <%= @settings.welcome_subtitle %>
+    </p>
+    <a href="#latest-posts" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl">
+      View Blog
+    </a>
+  </div>
+</div>
+
+<!-- Features Section (Optional - can be customized via settings) -->
+<div class="py-16 bg-white dark:bg-gray-800">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Fast & Lightweight</h3>
+        <p class="text-gray-600 dark:text-gray-400">Built with modern technologies for optimal performance.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Easy to Customize</h3>
+        <p class="text-gray-600 dark:text-gray-400">Flexible design system with powerful admin controls.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Secure & Reliable</h3>
+        <p class="text-gray-600 dark:text-gray-400">OAuth authentication and comprehensive security features.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Latest Posts Section -->
+<div id="latest-posts" class="py-16 bg-gray-50 dark:bg-gray-900">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-12 text-center">
+      Latest Posts
+    </h2>
+
+    <% if @posts.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <% @posts.first(3).each do |post| %>
+          <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
+            <div class="p-6">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                <a href="/posts/<%= post.slug %>" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <%= post.title %>
+                </a>
+              </h3>
+
+              <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <%= post.created_at.strftime(@settings.date_format || '%B %d, %Y') %>
+              </div>
+
+              <div class="prose dark:prose-invert prose-sm max-w-none mb-4 line-clamp-3">
+                <%= post.content.to_s.gsub(/<[^>]*>/, '')[0..150] %>...
+              </div>
+
+              <a href="/posts/<%= post.slug %>" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+                Read More
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <p class="text-gray-600 dark:text-gray-400 text-lg">No posts yet. Check back soon!</p>
+      </div>
+    <% end %>
+
+    <% if @posts.length > 3 %>
+      <div class="text-center mt-12">
+        <a href="/posts" class="inline-block bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-semibold px-8 py-3 rounded-lg border-2 border-blue-600 dark:border-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-400 dark:hover:text-gray-900 transition-colors duration-200">
+          View All Posts
+        </a>
+      </div>
+    <% end %>
+  </div>
+</div>
