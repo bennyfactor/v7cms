@@ -1,4 +1,4 @@
-require_relative '../../app/config/theme_fields'
+require_relative '../../config/theme_fields'
 
 class ExpandThemeFields < ActiveRecord::Migration[8.1]
   def up
