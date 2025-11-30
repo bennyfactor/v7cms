@@ -1,4 +1,4 @@
-require_relative '../config/theme_fields'
+require_relative '../../config/theme_fields'
 require 'logger'
 
 class ThemeGenerator

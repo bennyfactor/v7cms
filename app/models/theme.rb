@@ -1,4 +1,4 @@
-require_relative '../config/theme_fields'
+require_relative '../../config/theme_fields'
 
 class Theme < ActiveRecord::Base
   # Singleton pattern - only one theme record exists

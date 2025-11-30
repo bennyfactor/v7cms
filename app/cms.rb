@@ -1056,7 +1056,7 @@ class CMS < Sinatra::Base
 
   # Theme CSS generation helper using Tailwind v4 @theme directive
   def generate_theme_css(theme = @theme, params_override = params)
-    require_relative 'config/theme_fields'
+    require_relative '../config/theme_fields'
 
     # Build theme values hash from either params (preview) or model (normal)
     theme_values = if params_override[:theme_preview]
