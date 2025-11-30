@@ -90,6 +90,53 @@ class CMS < Sinatra::Base
     end
   end
 
+  # Custom error pages - check /error/ folder for static HTML files
+  error 404 do
+    error_file = File.join(settings.public_folder, 'error', '404.html')
+    if File.exist?(error_file)
+      content_type :html
+      File.read(error_file)
+    else
+      # Fall back to ERB template if it exists, otherwise Sinatra default
+      erb :'404' rescue "Not Found"
+    end
+  end
+
+  error 403 do
+    error_file = File.join(settings.public_folder, 'error', '403.html')
+    if File.exist?(error_file)
+      content_type :html
+      File.read(error_file)
+    else
+      "Forbidden"
+    end
+  end
+
+  error 500 do
+    error_file = File.join(settings.public_folder, 'error', '500.html')
+    if File.exist?(error_file)
+      content_type :html
+      File.read(error_file)
+    else
+      "Internal Server Error"
+    end
+  end
+
+  # Handle vanity URL redirects (for non-Apache deployments like Docker/Rack)
+  # Apache handles these via .htaccess, but we need Sinatra fallback for Rack/Puma
+  before do
+    # Skip reserved paths - let them be handled by their respective routes
+    return if request.path_info.start_with?('/api', '/auth', '/admin', '/feed', '/health')
+    return if request.path_info == '/'
+    return if request.path_info.include?('.')  # Skip static files
+
+    # Check for redirect
+    redirect_record = Redirect.find_by(short_path: request.path_info)
+    if redirect_record
+      redirect redirect_record.target_path, 301
+    end
+  end
+
   # Public site routes
 
   # Homepage - list all published posts
