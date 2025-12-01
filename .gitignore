@@ -96,5 +96,6 @@ public/pages/*.html
 !ROADMAP.md
 !CHANGELOG.md
 !CONTRIBUTING.md
+!RELEASING.md
 !SECURITY.md
 !docs/*.md
