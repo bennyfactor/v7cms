@@ -17,10 +17,77 @@ Releases are automated via GitHub Actions. When you push a version tag (e.g., `v
 - You have push access to the repository
 - All changes are merged to `main`
 - Tests are passing on `main`
+- `gem-release` is installed (`bundle install`)
 
 ## Release Process
 
-### 1. Determine the Version Number
+### Using gem-release (Recommended)
+
+The `gem-release` gem provides convenient commands for version bumping and tagging.
+
+#### Quick Release (One Command)
+
+```bash
+# Bump version, commit, tag, and push in one command
+gem bump --version minor --tag --push
+
+# Or for a patch release
+gem bump --version patch --tag --push
+```
+
+#### Step-by-Step Release
+
+1. **Bump the version** (updates `lib/v7cms/version.rb` and commits):
+
+   ```bash
+   # For a patch release (0.1.0 → 0.1.1)
+   gem bump --version patch
+
+   # For a minor release (0.1.0 → 0.2.0)
+   gem bump --version minor
+
+   # For a major release (0.1.0 → 1.0.0)
+   gem bump --version major
+
+   # Or set a specific version
+   gem bump --version 1.2.3
+   ```
+
+2. **Update CHANGELOG.md** (manual step):
+
+   Edit `CHANGELOG.md`:
+   - Change `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`
+   - Add a new `[Unreleased]` section above it
+   - Commit: `git commit -am "Update CHANGELOG for vX.Y.Z"`
+
+3. **Create and push the tag**:
+
+   ```bash
+   gem tag --push
+   ```
+
+   This creates a git tag matching the version in `version.rb` and pushes it.
+
+4. **Monitor the release** at:
+   https://github.com/bennyfactor/v7cms/actions/workflows/publish-gem.yml
+
+### Version Bump Options
+
+| Command | Result |
+|---------|--------|
+| `gem bump --version patch` | 0.1.0 → 0.1.1 |
+| `gem bump --version minor` | 0.1.0 → 0.2.0 |
+| `gem bump --version major` | 0.1.0 → 1.0.0 |
+| `gem bump --version 2.0.0` | Any → 2.0.0 |
+| `gem bump --version pre` | 0.1.0 → 0.1.1.pre.1 |
+
+Additional flags:
+- `--tag` - Also create a git tag
+- `--push` - Push commits and tags to remote
+- `--skip-ci` - Add `[skip ci]` to commit message
+- `--sign` - GPG sign the commit and tag
+
+### Semantic Versioning
 
 Follow [Semantic Versioning](https://semver.org/):
 
@@ -30,7 +97,11 @@ Follow [Semantic Versioning](https://semver.org/):
 | New features (backward compatible) | MINOR | 0.1.0 → 0.2.0 |
 | Breaking changes | MAJOR | 0.1.0 → 1.0.0 |
 
-### 2. Update the Version
+## Manual Release Process
+
+If you prefer not to use `gem-release`:
+
+### 1. Update the Version
 
 Edit `lib/v7cms/version.rb`:
 
@@ -40,15 +111,10 @@ module V7CMS
 end
 ```
 
-### 3. Update the Changelog
+### 2. Update the Changelog
 
 Edit `CHANGELOG.md`:
 
-1. Change `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`
-2. Add a new `[Unreleased]` section above it
-3. Update the comparison links at the bottom
-
-Example:
 ```markdown
 ## [Unreleased]
 
@@ -61,54 +127,22 @@ Example:
 [0.2.0]: https://github.com/bennyfactor/v7cms/compare/v0.1.0...v0.2.0
 ```
 
-### 4. Commit the Version Bump
+### 3. Commit and Tag
 
 ```bash
 git add lib/v7cms/version.rb CHANGELOG.md
 git commit -m "Bump version to X.Y.Z"
-git push origin main
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin main --tags
 ```
 
-### 5. Create and Push the Tag
-
-```bash
-git tag -a vX.Y.Z -m "Release vX.Y.Z - Brief description"
-git push origin vX.Y.Z
-```
-
-**Important:** The tag must start with `v` and match the version in `version.rb` exactly.
-
-### 6. Monitor the Release
-
-Watch the GitHub Action at:
-https://github.com/bennyfactor/v7cms/actions/workflows/publish-gem.yml
-
-The workflow will:
-- Fail fast if the tag doesn't match `version.rb`
-- Run all tests
-- Build and publish the gem
-
-### 7. Verify the Release
+## Verify the Release
 
 After the workflow completes:
 
 1. Check [GitHub Packages](https://github.com/bennyfactor/v7cms/packages) for the published gem
-2. Download the artifact from the workflow run to verify the `.gem` file
+2. Download the artifact from the workflow run
 3. Optionally create a [GitHub Release](https://github.com/bennyfactor/v7cms/releases/new) with release notes
-
-## Quick Reference
-
-For the current version `0.1.0`, run:
-
-```bash
-# Ensure you're on main with latest
-git checkout main
-git pull origin main
-
-# Create and push the tag
-git tag -a v0.1.0 -m "Release v0.1.0 - Initial gem release"
-git push origin v0.1.0
-```
 
 ## Troubleshooting
 
@@ -121,15 +155,26 @@ If the workflow fails with "Version mismatch", ensure:
 ### Failed Tests
 
 If tests fail during release:
-1. Do not delete the tag
+
+1. Do not delete the tag yet
 2. Fix the issue on `main`
 3. Delete and recreate the tag:
+
    ```bash
    git tag -d vX.Y.Z
    git push origin :refs/tags/vX.Y.Z
    git tag -a vX.Y.Z -m "Release vX.Y.Z"
    git push origin vX.Y.Z
    ```
+
+### Uncommitted Changes
+
+`gem-release` will refuse to tag if you have uncommitted changes. Commit or stash them first:
+
+```bash
+git status
+git stash  # or git commit
+```
 
 ### Manual Gem Build
 
@@ -155,3 +200,26 @@ Or install directly:
 ```bash
 gem install v7cms --source "https://rubygems.pkg.github.com/bennyfactor"
 ```
+
+## gem-release Reference
+
+Common commands:
+
+```bash
+# Show current version
+gem bump --pretend
+
+# Bump and see what would happen (dry run)
+gem bump --version minor --pretend
+
+# Full release workflow
+gem bump --version minor --tag --push
+
+# Just create a tag (no version bump)
+gem tag
+
+# Tag and push
+gem tag --push
+```
+
+See [gem-release documentation](https://github.com/svenfuchs/gem-release) for more options.

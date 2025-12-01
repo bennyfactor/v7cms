@@ -48,4 +48,5 @@ end
 group :development do
   gem 'rerun', '~> 0.14'
   gem 'puma', '~> 6.0'
+  gem 'gem-release', '~> 2.2'
 end
