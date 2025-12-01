@@ -17,6 +17,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -64,6 +67,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
