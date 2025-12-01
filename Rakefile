@@ -20,6 +20,9 @@ end
 # Load custom rake tasks
 Dir.glob('lib/tasks/*.rake').each { |r| load r }
 
+# Load v7cms gem rake tasks
+load 'lib/v7cms/tasks/v7cms.rake'
+
 # Default task
 task default: :spec
 
