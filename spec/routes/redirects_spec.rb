@@ -207,4 +207,81 @@ RSpec.describe 'Redirects API', type: :request do
       end
     end
   end
+
+  # ==========================================================================
+  # Redirect Handler Tests (for Docker/Rack deployments)
+  # ==========================================================================
+  # These tests verify that the Sinatra not_found handler correctly processes
+  # redirects stored in the database, providing the same functionality as
+  # Apache .htaccess rules for Rack/Puma/Docker deployments.
+  # ==========================================================================
+  describe 'Redirect Handler (not_found)' do
+    before do
+      # Mock HtaccessGenerator to avoid file system operations
+      allow(HtaccessGenerator).to receive(:generate).and_return(true)
+    end
+
+    context 'when a redirect exists for the requested path' do
+      let!(:redirect) { Redirect.create!(short_path: '/old-post', target_path: '/posts/new-post') }
+
+      it 'returns a 301 redirect to the target path' do
+        get '/old-post'
+
+        expect(last_response.status).to eq(301)
+        expect(last_response.headers['Location']).to end_with('/posts/new-post')
+      end
+
+      it 'handles paths with special characters' do
+        Redirect.create!(short_path: '/my-special-page', target_path: '/pages/special')
+
+        get '/my-special-page'
+
+        expect(last_response.status).to eq(301)
+        expect(last_response.headers['Location']).to end_with('/pages/special')
+      end
+
+      it 'redirects to external-style paths correctly' do
+        Redirect.create!(short_path: '/github', target_path: 'https://github.com/example')
+
+        get '/github'
+
+        expect(last_response.status).to eq(301)
+        # Note: Sinatra's redirect with relative URLs may prepend the host
+        expect(last_response.headers['Location']).to include('github.com/example')
+      end
+    end
+
+    context 'when no redirect exists for the requested path' do
+      it 'returns a 404 page' do
+        get '/nonexistent-path'
+
+        expect(last_response.status).to eq(404)
+        expect(last_response.body).to include('404')
+      end
+
+      it 'sets content type to HTML' do
+        get '/nonexistent-path'
+
+        expect(last_response.content_type).to include('text/html')
+      end
+    end
+
+    context 'path matching' do
+      let!(:redirect) { Redirect.create!(short_path: '/exact-match', target_path: '/posts/target') }
+
+      it 'matches exact paths only' do
+        get '/exact-match'
+        expect(last_response.status).to eq(301)
+
+        # Subpath should not match
+        get '/exact-match/subpath'
+        expect(last_response.status).to eq(404)
+      end
+
+      it 'is case-sensitive by default' do
+        get '/EXACT-MATCH'
+        expect(last_response.status).to eq(404)
+      end
+    end
+  end
 end

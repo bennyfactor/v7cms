@@ -925,6 +925,40 @@ class CMS < Sinatra::Base
     json({ success: true })
   end
 
+  # ==========================================================================
+  # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
+  # ==========================================================================
+  # This catch-all route checks for custom redirects stored in the database.
+  # For Apache/FastCGI deployments, redirects are handled via .htaccess rules.
+  # For Docker/Rack/Puma deployments, this Sinatra handler provides the same
+  # functionality by checking the Redirect model before returning a 404.
+  # ==========================================================================
+  not_found do
+    # Only check for redirects if we have a path to check
+    request_path = request.path_info
+
+    # Look for a matching redirect in the database
+    redirect_record = Redirect.find_by(short_path: request_path)
+
+    if redirect_record
+      # Perform 301 redirect to target path
+      redirect redirect_record.target_path, 301
+    elsif body.nil? || body.empty? || (body.is_a?(Array) && body.first.to_s.empty?)
+      # Only set default 404 response if the route didn't already set a body
+      # (This preserves custom 404 responses from halt 404, json(...))
+      if request_path.start_with?('/api/')
+        content_type :json
+        { error: 'Not found' }.to_json
+      else
+        content_type :html
+        @settings = Setting.instance
+        @title = '404 - Page Not Found'
+        erb :'404'
+      end
+    end
+    # If body was already set by the route, just return it as-is
+  end
+
   # Helper methods
 
   # JSON helper
