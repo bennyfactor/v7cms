@@ -9,6 +9,10 @@ ENV['RACK_ENV'] ||= 'development'
 require_relative 'v7cms/version'
 require_relative 'v7cms/file_resolver'
 
+# Load dependencies before requiring models/services
+require 'sinatra/base'
+require 'sinatra/activerecord'
+
 module V7CMS
   class << self
     attr_writer :project_root, :gem_root
@@ -49,6 +53,11 @@ module V7CMS
     end
   end
 end
+
+# Require models, helpers, and services
+require_relative 'v7cms/models'
+require_relative 'v7cms/helpers'
+require_relative 'v7cms/services'
 
 # Require the application after V7CMS module is defined
 require_relative 'v7cms/application'

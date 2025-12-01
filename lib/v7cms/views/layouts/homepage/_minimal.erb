@@ -1,0 +1,62 @@
+<!-- Minimal Homepage Layout - Clean, Medium-style design -->
+<div class="max-w-3xl mx-auto px-6 py-16">
+
+  <!-- Welcome Header -->
+  <header class="mb-20 text-center">
+    <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-4 leading-tight">
+      <%= @settings.welcome_title || @settings.site_title %>
+    </h1>
+    <% if @settings.welcome_subtitle && !@settings.welcome_subtitle.empty? %>
+      <p class="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
+        <%= @settings.welcome_subtitle %>
+      </p>
+    <% end %>
+  </header>
+
+  <!-- Posts List -->
+  <% if @posts.empty? %>
+    <div class="text-center py-16">
+      <p class="text-xl text-gray-500">No posts yet. Check back soon!</p>
+    </div>
+  <% else %>
+    <div class="space-y-16">
+      <% @posts.each_with_index do |post, index| %>
+        <article class="<%= 'pt-16 border-t border-gray-200' if index > 0 %>">
+
+          <!-- Post Date -->
+          <time datetime="<%= post.created_at.iso8601 %>" class="block text-sm text-gray-500 mb-3 tracking-wide uppercase">
+            <%= post.created_at.strftime(@settings.date_format || '%B %d, %Y') %>
+          </time>
+
+          <!-- Post Title -->
+          <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <a href="/posts/<%= post.slug %>" class="hover:text-gray-700 transition-colors">
+              <%= post.title %>
+            </a>
+          </h2>
+
+          <!-- Post Excerpt -->
+          <div class="text-lg md:text-xl text-gray-700 leading-relaxed mb-8 space-y-4">
+            <%
+              # Generate a longer excerpt from content
+              plain_text = post.content.gsub(/<[^>]*>/, ' ').gsub(/\s+/, ' ').strip
+              excerpt_length = 400
+              excerpt = plain_text.length > excerpt_length ? plain_text[0...excerpt_length].gsub(/\s\w+\s*$/, '...') : plain_text
+            %>
+            <p><%= excerpt %></p>
+          </div>
+
+          <!-- Continue Reading Link -->
+          <a href="/posts/<%= post.slug %>" class="inline-flex items-center text-lg font-medium text-gray-900 hover:text-gray-600 transition-colors group">
+            Continue reading
+            <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </a>
+
+        </article>
+      <% end %>
+    </div>
+  <% end %>
+
+</div>
