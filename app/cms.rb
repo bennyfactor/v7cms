@@ -90,23 +90,21 @@ class CMS < Sinatra::Base
     end
   end
 
-  # Custom error pages - check /error/ folder for static HTML files
+  # Custom error pages - check /error/ folder for static files
+  # Checks for .html, .shtml, and .php extensions (in that order)
   # Only serve custom HTML for non-API routes (preserve JSON responses for API)
-  error 404 do
-    # If response is already JSON (from API routes), don't override
-    if response['Content-Type']&.include?('application/json')
-      return response.body.join
-    end
+  ERROR_PAGE_EXTENSIONS = %w[.html .shtml .php].freeze
 
-    error_file = File.join(settings.public_folder, 'error', '404.html')
-    if File.exist?(error_file)
-      content_type :html
-      File.read(error_file)
-    else
-      # Fall back to ERB template if it exists, otherwise Sinatra default
-      erb :'404' rescue "Not Found"
+  # Helper to find custom error page file
+  def self.find_error_page(code)
+    ERROR_PAGE_EXTENSIONS.each do |ext|
+      path = File.join(settings.public_folder, 'error', "#{code}#{ext}")
+      return path if File.exist?(path)
     end
+    nil
   end
+
+  # Note: 404 errors are handled by the not_found block below (which also handles redirects)
 
   error 403 do
     # If response is already JSON (from API routes), don't override
@@ -114,8 +112,8 @@ class CMS < Sinatra::Base
       return response.body.join
     end
 
-    error_file = File.join(settings.public_folder, 'error', '403.html')
-    if File.exist?(error_file)
+    error_file = self.class.find_error_page(403)
+    if error_file
       content_type :html
       File.read(error_file)
     else
@@ -129,8 +127,8 @@ class CMS < Sinatra::Base
       return response.body.join
     end
 
-    error_file = File.join(settings.public_folder, 'error', '500.html')
-    if File.exist?(error_file)
+    error_file = self.class.find_error_page(500)
+    if error_file
       content_type :html
       File.read(error_file)
     else
@@ -950,10 +948,18 @@ class CMS < Sinatra::Base
         content_type :json
         { error: 'Not found' }.to_json
       else
-        content_type :html
-        @settings = Setting.instance
-        @title = '404 - Page Not Found'
-        erb :'404'
+        # Check for custom error page file (.html, .shtml, .php)
+        error_file = self.class.find_error_page(404)
+        if error_file
+          content_type :html
+          File.read(error_file)
+        else
+          # Fall back to ERB template
+          content_type :html
+          @settings = Setting.instance
+          @title = '404 - Page Not Found'
+          erb :'404'
+        end
       end
     end
     # If body was already set by the route, just return it as-is
