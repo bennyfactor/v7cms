@@ -10,22 +10,28 @@ module V7CMS
   class Application < Sinatra::Base
     # Configure Sinatra settings
     configure do
-      # Set the views directory - check user's project first, then gem
+      # Set the views directory
+      # Priority: 1. User's project (views/), 2. Gem views (lib/v7cms/views/), 3. Fallback (app/views for backward compatibility)
       views_paths = V7CMS.file_resolver.resolve_all('views')
       if views_paths.any?
         set :views, views_paths.first
       else
         # Fallback to app/views for backward compatibility during migration
-        set :views, File.expand_path('../../app/views', V7CMS.gem_root)
+        # This allows the current standalone app to continue working
+        fallback_views = File.expand_path('../../app/views', V7CMS.gem_root)
+        set :views, fallback_views
       end
 
-      # Set public folder - check user's project first, then gem
+      # Set public folder
+      # Priority: 1. User's project (public/), 2. Gem public (lib/v7cms/public/), 3. Fallback (public/ for backward compatibility)
       public_path = V7CMS.file_resolver.resolve('public')
       if public_path
         set :public_folder, public_path
       else
         # Fallback to public/ for backward compatibility during migration
-        set :public_folder, File.expand_path('../../public', V7CMS.gem_root)
+        # This allows the current standalone app to continue working
+        fallback_public = File.expand_path('../../public', V7CMS.gem_root)
+        set :public_folder, fallback_public
       end
 
       set :static, true

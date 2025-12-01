@@ -1,0 +1,3 @@
+<% @settings ||= Setting.instance %>
+<% layout_name = @settings.respond_to?(:layout_homepage) ? (@settings.layout_homepage || 'blog_list') : 'blog_list' %>
+<%= erb :"layouts/homepage/_#{layout_name}", layout: false %>
