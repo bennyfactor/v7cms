@@ -213,12 +213,12 @@ namespace :v7cms do
     project_root = V7CMS.project_root
     htaccess_path = File.join(project_root, '.htaccess')
 
-    # Use the existing HtaccessGenerator if available
-    if defined?(HtaccessGenerator)
-      HtaccessGenerator.generate
+    # Use the namespaced HtaccessGenerator
+    if defined?(V7CMS::HtaccessGenerator)
+      V7CMS::HtaccessGenerator.generate
       puts "Generated #{htaccess_path}"
     else
-      puts 'Error: HtaccessGenerator not available'
+      puts 'Error: V7CMS::HtaccessGenerator not available'
       exit 1
     end
   end
@@ -229,21 +229,56 @@ namespace :v7cms do
 
     puts 'Regenerating static files...'
 
-    if defined?(PostRenderer)
-      Post.published.find_each do |post|
-        PostRenderer.render_to_file(post)
+    if defined?(V7CMS::PostRenderer) && defined?(V7CMS::Post)
+      V7CMS::Post.published.find_each do |post|
+        V7CMS::PostRenderer.render_to_file(post)
         puts "  Rendered post: #{post.slug}"
       end
     end
 
-    if defined?(PageRenderer)
-      Page.published.find_each do |page|
-        PageRenderer.render_to_file(page)
+    if defined?(V7CMS::PageRenderer) && defined?(V7CMS::Page)
+      V7CMS::Page.published.find_each do |page|
+        V7CMS::PageRenderer.render_to_file(page)
         puts "  Rendered page: #{page.slug}"
       end
     end
 
     puts 'Done!'
+  end
+
+  desc 'Copy migrations from gem to project'
+  task :install_migrations do
+    require 'v7cms'
+
+    gem_migrations = File.join(V7CMS.gem_root, 'db', 'migrate')
+    project_migrations = File.join(V7CMS.project_root, 'db', 'migrate')
+
+    unless File.directory?(gem_migrations)
+      puts "Error: No migrations found in gem at #{gem_migrations}"
+      exit 1
+    end
+
+    FileUtils.mkdir_p(project_migrations)
+
+    copied = 0
+    skipped = 0
+
+    Dir.glob(File.join(gem_migrations, '*.rb')).each do |migration|
+      filename = File.basename(migration)
+      target = File.join(project_migrations, filename)
+
+      if File.exist?(target)
+        skipped += 1
+      else
+        FileUtils.cp(migration, target)
+        copied += 1
+        puts "  Copied: #{filename}"
+      end
+    end
+
+    puts
+    puts "Migrations: #{copied} copied, #{skipped} already existed"
+    puts "Run 'bundle exec rake db:migrate' to apply migrations"
   end
 
   desc 'Show v7cms version'

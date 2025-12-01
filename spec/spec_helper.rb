@@ -21,18 +21,9 @@ OmniAuth.config.test_mode = true
 # Configure WebMock to disable real HTTP requests except localhost
 WebMock.disable_net_connect!(allow_localhost: true)
 
-# Load models
-require_relative '../app/models/user'
-require_relative '../app/models/post'
-require_relative '../app/models/comment'
-require_relative '../app/models/theme'
-
-# Load Sinatra app for integration tests
-# For model-only tests, set SKIP_APP_LOAD=true
-unless ENV['SKIP_APP_LOAD']
-  # Load full app for route tests
-  require_relative '../app/cms'
-end
+# Load the gem (which loads all models, helpers, services, and the application)
+# This provides both V7CMS:: namespaced classes and backward-compatible aliases
+require_relative '../app/cms'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
