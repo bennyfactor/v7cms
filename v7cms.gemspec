@@ -5,8 +5,8 @@ require_relative 'lib/v7cms/version'
 Gem::Specification.new do |spec|
   spec.name          = 'v7cms'
   spec.version       = V7CMS::VERSION
-  spec.authors       = ['Ben'] # Update with your name
-  spec.email         = [''] # Update with your email
+  spec.authors       = ['Ben Factor']
+  spec.email         = ['ben@bennyfactor.com']
 
   spec.summary       = 'A minimal content management system built with Ruby and Sinatra'
   spec.description   = <<~DESC
@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
     a RESTful API, an Alpine.js admin interface, and support for custom themes.
     Designed for simplicity and easy deployment on shared hosting or containers.
   DESC
-  spec.homepage      = 'https://github.com/your/v7cms' # Update with your repo
+  spec.homepage      = 'https://github.com/bennyfactor/v7cms'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = '>= 3.0'
@@ -32,9 +32,6 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ['lib']
 
-  # Executables (none for now, but could add a CLI later)
-  # spec.bindir        = 'exe'
-  # spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
 
   # Core framework dependencies
   spec.add_dependency 'sinatra', '~> 3.0'

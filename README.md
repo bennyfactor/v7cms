@@ -3,7 +3,7 @@
 [![Ruby](https://img.shields.io/badge/Ruby-3.2-red?logo=ruby)](https://www.ruby-lang.org/)
 [![Sinatra](https://img.shields.io/badge/Sinatra-3.0-lightgrey?logo=ruby)](https://sinatrarb.com/)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
-[![Tests](https://img.shields.io/badge/Tests-583%20passing-brightgreen)](spec/)
+[![Tests](https://img.shields.io/badge/Tests-649%20passing-brightgreen)](spec/)
 [![RSpec](https://img.shields.io/badge/Tested%20with-RSpec-red?logo=ruby)](https://rspec.info/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -37,7 +37,7 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 
 **Developer Experience**
 - RESTful JSON API with OpenAPI documentation
-- Comprehensive test suite (583 tests)
+- Comprehensive test suite (649 tests)
 - Docker development environment
 - Rake tasks for common operations
 
@@ -59,22 +59,78 @@ docker-compose run --rm web bundle exec rake db:migrate
 
 ## Requirements
 
-**Docker Development** (recommended)
-- Docker and Docker Compose
-- Git
-
-**Local Development**
 - Ruby 3.0+
-- Bundler
-- SQLite3
-
-**Production**
-- Ruby 3.0+ with FastCGI (shared hosting), or
-- Docker environment (containerized)
+- SQLite3 (or PostgreSQL/MySQL)
+- Docker (optional, for development)
 
 ## Installation
 
-### Docker Setup (Recommended)
+### As a Gem (Recommended for New Projects)
+
+Add v7cms to your Gemfile:
+
+```ruby
+source 'https://rubygems.pkg.github.com/bennyfactor' do
+  gem 'v7cms', '~> 0.1'
+end
+```
+
+Or install directly:
+
+```bash
+gem install v7cms --source "https://rubygems.pkg.github.com/bennyfactor"
+```
+
+Then set up your project:
+
+```bash
+# Create project directory
+mkdir my-site && cd my-site
+
+# Create Gemfile
+echo "source 'https://rubygems.pkg.github.com/bennyfactor' do
+  gem 'v7cms'
+end" > Gemfile
+
+# Install dependencies
+bundle install
+
+# Run setup (creates config.ru, Rakefile, .env.example, etc.)
+bundle exec rake v7cms:setup
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your OAuth credentials and ADMIN_EMAILS
+
+# Install and run migrations
+bundle exec rake v7cms:install_migrations
+bundle exec rake db:migrate
+
+# Start the server
+bundle exec rackup -p 9292
+```
+
+Your site is now running at http://localhost:9292
+
+**Customization:**
+
+Override any view or asset by creating it in your project:
+
+```bash
+# Override the layout
+mkdir -p views
+cp $(bundle show v7cms)/lib/v7cms/views/layout.erb views/
+
+# Override admin styles
+mkdir -p public/css
+# Add your custom CSS
+```
+
+Files in your project take priority over gem defaults.
+
+### Cloning the Repository (For Development)
+
+#### Docker Setup (Recommended)
 
 1. Clone the repository:
    ```bash
@@ -109,7 +165,7 @@ docker-compose run --rm web bundle exec rake db:migrate
    - Public site: http://localhost:9292
    - Admin panel: http://localhost:9292/admin/
 
-### Local Development Setup
+#### Local Development Setup
 
 1. Install dependencies:
    ```bash
@@ -348,52 +404,42 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 
 ```
 v7cms/
+├── lib/
+│   ├── v7cms.rb                  # Main gem entry point
+│   └── v7cms/
+│       ├── application.rb        # V7CMS::Application (Sinatra app)
+│       ├── file_resolver.rb      # User-first path resolution
+│       ├── version.rb            # Gem version
+│       ├── models/               # V7CMS::User, Post, Page, etc.
+│       ├── helpers/              # V7CMS::AuthHelper
+│       ├── services/             # V7CMS::FeedGenerator, etc.
+│       ├── views/                # Default ERB templates
+│       ├── public/               # Default static assets
+│       └── tasks/                # Rake tasks (v7cms:setup, etc.)
 ├── app/
-│   ├── cms.rb                    # Main Sinatra application
-│   ├── docs/                     # OpenAPI documentation
-│   ├── helpers/
-│   │   └── auth_helper.rb        # Authentication helpers
-│   ├── models/
-│   │   ├── comment.rb            # Comment with moderation
-│   │   ├── page.rb               # Hierarchical pages
-│   │   ├── post.rb               # Blog posts
-│   │   ├── redirect.rb           # URL redirects
-│   │   ├── setting.rb            # Site settings (singleton)
-│   │   ├── theme.rb              # Theme settings (singleton)
-│   │   └── user.rb               # OAuth users
-│   ├── services/
-│   │   ├── feed_generator.rb     # RSS/Atom generation
-│   │   ├── gravatar_service.rb   # Gravatar profile integration
-│   │   ├── htaccess_generator.rb # Apache rewrite rules
-│   │   ├── page_renderer.rb      # Static page HTML
-│   │   ├── post_renderer.rb      # Static post HTML
-│   │   └── theme_generator.rb    # CSS generation
-│   └── views/                    # ERB templates
-│       ├── layout.erb
-│       ├── index.erb
-│       ├── post.erb
-│       ├── page.erb
-│       └── 404.erb
+│   ├── cms.rb                    # Backward compatibility aliases
+│   └── docs/                     # OpenAPI documentation
 ├── config/
-│   ├── database.yml
-│   └── theme_fields.rb           # Theme field definitions
+│   └── database.yml
 ├── db/
-│   ├── migrate/
-│   └── seed.rb
-├── public/
-│   ├── admin/
-│   │   └── index.html            # Admin SPA
-│   ├── css/
-│   │   └── input.css
-│   └── js/
-│       ├── admin.js
-│       └── comments.js
-├── spec/                         # Test suite (583 tests)
+│   └── migrate/                  # ActiveRecord migrations
+├── public/                       # Development static assets
+├── spec/                         # Test suite (649 tests)
+├── v7cms.gemspec                 # Gem specification
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Gemfile
 └── config.ru
 ```
+
+### Gem Architecture
+
+When using v7cms as a gem, the `V7CMS::FileResolver` provides user-first path resolution:
+
+1. **Your project files** (e.g., `./views/layout.erb`) take priority
+2. **Gem files** (e.g., `lib/v7cms/views/layout.erb`) are used as fallback
+
+This allows you to override any view, asset, or configuration without modifying the gem.
 
 ## Database Schema
 
