@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Run migrations
+        run: |
+          RACK_ENV=test bundle exec rake db:migrate
+
+      - name: Run tests
+        run: bundle exec rspec --format documentation
+
+      - name: Verify gem builds
+        run: gem build v7cms.gemspec

@@ -1,0 +1,85 @@
+name: Publish Gem
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Publish Gem
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Verify version matches gemspec
+        run: |
+          GEM_VERSION=$(ruby -e "require './lib/v7cms/version'; puts V7CMS::VERSION")
+          TAG_VERSION=${{ steps.version.outputs.VERSION }}
+          if [ "$GEM_VERSION" != "$TAG_VERSION" ]; then
+            echo "Version mismatch: gemspec has $GEM_VERSION, tag has $TAG_VERSION"
+            exit 1
+          fi
+          echo "Version verified: $GEM_VERSION"
+
+      - name: Build gem
+        run: gem build v7cms.gemspec
+
+      - name: Publish to GitHub Packages
+        run: |
+          mkdir -p ~/.gem
+          echo "---" > ~/.gem/credentials
+          echo ":github: Bearer ${{ secrets.GITHUB_TOKEN }}" >> ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          gem push --key github \
+            --host https://rubygems.pkg.github.com/${{ github.repository_owner }} \
+            v7cms-${{ steps.version.outputs.VERSION }}.gem
+
+      - name: Upload gem as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7cms-${{ steps.version.outputs.VERSION }}.gem
+          path: v7cms-${{ steps.version.outputs.VERSION }}.gem
+          retention-days: 90
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Run migrations
+        run: |
+          RACK_ENV=test bundle exec rake db:migrate
+
+      - name: Run tests
+        run: bundle exec rspec

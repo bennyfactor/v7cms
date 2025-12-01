@@ -1,5 +1,33 @@
 # Changelog
 
+All notable changes to v7cms will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Gem packaging infrastructure for library distribution
+- `V7CMS::Application` - Namespaced Sinatra application class
+- `V7CMS::FileResolver` - User-first file path resolution (project files override gem defaults)
+- Rake tasks: `v7cms:setup`, `v7cms:install_migrations`, `v7cms:htaccess`, `v7cms:regenerate`
+- Integration tests for gem structure (27 tests)
+
+### Changed
+- All models namespaced under `V7CMS::` (User, Post, Page, Comment, Setting, Theme, Redirect)
+- All services namespaced under `V7CMS::` (FeedGenerator, PostRenderer, PageRenderer, etc.)
+- All helpers namespaced under `V7CMS::` (AuthHelper)
+- Application code moved to `lib/v7cms/` for gem packaging
+- Views moved to `lib/v7cms/views/`
+- Public assets moved to `lib/v7cms/public/`
+
+### Backward Compatibility
+- `app/cms.rb` provides aliases for non-namespaced access (CMS, User, Post, etc.)
+- Existing projects continue to work without changes
+
+---
+
 ## 2025-11-29 - User Management UI
 
 ### Added (PR #39 - User Management UI)
