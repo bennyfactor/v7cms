@@ -93,7 +93,6 @@ public/pages/*.html
 # Don't commit markdown notes (but allow specific project docs)
 *.md
 !README.md
-!ROADMAP.md
 !CHANGELOG.md
 !CONTRIBUTING.md
 !RELEASING.md

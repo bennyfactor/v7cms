@@ -531,7 +531,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Production deployment guide
 - [RELEASING.md](RELEASING.md) - Gem release process (maintainers)
-- [ROADMAP.md](ROADMAP.md) - Development priorities
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [SECURITY.md](SECURITY.md) - Security policy
 
