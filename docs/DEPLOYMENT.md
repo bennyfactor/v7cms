@@ -470,7 +470,7 @@ env | grep GITHUB
 # Ensure redirect URLs include correct domain and protocol
 
 # For DreamHost ModSecurity issues: use 'email' scope only
-# See CLAUDE.md Security Notes section
+# See Security Notes in project documentation
 ```
 
 ### Issue: Admin Access Denied
@@ -803,6 +803,5 @@ For deployment issues:
 
 1. Check logs for error messages
 2. Review this troubleshooting section
-3. Consult [CLAUDE.md](../CLAUDE.md) for architecture details
-4. Check [README.md](../README.md) for configuration help
-5. Open GitHub issue with details if problem persists
+3. Check [README.md](../README.md) for configuration help
+4. Open GitHub issue with details if problem persists

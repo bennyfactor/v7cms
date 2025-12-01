@@ -155,7 +155,6 @@ Update documentation when:
 
 Documentation files to update:
 - **README.md**: User-facing features and API changes
-- **CLAUDE.md**: Architecture and development details
 - **docs/DEPLOYMENT.md**: Deployment-related changes
 - **CHANGELOG.md**: All changes (added by maintainer during merge)
 
@@ -294,8 +293,8 @@ Look for issues labeled `good-first-issue` or `help-wanted`.
 
 ## Questions?
 
-- Check [CLAUDE.md](CLAUDE.md) for architecture details
 - Check [README.md](README.md) for usage information
+- Check [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for deployment details
 - Check existing issues and pull requests
 - Open a new issue for questions
 

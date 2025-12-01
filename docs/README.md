@@ -15,14 +15,6 @@ Start here to understand the project and get it running:
    - API reference
    - Basic troubleshooting
 
-2. **[../CLAUDE.md](../CLAUDE.md)** - Complete project reference for development
-   - Architecture and design
-   - Technology stack details
-   - File structure and organization
-   - Development commands
-   - Testing strategy
-   - Common issues and solutions
-
 ### For Deployers
 
 Production deployment and operations:
@@ -58,15 +50,7 @@ Contributing to the project:
 
 Building and extending the project:
 
-1. **[../CLAUDE.md](../CLAUDE.md)** - Primary development reference
-   - Architecture overview
-   - Request flow
-   - Key files and components
-   - Model relationships
-   - Service layer
-   - Testing approach
-
-2. **[../CHANGELOG.md](../CHANGELOG.md)** - Project history and changes
+1. **[../CHANGELOG.md](../CHANGELOG.md)** - Project history and changes
    - Version history
    - Feature additions
    - Bug fixes
@@ -93,7 +77,6 @@ Detailed designs for specific features:
 - **...deploy to production**: Read [DEPLOYMENT.md](DEPLOYMENT.md)
 - **...contribute code**: Read [../CONTRIBUTING.md](../CONTRIBUTING.md)
 - **...report a security issue**: Read [../SECURITY.md](../SECURITY.md)
-- **...understand the architecture**: Read [../CLAUDE.md](../CLAUDE.md)
 - **...see what's changed**: Read [../CHANGELOG.md](../CHANGELOG.md)
 - **...implement a new feature**: Check [plans/](plans/) for existing designs
 
@@ -104,9 +87,8 @@ Detailed designs for specific features:
 Recommended reading order:
 
 1. [../README.md](../README.md) - Overview and quick start
-2. [../CLAUDE.md](../CLAUDE.md) - Architecture and structure
-3. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Development workflow
-4. [plans/](plans/) - Specific feature designs
+2. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Development workflow
+3. [plans/](plans/) - Specific feature designs
 
 ### System Administrators
 
@@ -115,7 +97,6 @@ Recommended reading order:
 1. [../README.md](../README.md) - OAuth and reCAPTCHA setup
 2. [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
 3. [../SECURITY.md](../SECURITY.md) - Security checklist
-4. [../CLAUDE.md](../CLAUDE.md) - Troubleshooting section
 
 ### Contributors (External)
 
@@ -124,7 +105,6 @@ Recommended reading order:
 1. [../README.md](../README.md) - Project overview
 2. [../CONTRIBUTING.md](../CONTRIBUTING.md) - How to contribute
 3. [../SECURITY.md](../SECURITY.md) - Security policy
-4. [../CLAUDE.md](../CLAUDE.md) - Code structure and standards
 
 ## Documentation Standards
 
@@ -134,7 +114,6 @@ When updating documentation:
 2. **Be specific**: Include exact commands, file paths, and code examples
 3. **Test instructions**: Verify all commands and examples work
 4. **Link related docs**: Cross-reference relevant documentation
-5. **No AI mentions**: Per CLAUDE.md policy, don't mention AI tools in committed docs
 
 ## Archive
 
@@ -147,11 +126,10 @@ These files are kept for reference but are not actively maintained.
 
 ## Getting Help
 
-1. **Quick questions**: Check [../CLAUDE.md](../CLAUDE.md) Common Issues section
-2. **Deployment issues**: Check [DEPLOYMENT.md](DEPLOYMENT.md) Troubleshooting section
-3. **Bug reports**: See [../CONTRIBUTING.md](../CONTRIBUTING.md)
-4. **Security concerns**: See [../SECURITY.md](../SECURITY.md)
-5. **General questions**: Open a GitHub issue
+1. **Deployment issues**: Check [DEPLOYMENT.md](DEPLOYMENT.md) Troubleshooting section
+2. **Bug reports**: See [../CONTRIBUTING.md](../CONTRIBUTING.md)
+3. **Security concerns**: See [../SECURITY.md](../SECURITY.md)
+4. **General questions**: Open a GitHub issue
 
 ## Documentation Maintenance
 
@@ -166,7 +144,6 @@ Last full review: 2025-11-27
 
 **Quick Links:**
 - [Project README](../README.md)
-- [Development Guide](../CLAUDE.md)
 - [Deployment Guide](DEPLOYMENT.md)
 - [Contributing Guide](../CONTRIBUTING.md)
 - [Security Policy](../SECURITY.md)
