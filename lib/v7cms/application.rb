@@ -49,17 +49,35 @@ module V7CMS
       set :static, true
     end
 
-    # Set views directory
-    # Priority: 1. User's project (views/), 2. Gem views (lib/v7cms/views/), 3. Fallback (app/views for backward compatibility)
+    # Set views directories (supports multiple paths for user overrides)
+    # Priority: 1. User's project (views/), 2. Gem views (lib/v7cms/views/)
+    # User can add custom layouts in their views/ folder without copying all gem views
     configure do
       views_paths = V7CMS.file_resolver.resolve_all('views')
-      if views_paths.any?
-        set :views, views_paths.first
-      else
+      if views_paths.empty?
         # Fallback to app/views for backward compatibility during migration
-        fallback_views = File.join(V7CMS.gem_root, 'app', 'views')
-        set :views, fallback_views
+        views_paths = [File.join(V7CMS.gem_root, 'app', 'views')]
       end
+      # Store all paths for multi-path template lookup
+      set :views_paths, views_paths
+      # Set primary views path (required by Sinatra for default behavior)
+      set :views, views_paths.first
+    end
+
+    # Override find_template to search multiple view paths
+    # This allows users to add custom layouts without copying all gem views
+    def find_template(views, name, engine)
+      # Get all configured view paths
+      all_views = settings.views_paths || [views]
+
+      all_views.each do |view_path|
+        super(view_path, name, engine) do |file|
+          return yield(file) if File.exist?(file)
+        end
+      end
+
+      # If not found in any path, yield the default path for error handling
+      yield ::File.join(views, "#{name}.erb")
     end
 
     # CSRF protection (disabled in test)
