@@ -256,12 +256,14 @@ namespace :v7cms do
     puts 'Done!'
   end
 
-  desc 'Copy migrations from gem to project'
+  desc 'Copy migrations from gem to project (use FORCE=true to overwrite changed migrations)'
   task :install_migrations do
     require 'v7cms'
+    require 'digest'
 
     gem_migrations = File.join(V7CMS.gem_root, 'db', 'migrate')
     project_migrations = File.join(V7CMS.project_root, 'db', 'migrate')
+    force = ENV['FORCE'] == 'true'
 
     unless File.directory?(gem_migrations)
       puts "Error: No migrations found in gem at #{gem_migrations}"
@@ -271,6 +273,7 @@ namespace :v7cms do
     FileUtils.mkdir_p(project_migrations)
 
     copied = 0
+    updated = 0
     skipped = 0
 
     Dir.glob(File.join(gem_migrations, '*.rb')).each do |migration|
@@ -278,7 +281,20 @@ namespace :v7cms do
       target = File.join(project_migrations, filename)
 
       if File.exist?(target)
-        skipped += 1
+        # Compare file contents using MD5 hash
+        gem_hash = Digest::MD5.file(migration).hexdigest
+        project_hash = Digest::MD5.file(target).hexdigest
+
+        if gem_hash == project_hash
+          skipped += 1
+        elsif force
+          FileUtils.cp(migration, target)
+          updated += 1
+          puts "  Updated: #{filename}"
+        else
+          puts "  Changed: #{filename} (use FORCE=true to update)"
+          skipped += 1
+        end
       else
         FileUtils.cp(migration, target)
         copied += 1
@@ -287,8 +303,10 @@ namespace :v7cms do
     end
 
     puts
-    puts "Migrations: #{copied} copied, #{skipped} already existed"
-    puts "Run 'bundle exec rake db:migrate' to apply migrations"
+    puts "Migrations: #{copied} copied, #{updated} updated, #{skipped} unchanged"
+    if updated > 0 || copied > 0
+      puts "Run 'bundle exec rake db:migrate' to apply migrations"
+    end
   end
 
   desc 'Show v7cms version'
