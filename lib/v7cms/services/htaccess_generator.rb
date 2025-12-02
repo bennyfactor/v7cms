@@ -2,8 +2,8 @@
 
 module V7CMS
   class HtaccessGenerator
-    # Template is in the gem's templates directory
-    TEMPLATE_PATH = File.expand_path('../templates/.htaccess.template', __dir__).freeze
+    # Template is in the gem's templates directory (no leading dot so it's included in gem)
+    TEMPLATE_PATH = File.expand_path('../templates/htaccess.template', __dir__).freeze
     PLACEHOLDER = '{{REDIRECTS}}'.freeze
 
     def self.generate
