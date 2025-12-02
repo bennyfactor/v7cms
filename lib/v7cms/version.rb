@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module V7CMS
-  VERSION = '0.1.1-bis'
+  VERSION = '0.1.2'
 end
