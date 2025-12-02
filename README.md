@@ -121,14 +121,38 @@ Your site is now running at http://localhost:9292
 
 **Customization:**
 
-Override any view or asset by creating it in your project:
+v7cms supports multi-path view resolution - add custom views without copying everything from the gem:
 
 ```bash
-# Override the layout
+# Add a custom homepage layout (no need to copy other files!)
+mkdir -p views/layouts/homepage
+cat > views/layouts/homepage/_my_custom.erb << 'EOF'
+<div class="my-homepage">
+  <h1><%= @settings.welcome_title %></h1>
+  <% @posts.each do |post| %>
+    <article>
+      <h2><a href="/posts/<%= post.slug %>"><%= post.title %></a></h2>
+      <time><%= post.created_at.strftime(@settings.date_format) %></time>
+    </article>
+  <% end %>
+</div>
+EOF
+```
+
+Then set `layout_homepage` to `my_custom` in admin Settings.
+
+**Available layout variables:**
+- `@posts` - published posts collection
+- `@settings` - site settings (site_title, welcome_title, date_format, etc.)
+
+**Override any view or asset:**
+
+```bash
+# Override the main layout
 mkdir -p views
 cp $(bundle show v7cms)/lib/v7cms/views/layout.erb views/
 
-# Override admin styles
+# Override styles
 mkdir -p public/css
 # Add your custom CSS
 ```
@@ -357,17 +381,28 @@ docker-compose run --rm web bundle exec rake db:migrate
 docker-compose run --rm web bundle exec rake db:rollback
 ```
 
-### Static File Management
+### Rake Tasks
 
 ```bash
-# Regenerate all static HTML files
-bundle exec rake posts:regenerate_all
+# Set up a new v7cms project (creates config files, copies templates)
+bundle exec rake v7cms:setup
 
-# Verify static files exist
-bundle exec rake posts:verify
+# Install/update migrations from gem
+bundle exec rake v7cms:install_migrations
+bundle exec rake v7cms:install_migrations FORCE=true  # Overwrite changed migrations
 
-# Clean orphaned files
-bundle exec rake posts:clean_orphans
+# Regenerate all static HTML files (posts and pages)
+bundle exec rake v7cms:regenerate
+
+# Generate .htaccess for Apache/FastCGI
+bundle exec rake v7cms:htaccess
+
+# Show v7cms version
+bundle exec rake v7cms:version
+
+# Database migrations
+bundle exec rake db:migrate
+bundle exec rake db:rollback
 ```
 
 ### CSS Development
@@ -398,12 +433,32 @@ docker run -d \
 
 ### Shared Hosting (FastCGI)
 
-1. Uncomment the `fcgi` gem in Gemfile
-2. Upload files to web directory
-3. Run `bundle install --deployment`
-4. Configure environment variables
-5. Run migrations
-6. Set up `.htaccess` for URL rewriting
+The `v7cms:setup` task automatically configures your project for FastCGI deployment:
+
+1. **Run setup** (if not already done):
+   ```bash
+   bundle exec rake v7cms:setup
+   ```
+   This creates:
+   - `setup.php` - Auto-detects Ruby path for your hosting environment
+   - `index.fcgi` - FastCGI entry point
+   - Adds `fcgi` gem to Gemfile (Linux-only, via `install_if`)
+
+2. **Upload and configure:**
+   ```bash
+   bundle install --deployment
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+3. **Run migrations and generate .htaccess:**
+   ```bash
+   RACK_ENV=production bundle exec rake db:migrate
+   bundle exec rake v7cms:htaccess
+   ```
+
+4. **Auto-configure Ruby path** (optional):
+   Visit `https://yourdomain.com/setup.php` in your browser to auto-detect and configure the Ruby shebang in `index.fcgi`.
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 
@@ -446,7 +501,16 @@ When using v7cms as a gem, the `V7CMS::FileResolver` provides user-first path re
 1. **Your project files** (e.g., `./views/layout.erb`) take priority
 2. **Gem files** (e.g., `lib/v7cms/views/layout.erb`) are used as fallback
 
-This allows you to override any view, asset, or configuration without modifying the gem.
+**Multi-path view resolution:** Unlike typical gems, v7cms searches multiple view directories. You can add a custom homepage layout in `views/layouts/homepage/_my_layout.erb` without needing to copy all other views. The gem's views remain accessible as fallback.
+
+**Built-in homepage layouts:**
+- `blog_list` (default) - Traditional blog format
+- `blog_grid` - Grid layout with cards
+- `hero_grid` - Featured post hero + grid
+- `magazine` - Magazine-style layout
+- `minimal` - Clean, text-focused
+- `portfolio` - Visual portfolio grid
+- `landing` - Marketing landing page
 
 ## Database Schema
 
