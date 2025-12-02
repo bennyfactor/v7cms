@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../../app/services/feed_generator'
 require 'nokogiri'
 
 RSpec.describe FeedGenerator do

@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../../app/services/page_renderer'
 
 RSpec.describe PageRenderer do
   let(:page) do

@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../../app/services/post_renderer'
 
 RSpec.describe PostRenderer do
   let(:post) do
