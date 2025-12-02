@@ -6,7 +6,8 @@ namespace :v7cms do
   desc 'Generate initial project files for a v7cms installation'
   task :setup do
     # Allow override via PROJECT_ROOT env var for testing
-    project_root = ENV['PROJECT_ROOT'] || (defined?(V7CMS) ? V7CMS.project_root : Dir.pwd)
+    # Check if V7CMS is fully loaded (has project_root method) or just partially defined
+    project_root = ENV['PROJECT_ROOT'] || (defined?(V7CMS) && V7CMS.respond_to?(:project_root) ? V7CMS.project_root : Dir.pwd)
 
     puts "Setting up v7cms project in #{project_root}..."
     puts
@@ -170,29 +171,38 @@ namespace :v7cms do
       puts "  Skipped #{config_ru} (already exists)"
     end
 
-    # Create Rakefile if it doesn't exist
+    # Create or update Rakefile
+    # Overwrite if it exists but is missing sinatra-activerecord (minimal bootstrap Rakefile)
     rakefile = File.join(project_root, 'Rakefile')
-    unless File.exist?(rakefile)
-      File.write(rakefile, <<~RUBY)
-        # frozen_string_literal: true
+    rakefile_content = <<~RUBY
+      # frozen_string_literal: true
 
-        require 'v7cms'
+      require 'v7cms'
 
-        # Load v7cms rake tasks
-        require 'v7cms/tasks'
+      # Load v7cms rake tasks
+      require 'v7cms/tasks'
 
-        # Load sinatra-activerecord rake tasks
-        require 'sinatra/activerecord/rake'
+      # Load sinatra-activerecord rake tasks
+      require 'sinatra/activerecord/rake'
 
-        namespace :db do
-          task :load_config do
-            require 'v7cms'
-          end
+      namespace :db do
+        task :load_config do
+          require 'v7cms'
         end
-      RUBY
-      puts "  Created #{rakefile}"
+      end
+    RUBY
+
+    if File.exist?(rakefile)
+      existing_content = File.read(rakefile)
+      if existing_content.include?('sinatra/activerecord/rake')
+        puts "  Skipped #{rakefile} (already complete)"
+      else
+        File.write(rakefile, rakefile_content)
+        puts "  Updated #{rakefile} (added database tasks)"
+      end
     else
-      puts "  Skipped #{rakefile} (already exists)"
+      File.write(rakefile, rakefile_content)
+      puts "  Created #{rakefile}"
     end
 
     puts
