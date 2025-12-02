@@ -293,14 +293,14 @@ namespace :v7cms do
 
     if defined?(V7CMS::PostRenderer) && defined?(V7CMS::Post)
       V7CMS::Post.published.find_each do |post|
-        V7CMS::PostRenderer.render_to_file(post)
+        V7CMS::PostRenderer.render_to_static(post)
         puts "  Rendered post: #{post.slug}"
       end
     end
 
     if defined?(V7CMS::PageRenderer) && defined?(V7CMS::Page)
       V7CMS::Page.published.find_each do |page|
-        V7CMS::PageRenderer.render_to_file(page)
+        V7CMS::PageRenderer.render_to_static(page)
         puts "  Rendered page: #{page.slug}"
       end
     end
