@@ -1,4 +1,9 @@
-require_relative '../../lib/v7cms/config/theme_fields'
+# Load ThemeConfig from gem or development path
+begin
+  require 'v7cms/config/theme_fields'
+rescue LoadError
+  require_relative '../../lib/v7cms/config/theme_fields'
+end
 
 class ExpandThemeFields < ActiveRecord::Migration[8.1]
   def up
