@@ -98,3 +98,5 @@ public/pages/*.html
 !RELEASING.md
 !SECURITY.md
 !docs/*.md
+!.github/*.md
+!.github/**/*.md
