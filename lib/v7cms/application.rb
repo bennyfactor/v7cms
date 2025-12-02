@@ -184,6 +184,59 @@ module V7CMS
     end
 
     # =========================================================================
+    # Admin Panel Routes (served from gem's public directory)
+    # =========================================================================
+
+    # Serve admin panel HTML - always from gem to ensure it's available
+    get '/admin/' do
+      admin_html = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public', 'admin', 'index.html')
+      if File.exist?(admin_html)
+        content_type 'text/html'
+        File.read(admin_html)
+      else
+        halt 404, 'Admin panel not found'
+      end
+    end
+
+    # Redirect /admin to /admin/
+    get '/admin' do
+      redirect '/admin/'
+    end
+
+    # Serve admin JS from gem's public directory
+    get '/js/admin.js' do
+      admin_js = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public', 'js', 'admin.js')
+      if File.exist?(admin_js)
+        content_type 'application/javascript'
+        File.read(admin_js)
+      else
+        halt 404, 'Admin JS not found'
+      end
+    end
+
+    # Serve comments JS from gem's public directory
+    get '/js/comments.js' do
+      comments_js = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public', 'js', 'comments.js')
+      if File.exist?(comments_js)
+        content_type 'application/javascript'
+        File.read(comments_js)
+      else
+        halt 404, 'Comments JS not found'
+      end
+    end
+
+    # Serve API docs from gem's public directory
+    get '/api-docs.html' do
+      api_docs = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public', 'api-docs.html')
+      if File.exist?(api_docs)
+        content_type 'text/html'
+        File.read(api_docs)
+      else
+        halt 404, 'API docs not found'
+      end
+    end
+
+    # =========================================================================
     # Public Site Routes
     # =========================================================================
 
