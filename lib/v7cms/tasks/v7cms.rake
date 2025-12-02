@@ -205,12 +205,12 @@ namespace :v7cms do
       puts "  Created #{rakefile}"
     end
 
+    # __dir__ is lib/v7cms/tasks, so go up to lib/v7cms for templates
+    templates_dir = File.expand_path('../templates', __dir__)
+
     # Copy setup.php for production FastCGI deployment
     setup_php = File.join(project_root, 'setup.php')
     unless File.exist?(setup_php)
-      # Find setup.php in gem templates directory
-      # __dir__ is lib/v7cms/tasks, so go up to lib/v7cms for templates
-      templates_dir = File.expand_path('../templates', __dir__)
       source_setup_php = File.join(templates_dir, 'setup.php')
 
       if File.exist?(source_setup_php)
@@ -221,6 +221,22 @@ namespace :v7cms do
       end
     else
       puts "  Skipped #{setup_php} (already exists)"
+    end
+
+    # Copy index.fcgi for production FastCGI deployment
+    index_fcgi = File.join(project_root, 'index.fcgi')
+    unless File.exist?(index_fcgi)
+      source_index_fcgi = File.join(templates_dir, 'index.fcgi')
+
+      if File.exist?(source_index_fcgi)
+        FileUtils.cp(source_index_fcgi, index_fcgi)
+        FileUtils.chmod(0o755, index_fcgi)
+        puts "  Created #{index_fcgi}"
+      else
+        puts "  Warning: index.fcgi template not found in gem"
+      end
+    else
+      puts "  Skipped #{index_fcgi} (already exists)"
     end
 
     puts
@@ -234,7 +250,8 @@ namespace :v7cms do
     puts '  5. Run: bundle exec rackup'
     puts
     puts 'For production FastCGI deployment:'
-    puts '  - Upload setup.php and visit it in your browser to configure Ruby paths'
+    puts '  - Visit setup.php in your browser to auto-configure Ruby paths'
+    puts '  - Or manually update the shebang in index.fcgi'
     puts
   end
 
