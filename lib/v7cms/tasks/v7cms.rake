@@ -205,14 +205,36 @@ namespace :v7cms do
       puts "  Created #{rakefile}"
     end
 
+    # Copy setup.php for production FastCGI deployment
+    setup_php = File.join(project_root, 'setup.php')
+    unless File.exist?(setup_php)
+      # Find setup.php in gem templates directory
+      # __dir__ is lib/v7cms/tasks, so go up to lib/v7cms for templates
+      templates_dir = File.expand_path('../templates', __dir__)
+      source_setup_php = File.join(templates_dir, 'setup.php')
+
+      if File.exist?(source_setup_php)
+        FileUtils.cp(source_setup_php, setup_php)
+        puts "  Created #{setup_php}"
+      else
+        puts "  Warning: setup.php template not found in gem"
+      end
+    else
+      puts "  Skipped #{setup_php} (already exists)"
+    end
+
     puts
     puts 'Setup complete!'
     puts
     puts 'Next steps:'
     puts '  1. Copy .env.example to .env and configure your settings'
     puts '  2. Copy config/database.yml.example to config/database.yml (optional)'
-    puts '  3. Run: bundle exec rake db:migrate'
-    puts '  4. Run: bundle exec rackup'
+    puts '  3. Run: bundle exec rake v7cms:install_migrations'
+    puts '  4. Run: bundle exec rake db:migrate'
+    puts '  5. Run: bundle exec rackup'
+    puts
+    puts 'For production FastCGI deployment:'
+    puts '  - Upload setup.php and visit it in your browser to configure Ruby paths'
     puts
   end
 

@@ -111,6 +111,8 @@ RSpec.describe PostRenderer do
 
   describe '#write_file' do
     it 'creates static HTML file' do
+      # Clean up any pre-existing file from other tests
+      FileUtils.rm_f(static_file_path)
       expect(File.exist?(static_file_path)).to be false
 
       renderer.write_file
@@ -179,6 +181,8 @@ RSpec.describe PostRenderer do
 
   describe '.write_static_file' do
     it 'creates static file' do
+      # Clean up any pre-existing file from other tests
+      FileUtils.rm_f(static_file_path)
       expect(File.exist?(static_file_path)).to be false
 
       PostRenderer.write_static_file(post)
