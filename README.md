@@ -88,14 +88,21 @@ Then set up your project:
 mkdir my-site && cd my-site
 
 # Create Gemfile
-echo "source 'https://rubygems.pkg.github.com/bennyfactor' do
-  gem 'v7cms'
-end" > Gemfile
+cat > Gemfile << 'EOF'
+source "https://rubygems.org"
+
+source "https://rubygems.pkg.github.com/bennyfactor" do
+  gem "v7cms", "~> 0.1"
+end
+EOF
 
 # Install dependencies
 bundle install
 
-# Run setup (creates config.ru, Rakefile, .env.example, etc.)
+# Create bootstrap Rakefile (required to run setup)
+echo 'require "v7cms/tasks"' > Rakefile
+
+# Run setup (creates config.ru, .env.example, updates Rakefile with db tasks, etc.)
 bundle exec rake v7cms:setup
 
 # Copy and configure environment
