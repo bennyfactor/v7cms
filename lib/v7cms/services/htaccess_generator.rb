@@ -2,19 +2,24 @@
 
 module V7CMS
   class HtaccessGenerator
-    TEMPLATE_PATH = File.expand_path('../../../.htaccess.template', __dir__).freeze
-    OUTPUT_PATH = File.expand_path('../../../.htaccess', __dir__).freeze
+    # Template is in the gem's templates directory
+    TEMPLATE_PATH = File.expand_path('../templates/.htaccess.template', __dir__).freeze
     PLACEHOLDER = '{{REDIRECTS}}'.freeze
 
     def self.generate
       new.generate
     end
 
+    # Output path is in the user's project root
+    def output_path
+      File.join(V7CMS.project_root, '.htaccess')
+    end
+
     def generate
       template = File.read(TEMPLATE_PATH)
       redirects_block = build_redirects_block
       output = template.gsub(PLACEHOLDER, redirects_block)
-      File.write(OUTPUT_PATH, output)
+      File.write(output_path, output)
       Logger.new(STDOUT).info("HtaccessGenerator: .htaccess regenerated with #{V7CMS::Redirect.count} redirects")
       true
     rescue StandardError => e
