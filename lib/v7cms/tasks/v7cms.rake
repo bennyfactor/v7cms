@@ -239,6 +239,19 @@ namespace :v7cms do
       puts "  Skipped #{index_fcgi} (already exists)"
     end
 
+    # Add fcgi gem to Gemfile for FastCGI deployment (Linux only)
+    gemfile_path = File.join(project_root, 'Gemfile')
+    if File.exist?(gemfile_path)
+      gemfile_content = File.read(gemfile_path)
+      unless gemfile_content.include?('fcgi')
+        fcgi_line = "\n# FastCGI support for production (only installed on Linux)\ninstall_if -> { RUBY_PLATFORM =~ /linux/ } do\n  gem 'fcgi'\nend\n"
+        File.write(gemfile_path, gemfile_content + fcgi_line)
+        puts "  Updated #{gemfile_path} (added fcgi gem for FastCGI)"
+      else
+        puts "  Skipped #{gemfile_path} (fcgi already present)"
+      end
+    end
+
     puts
     puts 'Setup complete!'
     puts
