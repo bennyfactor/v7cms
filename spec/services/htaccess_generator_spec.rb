@@ -2,7 +2,8 @@ require 'spec_helper'
 
 RSpec.describe HtaccessGenerator do
   let(:template_path) { HtaccessGenerator::TEMPLATE_PATH }
-  let(:output_path) { HtaccessGenerator::OUTPUT_PATH }
+  let(:generator) { HtaccessGenerator.new }
+  let(:output_path) { generator.output_path }
 
   before do
     # Ensure we have a template file for testing
@@ -53,8 +54,6 @@ RSpec.describe HtaccessGenerator do
   end
 
   describe '#escape_path' do
-    let(:generator) { HtaccessGenerator.new }
-
     it 'removes leading slash' do
       expect(generator.send(:escape_path, '/test')).to eq('test')
     end
@@ -78,8 +77,6 @@ RSpec.describe HtaccessGenerator do
   end
 
   describe '#build_redirects_block' do
-    let(:generator) { HtaccessGenerator.new }
-
     it 'returns "no redirects" message when no redirects exist' do
       result = generator.send(:build_redirects_block)
       expect(result).to eq('# No custom redirects configured')
