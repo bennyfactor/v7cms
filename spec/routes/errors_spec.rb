@@ -1,8 +1,10 @@
 require 'spec_helper'
 
 RSpec.describe 'Custom Error Pages' do
+  # Error pages are looked up in project root /error/ folder (not public/error/)
+  # This allows custom error pages to be placed at the root of the project
   def error_dir
-    File.join(CMS.settings.public_folder, 'error')
+    File.join(V7CMS.project_root, 'error')
   end
 
   def cleanup_error_dir
@@ -98,10 +100,10 @@ RSpec.describe 'Custom Error Pages' do
       expect(CMS.find_error_page(404)).to be_nil
     end
 
-    it 'find_error_page returns path when error file exists' do
+    it 'find_error_page returns path when error file exists in project root' do
       cleanup_error_dir
       create_error_file('404.html', 'test')
-      expected_path = File.join(error_dir, '404.html')
+      expected_path = File.join(V7CMS.project_root, 'error', '404.html')
 
       expect(CMS.find_error_page(404)).to eq(expected_path)
     ensure
