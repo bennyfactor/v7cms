@@ -1254,10 +1254,73 @@ module V7CMS
       }
     end
 
-    # reCAPTCHA v3 verification helper
+    # reCAPTCHA verification helper - supports both Enterprise and Standard v3
     def verify_recaptcha_v3(token, remote_ip)
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
+      # Choose Enterprise or Standard based on env vars
+      if ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']
+        verify_recaptcha_enterprise(token, remote_ip)
+      elsif ENV['RECAPTCHA_SECRET_KEY']
+        verify_recaptcha_standard(token, remote_ip)
+      else
+        puts "reCAPTCHA not configured - skipping verification"
+        1.0
+      end
+    end
+
+    # reCAPTCHA Enterprise verification
+    def verify_recaptcha_enterprise(token, remote_ip)
+      require 'net/http'
+      require 'json'
+
+      project_id = ENV['RECAPTCHA_PROJECT_ID']
+      api_key = ENV['RECAPTCHA_API_KEY']
+      site_key = ENV['RECAPTCHA_SITE_KEY']
+
+      uri = URI.parse("https://recaptchaenterprise.googleapis.com/v1/projects/#{project_id}/assessments?key=#{api_key}")
+
+      request_body = {
+        event: {
+          token: token,
+          siteKey: site_key,
+          expectedAction: 'submit_comment',
+          userIpAddress: remote_ip
+        }
+      }
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+
+      request = Net::HTTP::Post.new(uri.request_uri, { 'Content-Type' => 'application/json' })
+      request.body = request_body.to_json
+
+      response = http.request(request)
+      result = JSON.parse(response.body)
+
+      # Check token validity and action match
+      token_props = result['tokenProperties'] || {}
+      risk_analysis = result['riskAnalysis'] || {}
+
+      unless token_props['valid']
+        puts "reCAPTCHA Enterprise: invalid token - #{token_props['invalidReason']}"
+        return 0.0
+      end
+
+      if token_props['action'] != 'submit_comment'
+        puts "reCAPTCHA Enterprise: action mismatch - expected submit_comment, got #{token_props['action']}"
+        return 0.0
+      end
+
+      # Return score (0.0 = bot, 1.0 = human)
+      risk_analysis['score'] || 0.0
+    rescue => e
+      puts "reCAPTCHA Enterprise verification error: #{e.message}"
+      0.0
+    end
+
+    # Standard reCAPTCHA v3 verification
+    def verify_recaptcha_standard(token, remote_ip)
       require 'net/http'
       require 'json'
 
@@ -1273,7 +1336,6 @@ module V7CMS
       # Return score (0.0 = bot, 1.0 = human)
       result['success'] ? result['score'] : 0.0
     rescue => e
-      # Log error and return safe default
       puts "reCAPTCHA verification error: #{e.message}"
       0.0
     end
