@@ -79,12 +79,18 @@
   </div>
 </div>
 
-<!-- reCAPTCHA v3 Script -->
+<!-- reCAPTCHA Script (Enterprise or Standard v3) -->
+<% recaptcha_enterprise = ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY'] %>
+<% if recaptcha_enterprise %>
+<script src="https://www.google.com/recaptcha/enterprise.js?render=<%= ENV['RECAPTCHA_SITE_KEY'] %>"></script>
+<% else %>
 <script src="https://www.google.com/recaptcha/api.js?render=<%= ENV['RECAPTCHA_SITE_KEY'] %>"></script>
+<% end %>
 
 <!-- Comments JavaScript -->
 <script>
   const POST_ID = <%= @post.id %>;
   const RECAPTCHA_SITE_KEY = '<%= ENV['RECAPTCHA_SITE_KEY'] %>';
+  const RECAPTCHA_ENTERPRISE = <%= recaptcha_enterprise ? 'true' : 'false' %>;
 </script>
 <script src="/js/comments.js"></script>
