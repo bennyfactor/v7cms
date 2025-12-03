@@ -297,7 +297,7 @@ RSpec.describe Setting do
       it 'rejects invalid layout values' do
         setting.layout_homepage = 'invalid_layout'
         expect(setting).not_to be_valid
-        expect(setting.errors[:layout_homepage]).to include('must be a valid layout option')
+        expect(setting.errors[:layout_homepage].first).to include('must be a valid layout option')
       end
 
       it 'defines all expected layouts' do
