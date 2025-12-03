@@ -252,11 +252,35 @@ Configure at least one OAuth provider for admin access.
 
 ### reCAPTCHA Setup
 
-Required for comment spam prevention:
+Required for comment spam prevention. v7cms supports both standard reCAPTCHA v3 and reCAPTCHA Enterprise.
+
+#### Option 1: Standard reCAPTCHA v3 (Recommended for new setups)
 
 1. Visit [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin/create)
-2. Create a reCAPTCHA v3 site
-3. Add site key and secret key to `.env`
+2. Select **reCAPTCHA v3** (not v2 or Enterprise)
+3. Add your domain(s)
+4. Add site key and secret key to `.env`:
+   ```bash
+   RECAPTCHA_SITE_KEY=<your-site-key>
+   RECAPTCHA_SECRET_KEY=<your-secret-key>
+   ```
+
+#### Option 2: reCAPTCHA Enterprise
+
+If your Google account has been migrated to reCAPTCHA Enterprise, use these settings instead:
+
+1. Go to [Google Cloud reCAPTCHA](https://console.cloud.google.com/security/recaptcha)
+2. Create or select your reCAPTCHA key
+3. **Configure domain restrictions here** - add your domains in the key's "Domain list" section
+4. Create an API key at [Google Cloud Credentials](https://console.cloud.google.com/apis/credentials)
+5. Add credentials to `.env`:
+   ```bash
+   RECAPTCHA_SITE_KEY=<your-site-key>
+   RECAPTCHA_PROJECT_ID=<your-gcp-project-id>
+   RECAPTCHA_API_KEY=<your-api-key>
+   ```
+
+**Important:** When using reCAPTCHA Enterprise, configure domain restrictions on the **reCAPTCHA site key** (in the reCAPTCHA console), not on the API key. The API key settings page allows adding HTTP referrer restrictions, but this will cause authentication failures with the reCAPTCHA service. Leave the API key unrestricted or use API-level restrictions only (e.g., restrict to "reCAPTCHA Enterprise API").
 
 ## Usage
 
