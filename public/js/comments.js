@@ -16,10 +16,11 @@ async function loadComments(postId) {
   try {
     // Fetch post data to check comments_allowed status
     const postResponse = await fetch(`/api/posts/${postId}`);
-    const post = await postResponse.json();
+    const postData = await postResponse.json();
 
     // Check if comments are allowed (both globally and for this post)
-    const commentsAllowed = post.comments_allowed;
+    // API returns { post: { comments_allowed: true/false, ... } }
+    const commentsAllowed = postData.post && postData.post.comments_allowed;
 
     // Get form and container elements
     const formContainer = document.querySelector('#comment-form').parentElement;
