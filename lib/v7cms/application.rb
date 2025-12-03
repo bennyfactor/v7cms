@@ -146,10 +146,12 @@ module V7CMS
     ERROR_PAGE_EXTENSIONS = %w[.html .shtml .php].freeze
 
     # Helper to find custom error page file
+    # Checks project root /error/ folder first, then gem's error folder
     def self.find_error_page(code)
       ERROR_PAGE_EXTENSIONS.each do |ext|
-        path = File.join(settings.public_folder, 'error', "#{code}#{ext}")
-        return path if File.exist?(path)
+        # Use file_resolver to check project root first, then gem
+        path = V7CMS.file_resolver.resolve(File.join('error', "#{code}#{ext}"))
+        return path if path
       end
       nil
     end
