@@ -635,6 +635,18 @@ module V7CMS
       json({ settings: settings_json(settings) })
     end
 
+    # GET /api/settings/layouts - Get available homepage layouts
+    get '/api/settings/layouts' do
+      layouts = V7CMS::Setting.available_layouts.map do |name|
+        {
+          name: name,
+          label: name.split('_').map(&:capitalize).join(' '),
+          builtin: V7CMS::Setting::HOMEPAGE_LAYOUTS.include?(name)
+        }
+      end
+      json({ layouts: layouts })
+    end
+
     # =========================================================================
     # Theme API Routes
     # =========================================================================

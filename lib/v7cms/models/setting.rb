@@ -42,12 +42,32 @@ module V7CMS
 
     validates :reserved_redirect_paths, length: { maximum: 1000 }
 
+    # Built-in homepage layouts (shipped with gem)
     HOMEPAGE_LAYOUTS = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].freeze
 
-    validates :layout_homepage, inclusion: {
-      in: HOMEPAGE_LAYOUTS,
-      message: 'must be a valid layout option'
-    }
+    # Validate layout_homepage against all available layouts (built-in + custom)
+    validate :layout_homepage_must_be_available
+
+    # Discover all available homepage layouts from both gem and user views
+    def self.available_layouts
+      layouts = HOMEPAGE_LAYOUTS.dup
+
+      # Get all view paths (user's project + gem)
+      views_paths = V7CMS.file_resolver.resolve_all('views')
+
+      views_paths.each do |views_path|
+        layout_dir = File.join(views_path, 'layouts', 'homepage')
+        next unless File.directory?(layout_dir)
+
+        Dir.glob(File.join(layout_dir, '_*.erb')).each do |file|
+          # Extract layout name from _name.erb
+          name = File.basename(file, '.erb').sub(/^_/, '')
+          layouts << name unless layouts.include?(name)
+        end
+      end
+
+      layouts.sort
+    end
 
     # Callbacks
     after_commit :regenerate_feeds
@@ -112,6 +132,15 @@ module V7CMS
     end
 
     private
+
+    def layout_homepage_must_be_available
+      return if layout_homepage.blank?
+
+      available = self.class.available_layouts
+      unless available.include?(layout_homepage)
+        errors.add(:layout_homepage, "must be a valid layout option (available: #{available.join(', ')})")
+      end
+    end
 
     def regenerate_feeds
       FeedGenerator.write_feeds
