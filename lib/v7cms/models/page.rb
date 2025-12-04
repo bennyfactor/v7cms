@@ -4,10 +4,19 @@ module V7CMS
     belongs_to :parent, class_name: 'V7CMS::Page', optional: true
     has_many :children, class_name: 'V7CMS::Page', foreign_key: 'parent_id', dependent: :destroy
 
+    # Static page types + all homepage layout types
+    STATIC_PAGE_TYPES = %w[standard contact].freeze
+    LAYOUT_PAGE_TYPES = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].freeze
+    VALID_PAGE_TYPES = (STATIC_PAGE_TYPES + LAYOUT_PAGE_TYPES).freeze
+
+    VALID_CONTENT_SOURCES = %w[children posts].freeze
+
     # Validations
     validates :title, presence: true
     validates :slug, presence: true, uniqueness: true, format: { with: /\A[a-z0-9-]+\z/, message: 'only allows lowercase letters, numbers, and hyphens' }
-    validates :page_type, inclusion: { in: %w[standard landing contact], message: '%{value} is not a valid page type' }
+    validates :page_type, inclusion: { in: VALID_PAGE_TYPES, message: '%{value} is not a valid page type' }
+    validates :content_source, inclusion: { in: VALID_CONTENT_SOURCES, message: '%{value} is not a valid content source' }
+    validates :items_limit, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
     validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
     validate :prevent_circular_reference
 
