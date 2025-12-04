@@ -427,6 +427,18 @@ RSpec.describe 'Pages API', type: :request do
     end
   end
 
+  describe 'GET /api/pages/types' do
+    it 'returns available page types' do
+      get '/api/pages/types'
+      expect(last_response.status).to eq(200)
+      json = JSON.parse(last_response.body)
+      expect(json['types']).to include(
+        hash_including('name' => 'standard', 'category' => 'static'),
+        hash_including('name' => 'blog_grid', 'category' => 'layout')
+      )
+    end
+  end
+
   describe 'API dynamic content fields' do
     it 'includes content_source and items_limit in GET /api/pages/:id response' do
       page = Page.create!(title: 'Test', slug: 'test', published: true)
