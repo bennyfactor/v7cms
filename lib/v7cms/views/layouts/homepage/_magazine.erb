@@ -1,42 +1,41 @@
+<% items = defined?(@items) && @items ? @items : @posts %>
 <!-- Magazine Layout: Featured post + grid -->
 <div class="container mx-auto px-4 py-8">
   <!-- Welcome Section -->
-  <% if @settings.welcome_title.present? || @settings.welcome_subtitle.present? %>
-    <div class="text-center mb-12">
-      <% if @settings.welcome_title.present? %>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4"><%= @settings.welcome_title %></h1>
-      <% end %>
-      <% if @settings.welcome_subtitle.present? %>
-        <p class="text-xl text-gray-600"><%= @settings.welcome_subtitle %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div class="text-center mb-12">
+    <h1 class="text-4xl md:text-5xl font-bold mb-4"><%= @page&.title || @settings.welcome_title %></h1>
+    <% if @page&.content.present? %>
+    <div class="text-xl text-gray-600"><%= @page.content %></div>
+    <% elsif @settings.welcome_subtitle.present? %>
+    <p class="text-xl text-gray-600"><%= @settings.welcome_subtitle %></p>
+    <% end %>
+  </div>
 
   <!-- Posts Section -->
-  <% if @posts.empty? %>
+  <% if items.empty? %>
     <div class="text-center py-16">
-      <p class="text-gray-500 text-lg">No posts yet. Check back soon!</p>
+      <p class="text-gray-500 text-lg">No content yet. Check back soon!</p>
     </div>
   <% else %>
     <!-- Featured Row: 1 Large Post (50%) + 2 Stacked Small Posts (50%) -->
     <div class="flex flex-col lg:flex-row gap-6 mb-8">
       <!-- Large Featured Post (Left 50%) -->
-      <% featured_post = @posts.first %>
+      <% featured_item = items.first %>
       <article class="lg:w-1/2 bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-        <a href="/posts/<%= featured_post.slug %>" class="block">
+        <a href="/<%= featured_item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= featured_item.slug %>" class="block">
           <div class="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <span class="text-white text-6xl font-bold opacity-20">
-              <%= featured_post.title.first %>
+              <%= featured_item.title.first %>
             </span>
           </div>
           <div class="p-6">
             <div class="text-sm text-gray-500 mb-2">
-              <%= featured_post.created_at.strftime(@settings.date_format) %>
+              <%= featured_item.created_at.strftime(@settings.date_format) %>
             </div>
             <h2 class="text-3xl font-bold mb-3 hover:text-blue-600 transition-colors">
-              <%= featured_post.title %>
+              <%= featured_item.title %>
             </h2>
-            <% excerpt = strip_tags(featured_post.content).strip.split(/\s+/).first(40).join(' ') %>
+            <% excerpt = strip_tags(featured_item.content).strip.split(/\s+/).first(40).join(' ') %>
             <p class="text-gray-600 text-lg leading-relaxed">
               <%= excerpt %><%= excerpt.split(/\s+/).length >= 40 ? '...' : '' %>
             </p>
@@ -51,32 +50,32 @@
 
       <!-- Two Stacked Small Posts (Right 50%) -->
       <div class="lg:w-1/2 flex flex-col gap-6">
-        <% @posts[1..2].each_with_index do |post, index| %>
-          <% if post %>
+        <% items[1..2].each_with_index do |item, index| %>
+          <% if item %>
             <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col sm:flex-row h-full">
-              <a href="/posts/<%= post.slug %>" class="block sm:w-2/5">
+              <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="block sm:w-2/5">
                 <div class="aspect-video sm:aspect-square bg-gradient-to-br from-<%= ['green', 'orange'][index] %>-500 to-<%= ['teal', 'red'][index] %>-600 flex items-center justify-center h-full">
                   <span class="text-white text-4xl font-bold opacity-20">
-                    <%= post.title.first %>
+                    <%= item.title.first %>
                   </span>
                 </div>
               </a>
               <div class="p-4 sm:w-3/5 flex flex-col justify-between">
                 <div>
                   <div class="text-xs text-gray-500 mb-2">
-                    <%= post.created_at.strftime(@settings.date_format) %>
+                    <%= item.created_at.strftime(@settings.date_format) %>
                   </div>
-                  <a href="/posts/<%= post.slug %>">
+                  <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>">
                     <h3 class="text-xl font-bold mb-2 hover:text-blue-600 transition-colors line-clamp-2">
-                      <%= post.title %>
+                      <%= item.title %>
                     </h3>
                   </a>
-                  <% excerpt = strip_tags(post.content).strip.split(/\s+/).first(15).join(' ') %>
+                  <% excerpt = strip_tags(item.content).strip.split(/\s+/).first(15).join(' ') %>
                   <p class="text-gray-600 text-sm line-clamp-2">
                     <%= excerpt %><%= excerpt.split(/\s+/).length >= 15 ? '...' : '' %>
                   </p>
                 </div>
-                <a href="/posts/<%= post.slug %>" class="text-blue-600 text-sm font-medium hover:text-blue-700 mt-2">
+                <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="text-blue-600 text-sm font-medium hover:text-blue-700 mt-2">
                   Read more &rarr;
                 </a>
               </div>
@@ -87,31 +86,31 @@
     </div>
 
     <!-- Standard Grid for Remaining Posts -->
-    <% if @posts.length > 3 %>
+    <% if items.length > 3 %>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <% @posts[3..-1].each_with_index do |post, index| %>
+        <% items[3..-1].each_with_index do |item, index| %>
           <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-            <a href="/posts/<%= post.slug %>" class="block">
+            <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="block">
               <div class="aspect-video bg-gradient-to-br from-<%= ['purple', 'pink', 'indigo', 'yellow', 'blue', 'green'][index % 6] %>-500 to-<%= ['indigo', 'red', 'purple', 'orange', 'cyan', 'teal'][index % 6] %>-600 flex items-center justify-center">
                 <span class="text-white text-5xl font-bold opacity-20">
-                  <%= post.title.first %>
+                  <%= item.title.first %>
                 </span>
               </div>
             </a>
             <div class="p-5 flex flex-col flex-grow">
               <div class="text-sm text-gray-500 mb-2">
-                <%= post.created_at.strftime(@settings.date_format) %>
+                <%= item.created_at.strftime(@settings.date_format) %>
               </div>
-              <a href="/posts/<%= post.slug %>">
+              <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>">
                 <h3 class="text-xl font-bold mb-3 hover:text-blue-600 transition-colors">
-                  <%= post.title %>
+                  <%= item.title %>
                 </h3>
               </a>
-              <% excerpt = strip_tags(post.content).strip.split(/\s+/).first(20).join(' ') %>
+              <% excerpt = strip_tags(item.content).strip.split(/\s+/).first(20).join(' ') %>
               <p class="text-gray-600 mb-4 flex-grow">
                 <%= excerpt %><%= excerpt.split(/\s+/).length >= 20 ? '...' : '' %>
               </p>
-              <a href="/posts/<%= post.slug %>" class="text-blue-600 font-medium hover:text-blue-700">
+              <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="text-blue-600 font-medium hover:text-blue-700">
                 Read more &rarr;
               </a>
             </div>
