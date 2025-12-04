@@ -52,6 +52,45 @@ RSpec.describe Page, type: :model do
       expect(Page.new(title: 'Test', slug: 'test-3', page_type: 'contact')).to be_valid
     end
 
+    it 'accepts layout-based page types' do
+      %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].each do |type|
+        expect(Page.new(title: 'Test', slug: "test-#{type.tr('_', '-')}", page_type: type)).to be_valid
+      end
+    end
+
+    it 'validates content_source inclusion' do
+      page = Page.new(title: 'Test', slug: 'test', content_source: 'invalid')
+      expect(page).not_to be_valid
+      expect(page.errors[:content_source]).to include('invalid is not a valid content source')
+    end
+
+    it 'accepts valid content_source values' do
+      expect(Page.new(title: 'Test', slug: 'test-1', content_source: 'children')).to be_valid
+      expect(Page.new(title: 'Test', slug: 'test-2', content_source: 'posts')).to be_valid
+    end
+
+    it 'validates items_limit is positive integer' do
+      page = Page.new(title: 'Test', slug: 'test', items_limit: 0)
+      expect(page).not_to be_valid
+      expect(page.errors[:items_limit]).to include('must be greater than 0')
+    end
+
+    it 'validates items_limit maximum' do
+      page = Page.new(title: 'Test', slug: 'test', items_limit: 101)
+      expect(page).not_to be_valid
+      expect(page.errors[:items_limit]).to include('must be less than or equal to 100')
+    end
+
+    it 'defaults content_source to children' do
+      page = Page.new(title: 'Test', slug: 'test')
+      expect(page.content_source).to eq('children')
+    end
+
+    it 'defaults items_limit to 10' do
+      page = Page.new(title: 'Test', slug: 'test')
+      expect(page.items_limit).to eq(10)
+    end
+
     it 'validates position is non-negative integer' do
       page = Page.new(title: 'Test', slug: 'test', position: -1)
       expect(page).not_to be_valid
