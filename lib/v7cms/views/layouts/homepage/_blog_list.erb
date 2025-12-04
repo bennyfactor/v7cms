@@ -1,40 +1,43 @@
+<% items = defined?(@items) && @items ? @items : @posts %>
 <div class="text-center mb-12">
-    <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @settings.welcome_title %></h1>
-    <% if @settings.welcome_subtitle.present? %>
+    <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @page&.title || @settings.welcome_title %></h1>
+    <% if @page&.content.present? %>
+    <div class="text-xl text-gray-600"><%= @page.content %></div>
+    <% elsif @settings.welcome_subtitle.present? %>
     <p class="text-xl text-gray-600"><%= @settings.welcome_subtitle %></p>
     <% end %>
 </div>
 
-<% if @posts.empty? %>
+<% if items.empty? %>
     <div class="bg-white rounded-lg shadow-md p-12 text-center">
         <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
-        <h2 class="text-2xl font-semibold text-gray-700 mb-2">No posts yet</h2>
+        <h2 class="text-2xl font-semibold text-gray-700 mb-2">No content yet</h2>
         <div id="empty-posts-cta">
             <p class="text-gray-500">Check back soon for new content!</p>
         </div>
     </div>
 <% else %>
     <div class="space-y-6">
-        <% @posts.each do |post| %>
+        <% items.each do |item| %>
             <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
                 <div class="p-6">
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                        <a href="/posts/<%= post.slug %>" class="hover:text-blue-600 transition">
-                            <%= post.title %>
+                        <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="hover:text-blue-600 transition">
+                            <%= item.title %>
                         </a>
                     </h2>
                     <div class="text-sm text-gray-500 mb-4">
-                        <time datetime="<%= post.created_at.iso8601 %>">
-                            <%= post.created_at.strftime(@settings.date_format) %>
+                        <time datetime="<%= item.created_at.iso8601 %>">
+                            <%= item.created_at.strftime(@settings.date_format) %>
                         </time>
                     </div>
                     <div class="prose max-w-none text-gray-700 line-clamp-3">
-                        <%= post.content.to_s.gsub(/<[^>]*>/, '')[0..200] %>...
+                        <%= item.content.to_s.gsub(/<[^>]*>/, '')[0..200] %>...
                     </div>
                     <div class="mt-4">
-                        <a href="/posts/<%= post.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                        <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
                             Read more →
                         </a>
                     </div>

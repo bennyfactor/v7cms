@@ -1,12 +1,19 @@
+<% items = defined?(@items) && @items ? @items : @posts %>
 <!-- Hero Section -->
 <div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 py-20 md:py-32">
   <div class="max-w-4xl mx-auto px-4 text-center">
     <h1 class="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-      <%= @settings.welcome_title %>
+      <%= @page&.title || @settings.welcome_title %>
     </h1>
+    <% if @page&.content.present? %>
+    <div class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+      <%= @page.content %>
+    </div>
+    <% elsif @settings.welcome_subtitle.present? %>
     <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
       <%= @settings.welcome_subtitle %>
     </p>
+    <% end %>
     <a href="#latest-posts" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl">
       View Blog
     </a>
@@ -55,26 +62,26 @@
       Latest Posts
     </h2>
 
-    <% if @posts.any? %>
+    <% if items.any? %>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <% @posts.first(3).each do |post| %>
+        <% items.first(3).each do |item| %>
           <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200 overflow-hidden">
             <div class="p-6">
               <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                <a href="/posts/<%= post.slug %>" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <%= post.title %>
+                <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <%= item.title %>
                 </a>
               </h3>
 
               <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                <%= post.created_at.strftime(@settings.date_format || '%B %d, %Y') %>
+                <%= item.created_at.strftime(@settings.date_format || '%B %d, %Y') %>
               </div>
 
               <div class="prose dark:prose-invert prose-sm max-w-none mb-4 line-clamp-3">
-                <%= post.content.to_s.gsub(/<[^>]*>/, '')[0..150] %>...
+                <%= item.content.to_s.gsub(/<[^>]*>/, '')[0..150] %>...
               </div>
 
-              <a href="/posts/<%= post.slug %>" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+              <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
                 Read More
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -86,11 +93,11 @@
       </div>
     <% else %>
       <div class="text-center py-12">
-        <p class="text-gray-600 dark:text-gray-400 text-lg">No posts yet. Check back soon!</p>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">No content yet. Check back soon!</p>
       </div>
     <% end %>
 
-    <% if @posts.length > 3 %>
+    <% if items.length > 3 %>
       <div class="text-center mt-12">
         <a href="/posts" class="inline-block bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-semibold px-8 py-3 rounded-lg border-2 border-blue-600 dark:border-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-400 dark:hover:text-gray-900 transition-colors duration-200">
           View All Posts
