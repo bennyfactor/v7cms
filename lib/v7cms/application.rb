@@ -854,6 +854,19 @@ module V7CMS
       })
     end
 
+    # GET /api/pages/types - Get available page types
+    get '/api/pages/types' do
+      static_types = V7CMS::Page::STATIC_PAGE_TYPES.map do |name|
+        { name: name, label: name.capitalize, category: 'static' }
+      end
+
+      layout_types = V7CMS::Page::LAYOUT_PAGE_TYPES.map do |name|
+        { name: name, label: name.split('_').map(&:capitalize).join(' '), category: 'layout' }
+      end
+
+      json({ types: static_types + layout_types })
+    end
+
     # GET /api/pages/:id - Get a single page by ID or slug
     get '/api/pages/:id' do
       page = V7CMS::Page.find_by(id: params[:id]) || V7CMS::Page.find_by(slug: params[:id])
