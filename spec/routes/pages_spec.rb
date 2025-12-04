@@ -426,4 +426,70 @@ RSpec.describe 'Pages API', type: :request do
       expect(last_response.body).to include('About us')
     end
   end
+
+  describe 'API dynamic content fields' do
+    it 'includes content_source and items_limit in GET /api/pages/:id response' do
+      page = Page.create!(title: 'Test', slug: 'test', published: true)
+      get '/api/pages/test'
+
+      expect(last_response).to be_ok
+      json = JSON.parse(last_response.body)
+      expect(json['page']['content_source']).to eq('children')
+      expect(json['page']['items_limit']).to eq(10)
+    end
+
+    it 'allows setting content_source on POST /api/pages create' do
+      login_as(user)
+
+      post '/api/pages', { title: 'Test', content_source: 'posts' }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(201)
+      json = JSON.parse(last_response.body)
+      expect(json['page']['content_source']).to eq('posts')
+    end
+
+    it 'allows setting items_limit on POST /api/pages create' do
+      login_as(user)
+
+      post '/api/pages', { title: 'Test', items_limit: 5 }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(201)
+      json = JSON.parse(last_response.body)
+      expect(json['page']['items_limit']).to eq(5)
+    end
+
+    it 'allows updating content_source via PUT /api/pages/:id' do
+      login_as(user)
+      page = Page.create!(title: 'Test', slug: 'test')
+
+      put "/api/pages/#{page.id}", { content_source: 'posts' }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(200)
+      json = JSON.parse(last_response.body)
+      expect(json['page']['content_source']).to eq('posts')
+    end
+
+    it 'allows updating items_limit via PUT /api/pages/:id' do
+      login_as(user)
+      page = Page.create!(title: 'Test', slug: 'test')
+
+      put "/api/pages/#{page.id}", { items_limit: 15 }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(200)
+      json = JSON.parse(last_response.body)
+      expect(json['page']['items_limit']).to eq(15)
+    end
+
+    it 'allows updating both content_source and items_limit together' do
+      login_as(user)
+      page = Page.create!(title: 'Test', slug: 'test')
+
+      put "/api/pages/#{page.id}", { content_source: 'posts', items_limit: 5 }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(200)
+      json = JSON.parse(last_response.body)
+      expect(json['page']['content_source']).to eq('posts')
+      expect(json['page']['items_limit']).to eq(5)
+    end
+  end
 end
