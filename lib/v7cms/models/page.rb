@@ -33,6 +33,21 @@ module V7CMS
     scope :top_level, -> { where(parent_id: nil) }
     scope :ordered, -> { order(:position, :title) }
 
+    # Check if this page uses a layout template (vs static page.erb)
+    def uses_layout_template?
+      LAYOUT_PAGE_TYPES.include?(page_type)
+    end
+
+    # Get items to display based on content_source
+    def items_for_display
+      case content_source
+      when 'posts'
+        V7CMS::Post.published.order(created_at: :desc).limit(items_limit)
+      else # 'children' is default
+        children.published.ordered.limit(items_limit)
+      end
+    end
+
     # Generate URL-friendly slug from title
     def generate_slug
       self.slug = title.parameterize

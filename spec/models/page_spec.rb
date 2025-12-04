@@ -410,4 +410,49 @@ RSpec.describe Page, type: :model do
       expect(child.full_slug_path).to eq('gp/p/c')
     end
   end
+
+  describe '#items_for_display' do
+    let!(:parent_page) { Page.create!(title: 'Parent', slug: 'parent', published: true, page_type: 'blog_grid') }
+    let!(:child1) { Page.create!(title: 'Child 1', slug: 'child-1', published: true, parent: parent_page, position: 1) }
+    let!(:child2) { Page.create!(title: 'Child 2', slug: 'child-2', published: false, parent: parent_page, position: 2) }
+    let!(:child3) { Page.create!(title: 'Child 3', slug: 'child-3', published: true, parent: parent_page, position: 0) }
+
+    it 'returns published children ordered by position when content_source is children' do
+      parent_page.update!(content_source: 'children')
+      items = parent_page.items_for_display
+      expect(items.map(&:title)).to eq(['Child 3', 'Child 1'])
+    end
+
+    it 'respects items_limit for children' do
+      parent_page.update!(content_source: 'children', items_limit: 1)
+      expect(parent_page.items_for_display.count).to eq(1)
+    end
+
+    it 'returns published posts when content_source is posts' do
+      post1 = V7CMS::Post.create!(title: 'Post 1', slug: 'post-1', published: true)
+      post2 = V7CMS::Post.create!(title: 'Post 2', slug: 'post-2', published: false)
+      parent_page.update!(content_source: 'posts')
+      items = parent_page.items_for_display
+      expect(items.map(&:title)).to include('Post 1')
+      expect(items.map(&:title)).not_to include('Post 2')
+    end
+
+    it 'respects items_limit for posts' do
+      5.times { |i| V7CMS::Post.create!(title: "Post #{i}", slug: "post-#{i}", published: true) }
+      parent_page.update!(content_source: 'posts', items_limit: 3)
+      expect(parent_page.items_for_display.count).to eq(3)
+    end
+  end
+
+  describe '#uses_layout_template?' do
+    it 'returns true for layout-based page types' do
+      page = Page.new(page_type: 'blog_grid')
+      expect(page.uses_layout_template?).to be true
+    end
+
+    it 'returns false for static page types' do
+      page = Page.new(page_type: 'standard')
+      expect(page.uses_layout_template?).to be false
+    end
+  end
 end
