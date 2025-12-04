@@ -361,6 +361,61 @@ namespace :v7cms do
     end
   end
 
+  desc 'Link or copy public assets (js, css, admin) from gem to project'
+  task :assets do
+    require 'v7cms'
+
+    gem_public = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public')
+    project_public = File.join(V7CMS.project_root, 'public')
+
+    unless File.directory?(gem_public)
+      puts "Error: Gem public folder not found at #{gem_public}"
+      exit 1
+    end
+
+    FileUtils.mkdir_p(project_public)
+
+    # Assets to link/copy
+    assets = %w[js css admin api-docs.html]
+    linked = 0
+    copied = 0
+    skipped = 0
+
+    assets.each do |asset|
+      source = File.join(gem_public, asset)
+      target = File.join(project_public, asset)
+
+      next unless File.exist?(source)
+
+      if File.exist?(target) || File.symlink?(target)
+        if File.symlink?(target) && File.readlink(target) == source
+          skipped += 1
+          next
+        else
+          # Remove existing to replace
+          FileUtils.rm_rf(target)
+        end
+      end
+
+      # Try symlink first, fall back to copy
+      begin
+        File.symlink(source, target)
+        linked += 1
+        puts "  Linked: #{asset} -> #{source}"
+      rescue NotImplementedError, Errno::EACCES
+        # Symlinks not supported (Windows) or permission denied, copy instead
+        FileUtils.cp_r(source, target)
+        copied += 1
+        puts "  Copied: #{asset}"
+      end
+    end
+
+    puts
+    puts "Assets: #{linked} linked, #{copied} copied, #{skipped} unchanged"
+    puts
+    puts "Public assets are now available at #{project_public}"
+  end
+
   desc 'Show v7cms version'
   task :version do
     require_relative '../version'
