@@ -389,4 +389,41 @@ RSpec.describe 'Pages API', type: :request do
       expect(last_response.status).to eq(404)
     end
   end
+
+  describe 'dynamic page types' do
+    let!(:parent_page) do
+      Page.create!(
+        title: 'Blog Section',
+        slug: 'blog-section',
+        published: true,
+        page_type: 'blog_grid',
+        content_source: 'children',
+        items_limit: 10
+      )
+    end
+    let!(:child1) { Page.create!(title: 'Article 1', slug: 'article-1', published: true, parent: parent_page) }
+    let!(:child2) { Page.create!(title: 'Article 2', slug: 'article-2', published: true, parent: parent_page) }
+
+    it 'renders layout template for layout-based page types' do
+      get '/pages/blog-section'
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include('Article 1')
+      expect(last_response.body).to include('Article 2')
+    end
+
+    it 'renders posts when content_source is posts' do
+      Post.create!(title: 'Test Post', slug: 'test-post', published: true, content: 'Post content here')
+      parent_page.update!(content_source: 'posts')
+      get '/pages/blog-section'
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include('Test Post')
+    end
+
+    it 'continues to render standard pages with page.erb' do
+      standard_page = Page.create!(title: 'About', slug: 'about', published: true, page_type: 'standard', content: '<p>About us</p>')
+      get '/pages/about'
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include('About us')
+    end
+  end
 end

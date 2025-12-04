@@ -303,7 +303,16 @@ module V7CMS
 
       @title = @page.title
       @description = @page.content.to_s.gsub(/<[^>]*>/, '')[0..150]
-      erb :page
+
+      # Check if page uses a layout template (blog_grid, blog_list, etc.)
+      if @page.uses_layout_template?
+        @items = @page.items_for_display
+        @posts = @items  # Backward compatibility until templates are updated
+        @settings = V7CMS::Setting.instance  # Required for layout templates
+        erb :"layouts/homepage/_#{@page.page_type}", layout: :layout
+      else
+        erb :page
+      end
     end
 
     # RSS Feed - generate dynamically at /feed/rss
