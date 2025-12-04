@@ -888,7 +888,9 @@ module V7CMS
         published: data['published'] || false,
         parent_id: data['parent_id'],
         position: data['position'] || 0,
-        page_type: data['page_type'] || 'standard'
+        page_type: data['page_type'] || 'standard',
+        content_source: data['content_source'] || 'children',
+        items_limit: data['items_limit'] || 10
       )
 
       if page.save
@@ -924,6 +926,8 @@ module V7CMS
       page.parent_id = data['parent_id'] if data.key?('parent_id')
       page.position = data['position'] if data.key?('position')
       page.page_type = data['page_type'] if data.key?('page_type')
+      page.content_source = data['content_source'] if data.key?('content_source')
+      page.items_limit = data['items_limit'] if data.key?('items_limit')
 
       if page.save
         json({ page: page_json(page, include_relations: true) })
@@ -1217,6 +1221,8 @@ module V7CMS
         parent_id: page.parent_id,
         position: page.position,
         page_type: page.page_type,
+        content_source: page.content_source,
+        items_limit: page.items_limit,
         created_at: page.created_at,
         updated_at: page.updated_at
       }
