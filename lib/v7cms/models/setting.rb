@@ -74,6 +74,9 @@ module V7CMS
     end
 
     # Discover all available post layouts from both gem and user views
+    # Partials that should not be listed as layouts
+    POST_LAYOUT_PARTIALS = %w[comments].freeze
+
     def self.available_post_layouts
       layouts = POST_LAYOUTS.dup
 
@@ -87,6 +90,8 @@ module V7CMS
         Dir.glob(File.join(layout_dir, '_*.erb')).each do |file|
           # Extract layout name from _name.erb
           name = File.basename(file, '.erb').sub(/^_/, '')
+          # Skip partials that aren't actual layouts
+          next if POST_LAYOUT_PARTIALS.include?(name)
           layouts << name unless layouts.include?(name)
         end
       end
