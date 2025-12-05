@@ -164,6 +164,96 @@ RSpec.describe 'Settings Routes' do
     end
   end
 
+  describe 'GET /api/settings/post-layouts' do
+    it 'returns available post layouts' do
+      get '/api/settings/post-layouts'
+
+      expect(last_response).to be_ok
+      data = JSON.parse(last_response.body)
+      expect(data['layouts']).to be_an(Array)
+      expect(data['layouts'].length).to be >= 4
+    end
+
+    it 'includes all built-in layouts' do
+      get '/api/settings/post-layouts'
+
+      data = JSON.parse(last_response.body)
+      layout_names = data['layouts'].map { |l| l['name'] }
+      expect(layout_names).to include('standard', 'magazine', 'minimal', 'full_width')
+    end
+
+    it 'marks built-in layouts correctly' do
+      get '/api/settings/post-layouts'
+
+      data = JSON.parse(last_response.body)
+      standard = data['layouts'].find { |l| l['name'] == 'standard' }
+      expect(standard['builtin']).to be true
+    end
+
+    it 'includes formatted labels' do
+      get '/api/settings/post-layouts'
+
+      data = JSON.parse(last_response.body)
+      full_width = data['layouts'].find { |l| l['name'] == 'full_width' }
+      expect(full_width['label']).to eq('Full Width')
+    end
+
+    it 'works without authentication' do
+      get '/api/settings/post-layouts'
+      expect(last_response).to be_ok
+    end
+  end
+
+  describe 'layout_post setting' do
+    it 'returns layout_post in GET /api/settings' do
+      get '/api/settings'
+
+      data = JSON.parse(last_response.body)
+      expect(data['settings']).to have_key('layout_post')
+    end
+
+    it 'defaults to standard' do
+      get '/api/settings'
+
+      data = JSON.parse(last_response.body)
+      expect(data['settings']['layout_post']).to eq('standard')
+    end
+
+    context 'when logged in' do
+      it 'updates layout_post setting' do
+        put '/api/settings',
+          { layout_post: 'magazine' }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['settings']['layout_post']).to eq('magazine')
+      end
+
+      it 'rejects invalid layout_post values' do
+        put '/api/settings',
+          { layout_post: 'invalid_layout' }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to be_present
+      end
+
+      it 'resets layout_post to default on reset' do
+        Setting.instance.update!(layout_post: 'magazine')
+
+        post '/api/settings/reset',
+          {},
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['settings']['layout_post']).to eq('standard')
+      end
+    end
+  end
+
   describe 'POST /api/settings/reset' do
     context 'when not logged in' do
       it 'returns 401 unauthorized' do

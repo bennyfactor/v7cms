@@ -1,0 +1,69 @@
+<!-- Comments Section -->
+<div class="max-w-3xl mx-auto mt-12 px-4">
+  <h2 class="text-2xl font-bold mb-6">Comments (<span id="comment-count">0</span>)</h2>
+
+  <!-- Comment Form -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+    <h3 class="text-lg font-semibold mb-4">Leave a Comment</h3>
+    <form id="comment-form" class="space-y-4" data-recaptcha="true">
+      <div>
+        <label for="author_name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+        <input type="text" id="author_name" name="author_name" required
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <div>
+        <label for="author_email" class="block text-sm font-medium text-gray-700 mb-1">Email * <span class="text-xs text-gray-500">(will not be published)</span></label>
+        <input type="email" id="author_email" name="author_email" required
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <div>
+        <label for="author_url" class="block text-sm font-medium text-gray-700 mb-1">Website (optional)</label>
+        <input type="url" id="author_url" name="author_url"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <div>
+        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Comment *</label>
+        <textarea id="content" name="content" required rows="4"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+      </div>
+
+      <div id="form-message" class="hidden p-3 rounded-lg text-sm"></div>
+
+      <button type="submit" id="submit-btn"
+              class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
+        Submit Comment
+      </button>
+    </form>
+  </div>
+
+  <!-- Comments List -->
+  <div id="comments-list" class="space-y-6"></div>
+
+  <!-- Load More Button -->
+  <div class="text-center mt-6">
+    <button id="load-more" style="display:none"
+            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+      Load More Comments
+    </button>
+  </div>
+</div>
+
+<!-- reCAPTCHA Script (Enterprise or Standard v3) -->
+<% recaptcha_enterprise = ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY'] %>
+<% if recaptcha_enterprise %>
+<script src="https://www.google.com/recaptcha/enterprise.js?render=<%= ENV['RECAPTCHA_SITE_KEY'] %>"></script>
+<% else %>
+<script src="https://www.google.com/recaptcha/api.js?render=<%= ENV['RECAPTCHA_SITE_KEY'] %>"></script>
+<% end %>
+
+<!-- Comments JavaScript -->
+<script>
+  const POST_ID = <%= @post.id %>;
+  const RECAPTCHA_SITE_KEY = '<%= ENV['RECAPTCHA_SITE_KEY'] %>';
+  const RECAPTCHA_ENTERPRISE = <%= recaptcha_enterprise ? 'true' : 'false' %>;
+</script>
+<script src="/js/recaptcha.js"></script>
+<script src="/js/comments.js"></script>
