@@ -14,6 +14,8 @@ RSpec.describe PageRenderer do
   let(:static_file_path) { File.join(PageRenderer::STATIC_DIR, 'test-page.html') }
 
   before do
+    # Clean up any leftover files from previous tests
+    FileUtils.rm_rf(PageRenderer::STATIC_DIR) if Dir.exist?(PageRenderer::STATIC_DIR)
     # Ensure settings exist
     Setting.instance
     # Save the page without triggering callbacks
