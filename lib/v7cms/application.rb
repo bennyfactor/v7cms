@@ -363,6 +363,11 @@ module V7CMS
       json status: 'ok', database: db_status
     end
 
+    # Version endpoint
+    get '/api/version' do
+      json version: V7CMS::VERSION
+    end
+
     # API Documentation
     get '/api/docs' do
       redirect '/api-docs.html'
