@@ -45,8 +45,12 @@ module V7CMS
     # Built-in homepage layouts (shipped with gem)
     HOMEPAGE_LAYOUTS = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].freeze
 
+    # Built-in post layouts (shipped with gem)
+    POST_LAYOUTS = %w[standard magazine minimal full_width].freeze
+
     # Validate layout_homepage against all available layouts (built-in + custom)
     validate :layout_homepage_must_be_available
+    validate :layout_post_must_be_available
 
     # Discover all available homepage layouts from both gem and user views
     def self.available_layouts
@@ -57,6 +61,27 @@ module V7CMS
 
       views_paths.each do |views_path|
         layout_dir = File.join(views_path, 'layouts', 'homepage')
+        next unless File.directory?(layout_dir)
+
+        Dir.glob(File.join(layout_dir, '_*.erb')).each do |file|
+          # Extract layout name from _name.erb
+          name = File.basename(file, '.erb').sub(/^_/, '')
+          layouts << name unless layouts.include?(name)
+        end
+      end
+
+      layouts.sort
+    end
+
+    # Discover all available post layouts from both gem and user views
+    def self.available_post_layouts
+      layouts = POST_LAYOUTS.dup
+
+      # Get all view paths (user's project + gem)
+      views_paths = V7CMS.file_resolver.resolve_all('views')
+
+      views_paths.each do |views_path|
+        layout_dir = File.join(views_path, 'layouts', 'post')
         next unless File.directory?(layout_dir)
 
         Dir.glob(File.join(layout_dir, '_*.erb')).each do |file|
@@ -127,7 +152,8 @@ module V7CMS
         date_format: '%B %d, %Y',
         allow_comments: true,
         reserved_redirect_paths: '/,/admin,/api,/auth,/feed,/posts,/pages',
-        layout_homepage: 'blog_list'
+        layout_homepage: 'blog_list',
+        layout_post: 'standard'
       )
     end
 
@@ -139,6 +165,15 @@ module V7CMS
       available = self.class.available_layouts
       unless available.include?(layout_homepage)
         errors.add(:layout_homepage, "must be a valid layout option (available: #{available.join(', ')})")
+      end
+    end
+
+    def layout_post_must_be_available
+      return if layout_post.blank?
+
+      available = self.class.available_post_layouts
+      unless available.include?(layout_post)
+        errors.add(:layout_post, "must be a valid layout option (available: #{available.join(', ')})")
       end
     end
 

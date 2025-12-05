@@ -279,7 +279,22 @@ module V7CMS
 
       @title = @post.title
       @description = @post.content.to_s.gsub(/<[^>]*>/, '')[0..150]
-      erb :post
+      @settings = V7CMS::Setting.instance
+
+      # Use post layout from settings, default to 'standard'
+      layout_name = @settings.layout_post.presence || 'standard'
+      layout_path = "layouts/post/_#{layout_name}"
+
+      # Check if layout template exists in any view path
+      layout_exists = settings.views_paths.any? do |path|
+        File.exist?(File.join(path, "#{layout_path}.erb"))
+      end
+
+      if layout_exists
+        erb layout_path.to_sym, layout: :layout
+      else
+        erb :post, layout: :layout
+      end
     end
 
     # View a page by slug (supports hierarchical paths like /parent/child)
@@ -653,6 +668,18 @@ module V7CMS
           name: name,
           label: name.split('_').map(&:capitalize).join(' '),
           builtin: V7CMS::Setting::HOMEPAGE_LAYOUTS.include?(name)
+        }
+      end
+      json({ layouts: layouts })
+    end
+
+    # GET /api/settings/post-layouts - List available post layouts
+    get '/api/settings/post-layouts' do
+      layouts = V7CMS::Setting.available_post_layouts.map do |name|
+        {
+          name: name,
+          label: name.split('_').map(&:capitalize).join(' '),
+          builtin: V7CMS::Setting::POST_LAYOUTS.include?(name)
         }
       end
       json({ layouts: layouts })
@@ -1178,7 +1205,8 @@ module V7CMS
         date_format: setting.date_format,
         allow_comments: setting.allow_comments,
         reserved_redirect_paths: setting.reserved_redirect_paths,
-        layout_homepage: setting.layout_homepage
+        layout_homepage: setting.layout_homepage,
+        layout_post: setting.layout_post
       }
     end
 

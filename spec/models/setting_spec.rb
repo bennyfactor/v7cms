@@ -305,6 +305,26 @@ RSpec.describe Setting do
         expect(Setting::HOMEPAGE_LAYOUTS).to match_array(expected_layouts)
       end
     end
+
+    describe 'layout_post' do
+      it 'accepts valid post layout values' do
+        Setting::POST_LAYOUTS.each do |layout|
+          setting.layout_post = layout
+          expect(setting).to be_valid, "Expected #{layout} to be valid"
+        end
+      end
+
+      it 'rejects invalid post layout values' do
+        setting.layout_post = 'invalid_layout'
+        expect(setting).not_to be_valid
+        expect(setting.errors[:layout_post].first).to include('must be a valid layout option')
+      end
+
+      it 'defines all expected post layouts' do
+        expected_layouts = %w[standard magazine minimal full_width]
+        expect(Setting::POST_LAYOUTS).to match_array(expected_layouts)
+      end
+    end
   end
 
   describe 'defaults' do
