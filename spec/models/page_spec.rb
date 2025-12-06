@@ -102,6 +102,34 @@ RSpec.describe Page, type: :model do
       expect(page).not_to be_valid
       expect(page.errors[:position]).to include('must be an integer')
     end
+
+    describe 'hero_image_url' do
+      it 'allows blank hero_image_url' do
+        page = Page.new(title: 'Test', slug: 'test', hero_image_url: '')
+        expect(page).to be_valid
+      end
+
+      it 'allows nil hero_image_url' do
+        page = Page.new(title: 'Test', slug: 'test', hero_image_url: nil)
+        expect(page).to be_valid
+      end
+
+      it 'allows valid http URL' do
+        page = Page.new(title: 'Test', slug: 'test', hero_image_url: 'http://example.com/image.jpg')
+        expect(page).to be_valid
+      end
+
+      it 'allows valid https URL' do
+        page = Page.new(title: 'Test', slug: 'test', hero_image_url: 'https://example.com/image.jpg')
+        expect(page).to be_valid
+      end
+
+      it 'rejects invalid URL format' do
+        page = Page.new(title: 'Test', slug: 'test', hero_image_url: 'not a url')
+        expect(page).not_to be_valid
+        expect(page.errors[:hero_image_url]).to include('must be a valid URL')
+      end
+    end
   end
 
   describe 'circular reference prevention' do

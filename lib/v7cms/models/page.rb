@@ -19,6 +19,10 @@ module V7CMS
     validates :items_limit, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
     validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
     validate :prevent_circular_reference
+    validates :hero_image_url, format: {
+      with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+      message: 'must be a valid URL'
+    }, allow_blank: true
 
     # Callbacks
     before_validation :generate_slug, if: -> { slug.blank? && title.present? }
