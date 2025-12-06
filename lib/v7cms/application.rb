@@ -935,7 +935,8 @@ module V7CMS
         position: data['position'] || 0,
         page_type: data['page_type'] || 'standard',
         content_source: data['content_source'] || 'children',
-        items_limit: data['items_limit'] || 10
+        items_limit: data['items_limit'] || 10,
+        hero_image_url: data['hero_image_url']
       )
 
       if page.save
@@ -973,6 +974,7 @@ module V7CMS
       page.page_type = data['page_type'] if data.key?('page_type')
       page.content_source = data['content_source'] if data.key?('content_source')
       page.items_limit = data['items_limit'] if data.key?('items_limit')
+      page.hero_image_url = data['hero_image_url'] if data.key?('hero_image_url')
 
       if page.save
         json({ page: page_json(page, include_relations: true) })
