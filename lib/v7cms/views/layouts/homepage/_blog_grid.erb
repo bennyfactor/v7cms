@@ -24,6 +24,11 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <% items.each do |item| %>
         <article class="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
+          <% if item.respond_to?(:hero_image_url) && item.hero_image_url.present? %>
+          <img src="<%= item.hero_image_url %>"
+               alt="<%= item.title %>"
+               class="w-full h-48 object-cover">
+          <% end %>
           <!-- Card Content -->
           <div class="p-6">
             <!-- Post Title -->

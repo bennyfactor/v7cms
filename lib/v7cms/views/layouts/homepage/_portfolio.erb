@@ -27,8 +27,14 @@
         <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="group block relative overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
           <!-- Image Container with Aspect Ratio -->
           <div class="relative aspect-video bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 overflow-hidden">
+            <% if item.respond_to?(:hero_image_url) && item.hero_image_url.present? %>
+            <img src="<%= item.hero_image_url %>"
+                 alt="<%= item.title %>"
+                 class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            <% else %>
             <!-- Placeholder gradient background (would be replaced with actual images when implemented) -->
             <div class="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 group-hover:scale-110 transition-transform duration-500"></div>
+            <% end %>
 
             <!-- Gradient Overlay -->
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300"></div>
