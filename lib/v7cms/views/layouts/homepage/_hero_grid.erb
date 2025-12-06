@@ -32,6 +32,11 @@
     <!-- Hero Post -->
     <article class="mb-12 bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
       <a href="/<%= hero_item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= hero_item.slug %>" class="block group">
+        <% if hero_item.respond_to?(:hero_image_url) && hero_item.hero_image_url.present? %>
+        <img src="<%= hero_item.hero_image_url %>"
+             alt="<%= hero_item.title %>"
+             class="w-full h-64 md:h-80 object-cover">
+        <% end %>
         <div class="p-8 sm:p-12">
           <div class="flex items-center gap-3 text-sm text-gray-500 mb-4">
             <time datetime="<%= hero_item.created_at.iso8601 %>">
@@ -68,6 +73,11 @@
         <% grid_items.each do |item| %>
           <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
             <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="block group">
+              <% if item.respond_to?(:hero_image_url) && item.hero_image_url.present? %>
+              <img src="<%= item.hero_image_url %>"
+                   alt="<%= item.title %>"
+                   class="w-full h-48 object-cover">
+              <% end %>
               <div class="p-6">
                 <time datetime="<%= item.created_at.iso8601 %>" class="text-sm text-gray-500 block mb-3">
                   <%= item.created_at.strftime(@settings.date_format) %>
