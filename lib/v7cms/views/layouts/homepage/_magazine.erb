@@ -23,11 +23,17 @@
       <% featured_item = items.first %>
       <article class="lg:w-1/2 bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
         <a href="/<%= featured_item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= featured_item.slug %>" class="block">
+          <% if featured_item.respond_to?(:hero_image_url) && featured_item.hero_image_url.present? %>
+          <img src="<%= featured_item.hero_image_url %>"
+               alt="<%= featured_item.title %>"
+               class="w-full aspect-video object-cover">
+          <% else %>
           <div class="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <span class="text-white text-6xl font-bold opacity-20">
               <%= featured_item.title.first %>
             </span>
           </div>
+          <% end %>
           <div class="p-6">
             <div class="text-sm text-gray-500 mb-2">
               <%= featured_item.created_at.strftime(@settings.date_format) %>
@@ -54,11 +60,17 @@
           <% if item %>
             <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col sm:flex-row h-full">
               <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="block sm:w-2/5">
+                <% if item.respond_to?(:hero_image_url) && item.hero_image_url.present? %>
+                <img src="<%= item.hero_image_url %>"
+                     alt="<%= item.title %>"
+                     class="w-full aspect-video sm:aspect-square object-cover h-full">
+                <% else %>
                 <div class="aspect-video sm:aspect-square bg-gradient-to-br from-<%= ['green', 'orange'][index] %>-500 to-<%= ['teal', 'red'][index] %>-600 flex items-center justify-center h-full">
                   <span class="text-white text-4xl font-bold opacity-20">
                     <%= item.title.first %>
                   </span>
                 </div>
+                <% end %>
               </a>
               <div class="p-4 sm:w-3/5 flex flex-col justify-between">
                 <div>
@@ -91,11 +103,17 @@
         <% items[3..-1].each_with_index do |item, index| %>
           <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
             <a href="/<%= item.is_a?(V7CMS::Post) ? 'posts' : 'pages' %>/<%= item.slug %>" class="block">
+              <% if item.respond_to?(:hero_image_url) && item.hero_image_url.present? %>
+              <img src="<%= item.hero_image_url %>"
+                   alt="<%= item.title %>"
+                   class="w-full aspect-video object-cover">
+              <% else %>
               <div class="aspect-video bg-gradient-to-br from-<%= ['purple', 'pink', 'indigo', 'yellow', 'blue', 'green'][index % 6] %>-500 to-<%= ['indigo', 'red', 'purple', 'orange', 'cyan', 'teal'][index % 6] %>-600 flex items-center justify-center">
                 <span class="text-white text-5xl font-bold opacity-20">
                   <%= item.title.first %>
                 </span>
               </div>
+              <% end %>
             </a>
             <div class="p-5 flex flex-col flex-grow">
               <div class="text-sm text-gray-500 mb-2">

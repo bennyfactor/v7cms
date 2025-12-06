@@ -1269,6 +1269,7 @@ module V7CMS
         page_type: page.page_type,
         content_source: page.content_source,
         items_limit: page.items_limit,
+        hero_image_url: page.hero_image_url,
         created_at: page.created_at,
         updated_at: page.updated_at
       }

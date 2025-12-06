@@ -189,6 +189,15 @@ RSpec.describe 'Pages API', type: :request do
       expect(data['page']['breadcrumb_trail']).to be_an(Array)
       expect(data['page']['breadcrumb_trail'].length).to eq(2)
     end
+
+    it 'includes hero_image_url in page response' do
+      page = Page.create!(title: 'Test', slug: 'test-hero', hero_image_url: 'https://example.com/hero.jpg', published: true)
+      get "/api/pages/#{page.id}"
+
+      expect(last_response).to be_ok
+      data = JSON.parse(last_response.body)
+      expect(data['page']['hero_image_url']).to eq('https://example.com/hero.jpg')
+    end
   end
 
   describe 'POST /api/pages' do
