@@ -568,7 +568,10 @@ When using v7cms as a gem, the `V7CMS::FileResolver` provides user-first path re
 | slug | string | URL identifier (unique) |
 | content | text | HTML content |
 | published | boolean | Visibility flag |
-| page_type | string | Page type |
+| page_type | string | Layout type (standard, portfolio, blog_grid, etc.) |
+| content_source | string | Source for layout items (children, posts) |
+| items_limit | integer | Max items to display in layouts |
+| hero_image_url | string | Optional hero/thumbnail image URL |
 | parent_id | integer | Parent page FK |
 | position | integer | Sort order |
 
