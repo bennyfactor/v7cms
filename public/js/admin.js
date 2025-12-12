@@ -8,6 +8,7 @@ function cmsApp() {
 
     // Posts
     posts: [],
+    postsPagination: { total: 0, loaded: 0, loading: false },
     editingPost: false,
     currentPost: {},
     saving: false,
@@ -15,6 +16,7 @@ function cmsApp() {
 
     // Pages
     pages: [],
+    pagesPagination: { total: 0, loaded: 0, loading: false },
     editingPage: false,
     currentPage: {},
     savingPage: false,
@@ -155,19 +157,42 @@ function cmsApp() {
     },
 
     // Posts
-    async fetchPosts() {
+    async fetchPosts(loadMore = false) {
       try {
-        const response = await fetch('/api/posts?include_drafts=true', { credentials: 'include' });
+        if (loadMore) {
+          this.postsPagination.loading = true;
+        }
+
+        const offset = loadMore ? this.posts.length : 0;
+        const response = await fetch(`/api/posts?include_drafts=true&limit=20&offset=${offset}`, { credentials: 'include' });
         if (!response.ok) {
           console.error('Failed to fetch posts:', response.status, response.statusText);
-          this.posts = [];
+          if (!loadMore) {
+            this.posts = [];
+            this.postsPagination = { total: 0, loaded: 0, loading: false };
+          }
           return;
         }
         const data = await response.json();
-        this.posts = data.posts || [];
+
+        if (loadMore) {
+          this.posts = [...this.posts, ...(data.posts || [])];
+        } else {
+          this.posts = data.posts || [];
+        }
+
+        this.postsPagination = {
+          total: data.pagination?.total || this.posts.length,
+          loaded: this.posts.length,
+          loading: false
+        };
       } catch (error) {
         console.error('Error fetching posts:', error);
-        this.posts = [];
+        if (!loadMore) {
+          this.posts = [];
+          this.postsPagination = { total: 0, loaded: 0, loading: false };
+        }
+        this.postsPagination.loading = false;
       }
     },
 
@@ -287,19 +312,42 @@ function cmsApp() {
     },
 
     // Pages
-    async fetchPages() {
+    async fetchPages(loadMore = false) {
       try {
-        const response = await fetch('/api/pages?include_drafts=true', { credentials: 'include' });
+        if (loadMore) {
+          this.pagesPagination.loading = true;
+        }
+
+        const offset = loadMore ? this.pages.length : 0;
+        const response = await fetch(`/api/pages?include_drafts=true&limit=20&offset=${offset}`, { credentials: 'include' });
         if (!response.ok) {
           console.error('Failed to fetch pages:', response.status, response.statusText);
-          this.pages = [];
+          if (!loadMore) {
+            this.pages = [];
+            this.pagesPagination = { total: 0, loaded: 0, loading: false };
+          }
           return;
         }
         const data = await response.json();
-        this.pages = data.pages || [];
+
+        if (loadMore) {
+          this.pages = [...this.pages, ...(data.pages || [])];
+        } else {
+          this.pages = data.pages || [];
+        }
+
+        this.pagesPagination = {
+          total: data.pagination?.total || this.pages.length,
+          loaded: this.pages.length,
+          loading: false
+        };
       } catch (error) {
         console.error('Error fetching pages:', error);
-        this.pages = [];
+        if (!loadMore) {
+          this.pages = [];
+          this.pagesPagination = { total: 0, loaded: 0, loading: false };
+        }
+        this.pagesPagination.loading = false;
       }
     },
 
