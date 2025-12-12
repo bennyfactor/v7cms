@@ -134,6 +134,18 @@
                     </div>
 
                     <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <!-- Posts pagination bar (top) -->
+                        <div x-show="posts.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-b border-gray-200">
+                            <span class="text-sm text-gray-600">
+                                Showing <span x-text="postsPagination.loaded"></span> of <span x-text="postsPagination.total"></span> posts
+                            </span>
+                            <button x-show="postsPagination.loaded < postsPagination.total"
+                                    @click="fetchPosts(true)"
+                                    :disabled="postsPagination.loading"
+                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
+                                <span x-text="postsPagination.loading ? 'Loading...' : 'Load More'"></span>
+                            </button>
+                        </div>
                         <template x-if="posts.length === 0">
                             <div class="p-8 text-center text-gray-500">
                                 <i class="fa-regular fa-file-lines mx-auto h-12 w-12 text-gray-400 text-5xl"></i>
@@ -172,6 +184,18 @@
                                 </template>
                             </tbody>
                         </table>
+                        <!-- Posts pagination bar (bottom) -->
+                        <div x-show="posts.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-t border-gray-200">
+                            <span class="text-sm text-gray-600">
+                                Showing <span x-text="postsPagination.loaded"></span> of <span x-text="postsPagination.total"></span> posts
+                            </span>
+                            <button x-show="postsPagination.loaded < postsPagination.total"
+                                    @click="fetchPosts(true)"
+                                    :disabled="postsPagination.loading"
+                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
+                                <span x-text="postsPagination.loading ? 'Loading...' : 'Load More'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -296,6 +320,18 @@
                     </div>
 
                     <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <!-- Pages pagination bar (top) -->
+                        <div x-show="pages.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-b border-gray-200">
+                            <span class="text-sm text-gray-600">
+                                Showing <span x-text="pagesPagination.loaded"></span> of <span x-text="pagesPagination.total"></span> pages
+                            </span>
+                            <button x-show="pagesPagination.loaded < pagesPagination.total"
+                                    @click="fetchPages(true)"
+                                    :disabled="pagesPagination.loading"
+                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
+                                <span x-text="pagesPagination.loading ? 'Loading...' : 'Load More'"></span>
+                            </button>
+                        </div>
                         <template x-if="pages.length === 0">
                             <div class="p-8 text-center text-gray-500">
                                 <i class="fa-regular fa-file mx-auto h-12 w-12 text-gray-400 text-5xl"></i>
@@ -340,6 +376,18 @@
                                 </template>
                             </tbody>
                         </table>
+                        <!-- Pages pagination bar (bottom) -->
+                        <div x-show="pages.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-t border-gray-200">
+                            <span class="text-sm text-gray-600">
+                                Showing <span x-text="pagesPagination.loaded"></span> of <span x-text="pagesPagination.total"></span> pages
+                            </span>
+                            <button x-show="pagesPagination.loaded < pagesPagination.total"
+                                    @click="fetchPages(true)"
+                                    :disabled="pagesPagination.loading"
+                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
+                                <span x-text="pagesPagination.loading ? 'Loading...' : 'Load More'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
