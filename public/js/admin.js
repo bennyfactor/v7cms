@@ -21,6 +21,7 @@ function cmsApp() {
     currentPage: {},
     savingPage: false,
     quillPageInstance: null,
+    pageTypes: [],
 
     // Theme
     theme: {},
@@ -112,6 +113,7 @@ function cmsApp() {
         await Promise.all([
           this.fetchPosts(),
           this.fetchPages(),
+          this.loadPageTypes(),
           this.loadSettings(),
           this.fetchTheme(),
           this.fetchComments(),
@@ -351,8 +353,22 @@ function cmsApp() {
       }
     },
 
+    async loadPageTypes() {
+      try {
+        const response = await fetch('/api/pages/types');
+        if (!response.ok) {
+          console.error('Failed to load page types:', response.status, response.statusText);
+          return;
+        }
+        const data = await response.json();
+        this.pageTypes = data.types || [];
+      } catch (error) {
+        console.error('Error loading page types:', error);
+      }
+    },
+
     createNewPage() {
-      this.currentPage = { title: '', slug: '', content: '', parent_id: null, page_type: 'standard', position: 0, published: false };
+      this.currentPage = { title: '', slug: '', content: '', parent_id: null, page_type: 'standard', content_source: 'children', items_limit: 10, position: 0, hero_image_url: '', published: false };
       this.editingPage = true;
       this.resetValidation('page');
       this.$nextTick(() => this.initPageQuill());
