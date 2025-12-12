@@ -1,5 +1,5 @@
-# Disable directory browsing
-Options -Indexes
+# Disable directory browsing, enable symlink following (needed for gem assets)
+Options -Indexes +FollowSymLinks
 
 # Enable RewriteEngine for FastCGI routing
 RewriteEngine On
