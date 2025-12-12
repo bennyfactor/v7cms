@@ -171,6 +171,11 @@ Header always set Expires "0" env=is_fcgi_request
 # APPLICATION ROUTING: FastCGI handler
 # ============================================================================
 
+# Serve admin SPA from public/admin/ (Sinatra convention for static assets)
+# This is needed because DocumentRoot is the repo root, not public/
+RewriteRule ^admin/?$ /public/admin/index.html [L]
+RewriteRule ^admin/(.*)$ /public/admin/$1 [L]
+
 # Set directory index files - try index.html first, then index.fcgi
 DirectoryIndex index.html index.fcgi
 
