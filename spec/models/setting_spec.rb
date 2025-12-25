@@ -325,6 +325,27 @@ RSpec.describe Setting do
         expect(Setting::POST_LAYOUTS).to match_array(expected_layouts)
       end
     end
+
+    describe 'max_upload_size' do
+      it 'has a default value of 10MB' do
+        setting = V7CMS::Setting.new
+        expect(setting.max_upload_size).to eq(10_485_760)
+      end
+
+      it 'validates minimum of 1MB' do
+        setting = V7CMS::Setting.instance
+        setting.max_upload_size = 500_000
+        expect(setting).not_to be_valid
+        expect(setting.errors[:max_upload_size]).to include('must be greater than or equal to 1048576')
+      end
+
+      it 'validates maximum of 100MB' do
+        setting = V7CMS::Setting.instance
+        setting.max_upload_size = 200_000_000
+        expect(setting).not_to be_valid
+        expect(setting.errors[:max_upload_size]).to include('must be less than or equal to 104857600')
+      end
+    end
   end
 
   describe 'defaults' do
