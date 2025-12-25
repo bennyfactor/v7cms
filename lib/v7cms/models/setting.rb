@@ -36,6 +36,12 @@ module V7CMS
       less_than_or_equal_to: 100
     }
 
+    validates :max_upload_size, numericality: {
+      only_integer: true,
+      greater_than_or_equal_to: 1_048_576,      # 1 MB
+      less_than_or_equal_to: 104_857_600        # 100 MB
+    }
+
     validates :date_format, presence: true
 
     validates :allow_comments, inclusion: { in: [true, false] }
@@ -158,7 +164,8 @@ module V7CMS
         allow_comments: true,
         reserved_redirect_paths: '/,/admin,/api,/auth,/feed,/posts,/pages',
         layout_homepage: 'blog_list',
-        layout_post: 'standard'
+        layout_post: 'standard',
+        max_upload_size: 10_485_760
       )
     end
 
