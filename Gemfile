@@ -36,6 +36,11 @@ gem 'swagger-blocks', '~> 3.0'
 gem 'builder', '~> 3.2'
 gem 'nokogiri', '~> 1.15'
 
+# Image/Asset handling
+gem 'fastimage', '~> 2.3'           # Fast image dimension detection (pure Ruby)
+gem 'image_processing', '~> 1.12'   # Unified image processing API
+gem 'mini_magick', '~> 4.12'        # ImageMagick wrapper (optional runtime dependency)
+
 group :development, :test do
   gem 'pry', '~> 0.14'
   gem 'rspec', '~> 3.12'
