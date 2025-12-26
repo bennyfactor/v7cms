@@ -51,6 +51,15 @@ function cmsApp() {
       target_path: ''
     },
 
+    // Assets
+    assets: [],
+    assetPage: 1,
+    assetPagination: {},
+    assetSearch: '',
+    assetTypeFilter: '',
+    selectedAsset: null,
+    uploading: false,
+
     // Validation
     validationErrors: {
       post: {},
@@ -929,6 +938,85 @@ function cmsApp() {
         alert('Failed to delete redirect');
       }
     },
+
+    // Assets
+    async loadAssets() {
+      const params = new URLSearchParams({
+        page: this.assetPage,
+        per_page: 24
+      });
+      if (this.assetSearch) params.append('search', this.assetSearch);
+      if (this.assetTypeFilter) params.append('type', this.assetTypeFilter);
+
+      const response = await fetch(`/api/assets?${params}`);
+      const data = await response.json();
+      this.assets = data.assets;
+      this.assetPagination = data.pagination;
+    },
+
+    selectAsset(asset) {
+      this.selectedAsset = { ...asset };
+    },
+
+    async uploadAsset(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+
+      this.uploading = true;
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/assets', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            alert(error.error || 'Upload failed');
+          }
+        } catch (e) {
+          alert('Upload failed: ' + e.message);
+        }
+      }
+
+      this.uploading = false;
+      event.target.value = '';
+      this.loadAssets();
+    },
+
+    async updateAssetAltText() {
+      if (!this.selectedAsset) return;
+
+      await fetch(`/api/assets/${this.selectedAsset.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alt_text: this.selectedAsset.alt_text })
+      });
+    },
+
+    async deleteAsset(asset) {
+      if (!confirm(`Delete "${asset.filename}"? This cannot be undone.`)) return;
+
+      await fetch(`/api/assets/${asset.id}`, { method: 'DELETE' });
+      this.selectedAsset = null;
+      this.loadAssets();
+    },
+
+    formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    },
+
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+    },
+
+    // Validation
     markTouched(form, field) {
       this.touchedFields[form].add(field);
     },
