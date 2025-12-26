@@ -60,6 +60,14 @@ function cmsApp() {
     selectedAsset: null,
     uploading: false,
 
+    // Media Library Modal
+    showMediaLibrary: false,
+    mediaAssets: [],
+    mediaSearch: '',
+    mediaTypeFilter: 'image',
+    selectedMediaAsset: null,
+    mediaCallback: null,
+
     // Validation
     validationErrors: {
       post: {},
@@ -308,6 +316,14 @@ function cmsApp() {
         });
         this.quillInstance.root.innerHTML = content;
 
+        // Custom image handler to open media library
+        this.quillInstance.getModule('toolbar').addHandler('image', () => {
+          this.openMediaLibrary((asset) => {
+            const range = this.quillInstance.getSelection(true);
+            this.quillInstance.insertEmbed(range.index, 'image', asset.url);
+          });
+        });
+
         // Track content changes for validation
         this.quillInstance.on('text-change', () => {
           if (this.touchedFields.post.has('content')) {
@@ -481,6 +497,14 @@ function cmsApp() {
           }
         });
         this.quillPageInstance.root.innerHTML = content;
+
+        // Custom image handler to open media library
+        this.quillPageInstance.getModule('toolbar').addHandler('image', () => {
+          this.openMediaLibrary((asset) => {
+            const range = this.quillPageInstance.getSelection(true);
+            this.quillPageInstance.insertEmbed(range.index, 'image', asset.url);
+          });
+        });
 
         // Track content changes for validation
         this.quillPageInstance.on('text-change', () => {
@@ -1014,6 +1038,61 @@ function cmsApp() {
 
     copyToClipboard(text) {
       navigator.clipboard.writeText(text);
+    },
+
+    // Media Library Modal
+    openMediaLibrary(callback) {
+      this.mediaCallback = callback;
+      this.selectedMediaAsset = null;
+      this.showMediaLibrary = true;
+      this.loadMediaLibrary();
+    },
+
+    closeMediaLibrary() {
+      this.showMediaLibrary = false;
+      this.mediaCallback = null;
+    },
+
+    async loadMediaLibrary() {
+      const params = new URLSearchParams({ per_page: 40 });
+      if (this.mediaSearch) params.append('search', this.mediaSearch);
+      if (this.mediaTypeFilter) params.append('type', this.mediaTypeFilter);
+
+      const response = await fetch(`/api/assets?${params}`);
+      const data = await response.json();
+      this.mediaAssets = data.assets;
+    },
+
+    selectMediaAsset(asset) {
+      this.selectedMediaAsset = asset;
+    },
+
+    async uploadMediaAsset(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/assets', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const asset = await response.json();
+        this.selectedMediaAsset = asset;
+        this.loadMediaLibrary();
+      }
+
+      event.target.value = '';
+    },
+
+    insertSelectedMedia() {
+      if (this.selectedMediaAsset && this.mediaCallback) {
+        this.mediaCallback(this.selectedMediaAsset);
+      }
+      this.closeMediaLibrary();
     },
 
     // Validation
