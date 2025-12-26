@@ -119,4 +119,40 @@ RSpec.describe 'Assets API', type: :request do
       expect(V7CMS::Asset.find_by(id: asset.id)).to be_nil
     end
   end
+
+  describe 'GET /upload/*' do
+    let(:temp_dir) { Dir.mktmpdir('v7cms_test_uploads') }
+
+    before do
+      # Set up test upload directory
+      allow(V7CMS::Asset).to receive(:storage_adapter).and_return(
+        V7CMS::Storage::LocalAdapter.new(base_path: temp_dir)
+      )
+    end
+
+    after { FileUtils.rm_rf(temp_dir) }
+
+    it 'serves existing file' do
+      FileUtils.mkdir_p(File.join(temp_dir, '2025/12'))
+      File.write(File.join(temp_dir, '2025/12/test.txt'), 'Hello World')
+
+      get '/upload/2025/12/test.txt'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
+    end
+
+    it 'returns 404 for non-existent file' do
+      get '/upload/2025/12/nonexistent.txt'
+      expect(last_response.status).to eq(404)
+    end
+
+    it 'sets correct content type for images' do
+      FileUtils.mkdir_p(File.join(temp_dir, '2025/12'))
+      # Create a minimal valid JPEG file header
+      File.binwrite(File.join(temp_dir, '2025/12/test.jpg'), "\xFF\xD8\xFF\xE0")
+
+      get '/upload/2025/12/test.jpg'
+      expect(last_response.content_type).to include('image/jpeg')
+    end
+  end
 end
