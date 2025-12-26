@@ -1688,6 +1688,65 @@
         </div>
     </div>
 
+    <!-- Media Library Modal -->
+    <div x-show="showMediaLibrary" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50" @click="closeMediaLibrary()"></div>
+
+            <div class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h3 class="text-lg font-semibold">Select Media</h3>
+                    <button @click="closeMediaLibrary()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-4 border-b flex gap-4">
+                    <input type="text" x-model="mediaSearch" @input.debounce.300ms="loadMediaLibrary()" placeholder="Search..." class="flex-1 px-3 py-2 border rounded-lg">
+                    <select x-model="mediaTypeFilter" @change="loadMediaLibrary()" class="px-3 py-2 border rounded-lg">
+                        <option value="">All Types</option>
+                        <option value="image">Images</option>
+                        <option value="document">Documents</option>
+                    </select>
+                    <label class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg cursor-pointer">
+                        <i class="fa-solid fa-upload mr-2"></i>
+                        Upload
+                        <input type="file" @change="uploadMediaAsset($event)" class="hidden" accept="image/*,application/pdf">
+                    </label>
+                </div>
+
+                <div class="p-4 overflow-y-auto" style="max-height: 400px;">
+                    <div class="grid grid-cols-4 gap-3">
+                        <template x-for="asset in mediaAssets" :key="asset.id">
+                            <div @click="selectMediaAsset(asset)" class="cursor-pointer rounded-lg overflow-hidden border-2 transition" :class="selectedMediaAsset?.id === asset.id ? 'border-blue-500' : 'border-transparent hover:border-gray-300'">
+                                <div class="aspect-square bg-gray-100 flex items-center justify-center">
+                                    <template x-if="asset.type === 'image'">
+                                        <img :src="asset.url + '?w=150&h=150&fit=crop'" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="asset.type !== 'image'">
+                                        <i class="fa-solid fa-file text-3xl text-gray-400"></i>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t flex justify-between items-center">
+                    <div x-show="selectedMediaAsset" class="text-sm text-gray-600">
+                        Selected: <span x-text="selectedMediaAsset?.filename"></span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="closeMediaLibrary()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button @click="insertSelectedMedia()" :disabled="!selectedMediaAsset" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            Insert
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Quill.js -->
