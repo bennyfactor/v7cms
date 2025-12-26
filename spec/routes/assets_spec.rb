@@ -1,0 +1,122 @@
+# frozen_string_literal: true
+
+require 'spec_helper'
+
+RSpec.describe 'Assets API', type: :request do
+  let(:admin_user) { V7CMS::User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '123', admin: true) }
+  let(:asset_attributes) do
+    {
+      filename: 'photo.jpg',
+      original_filename: 'My Photo.jpg',
+      content_type: 'image/jpeg',
+      file_size: 1024,
+      storage_key: '2025/12/photo.jpg',
+      width: 800,
+      height: 600
+    }
+  end
+
+  def login_as(user)
+    env 'rack.session', { user_id: user.id }
+  end
+
+  describe 'GET /api/assets' do
+    it 'returns empty array when no assets' do
+      get '/api/assets'
+      expect(last_response).to be_ok
+      expect(JSON.parse(last_response.body)['assets']).to eq([])
+    end
+
+    it 'returns paginated assets' do
+      3.times do |i|
+        V7CMS::Asset.create!(asset_attributes.merge(storage_key: "2025/12/photo-#{i}.jpg", filename: "photo-#{i}.jpg"))
+      end
+
+      get '/api/assets', per_page: 2
+      body = JSON.parse(last_response.body)
+
+      expect(body['assets'].length).to eq(2)
+      expect(body['pagination']['total']).to eq(3)
+      expect(body['pagination']['pages']).to eq(2)
+    end
+
+    it 'filters by type' do
+      V7CMS::Asset.create!(asset_attributes.merge(storage_key: '2025/12/a.jpg'))
+      V7CMS::Asset.create!(asset_attributes.merge(storage_key: '2025/12/b.pdf', content_type: 'application/pdf'))
+
+      get '/api/assets', type: 'image'
+      body = JSON.parse(last_response.body)
+
+      expect(body['assets'].length).to eq(1)
+      expect(body['assets'][0]['content_type']).to eq('image/jpeg')
+    end
+
+    it 'searches by filename' do
+      V7CMS::Asset.create!(asset_attributes.merge(storage_key: '2025/12/cat.jpg', filename: 'cat.jpg', original_filename: 'cat.jpg'))
+      V7CMS::Asset.create!(asset_attributes.merge(storage_key: '2025/12/dog.jpg', filename: 'dog.jpg', original_filename: 'dog.jpg'))
+
+      get '/api/assets', search: 'cat'
+      body = JSON.parse(last_response.body)
+
+      expect(body['assets'].length).to eq(1)
+      expect(body['assets'][0]['filename']).to eq('cat.jpg')
+    end
+  end
+
+  describe 'GET /api/assets/:id' do
+    it 'returns asset details' do
+      asset = V7CMS::Asset.create!(asset_attributes)
+
+      get "/api/assets/#{asset.id}"
+      expect(last_response).to be_ok
+
+      body = JSON.parse(last_response.body)
+      expect(body['id']).to eq(asset.id)
+      expect(body['url']).to eq('/upload/2025/12/photo.jpg')
+    end
+
+    it 'returns 404 for non-existent asset' do
+      get '/api/assets/99999'
+      expect(last_response.status).to eq(404)
+    end
+  end
+
+  describe 'PUT /api/assets/:id' do
+    it 'requires authentication' do
+      asset = V7CMS::Asset.create!(asset_attributes)
+
+      put "/api/assets/#{asset.id}", { alt_text: 'Updated' }.to_json, 'CONTENT_TYPE' => 'application/json'
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'updates alt_text when authenticated' do
+      login_as(admin_user)
+      asset = V7CMS::Asset.create!(asset_attributes)
+
+      put "/api/assets/#{asset.id}", { alt_text: 'A beautiful photo' }.to_json, 'CONTENT_TYPE' => 'application/json'
+      expect(last_response).to be_ok
+
+      asset.reload
+      expect(asset.alt_text).to eq('A beautiful photo')
+    end
+  end
+
+  describe 'DELETE /api/assets/:id' do
+    it 'requires authentication' do
+      asset = V7CMS::Asset.create!(asset_attributes)
+
+      delete "/api/assets/#{asset.id}"
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'deletes asset when authenticated' do
+      login_as(admin_user)
+      asset = V7CMS::Asset.create!(asset_attributes)
+
+      delete "/api/assets/#{asset.id}"
+      expect(last_response).to be_ok
+
+      expect(V7CMS::Asset.find_by(id: asset.id)).to be_nil
+    end
+  end
+end
