@@ -1126,6 +1126,63 @@ module V7CMS
       json({ success: true })
     end
 
+    # ============================================================================
+    # Upload File Serving Route
+    # ============================================================================
+
+    # GET /upload/* - Serve uploaded files with optional transformations
+    get '/upload/*' do
+      path = params[:splat].first
+      adapter = V7CMS::Asset.storage_adapter
+
+      # Check if file exists
+      unless adapter.exists?(path)
+        halt 404, 'File not found'
+      end
+
+      # Parse transform params
+      transform_params = V7CMS::ImageTransformer.parse_params(params)
+      cache_key = V7CMS::ImageTransformer.cache_key(transform_params)
+
+      file_path = File.join(adapter.base_path, path)
+
+      # If transforms requested and available, try to serve/create cached version
+      if cache_key && V7CMS::ImageTransformer.available?
+        cache_dir = File.join(adapter.base_path, '.cache', cache_key)
+        cached_path = File.join(cache_dir, path)
+
+        unless File.exist?(cached_path)
+          V7CMS::ImageTransformer.transform(file_path, transform_params, cached_path)
+        end
+
+        if File.exist?(cached_path)
+          file_path = cached_path
+        end
+      end
+
+      # Determine content type
+      ext = File.extname(path).downcase
+      content_type = case ext
+                     when '.jpg', '.jpeg' then 'image/jpeg'
+                     when '.png' then 'image/png'
+                     when '.gif' then 'image/gif'
+                     when '.webp' then 'image/webp'
+                     when '.svg' then 'image/svg+xml'
+                     when '.pdf' then 'application/pdf'
+                     when '.mp3' then 'audio/mpeg'
+                     when '.mp4' then 'video/mp4'
+                     when '.zip' then 'application/zip'
+                     when '.doc' then 'application/msword'
+                     when '.docx' then 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                     when '.xls' then 'application/vnd.ms-excel'
+                     when '.xlsx' then 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                     else 'application/octet-stream'
+                     end
+
+      content_type content_type
+      send_file file_path
+    end
+
     # =========================================================================
     # Assets API Routes
     # =========================================================================
