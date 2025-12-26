@@ -1205,6 +1205,14 @@ module V7CMS
       }
     end
 
+    # GET /api/assets/capabilities - Check asset system capabilities
+    get '/api/assets/capabilities' do
+      json({
+        image_processing: V7CMS::ImageTransformer.available?,
+        max_upload_size: V7CMS::Setting.instance.max_upload_size
+      })
+    end
+
     # GET /api/assets - List assets with pagination and filtering
     get '/api/assets' do
       page = (params[:page] || 1).to_i
