@@ -68,6 +68,9 @@ function cmsApp() {
     selectedMediaAsset: null,
     mediaCallback: null,
 
+    // Image Processing
+    imageProcessingAvailable: false,
+
     // Validation
     validationErrors: {
       post: {},
@@ -135,7 +138,8 @@ function cmsApp() {
           this.fetchTheme(),
           this.fetchComments(),
           this.updatePendingCount(),
-          this.fetchRedirects()
+          this.fetchRedirects(),
+          this.checkImageProcessing()
         ]);
 
         // Poll for pending count every 60 seconds
@@ -622,6 +626,14 @@ function cmsApp() {
       } catch (error) {
         console.error('Error loading settings:', error);
         this.settings = {};
+      }
+    },
+
+    async checkImageProcessing() {
+      const response = await fetch('/api/assets/capabilities');
+      if (response.ok) {
+        const data = await response.json();
+        this.imageProcessingAvailable = data.image_processing;
       }
     },
 
