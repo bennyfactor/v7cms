@@ -51,6 +51,26 @@ function cmsApp() {
       target_path: ''
     },
 
+    // Assets
+    assets: [],
+    assetPage: 1,
+    assetPagination: {},
+    assetSearch: '',
+    assetTypeFilter: '',
+    selectedAsset: null,
+    uploading: false,
+
+    // Media Library Modal
+    showMediaLibrary: false,
+    mediaAssets: [],
+    mediaSearch: '',
+    mediaTypeFilter: 'image',
+    selectedMediaAsset: null,
+    mediaCallback: null,
+
+    // Image Processing
+    imageProcessingAvailable: false,
+
     // Validation
     validationErrors: {
       post: {},
@@ -118,7 +138,8 @@ function cmsApp() {
           this.fetchTheme(),
           this.fetchComments(),
           this.updatePendingCount(),
-          this.fetchRedirects()
+          this.fetchRedirects(),
+          this.checkImageProcessing()
         ]);
 
         // Poll for pending count every 60 seconds
@@ -299,6 +320,14 @@ function cmsApp() {
         });
         this.quillInstance.root.innerHTML = content;
 
+        // Custom image handler to open media library
+        this.quillInstance.getModule('toolbar').addHandler('image', () => {
+          this.openMediaLibrary((asset) => {
+            const range = this.quillInstance.getSelection(true);
+            this.quillInstance.insertEmbed(range.index, 'image', asset.url);
+          });
+        });
+
         // Track content changes for validation
         this.quillInstance.on('text-change', () => {
           if (this.touchedFields.post.has('content')) {
@@ -473,6 +502,14 @@ function cmsApp() {
         });
         this.quillPageInstance.root.innerHTML = content;
 
+        // Custom image handler to open media library
+        this.quillPageInstance.getModule('toolbar').addHandler('image', () => {
+          this.openMediaLibrary((asset) => {
+            const range = this.quillPageInstance.getSelection(true);
+            this.quillPageInstance.insertEmbed(range.index, 'image', asset.url);
+          });
+        });
+
         // Track content changes for validation
         this.quillPageInstance.on('text-change', () => {
           if (this.touchedFields.page.has('content')) {
@@ -589,6 +626,14 @@ function cmsApp() {
       } catch (error) {
         console.error('Error loading settings:', error);
         this.settings = {};
+      }
+    },
+
+    async checkImageProcessing() {
+      const response = await fetch('/api/assets/capabilities');
+      if (response.ok) {
+        const data = await response.json();
+        this.imageProcessingAvailable = data.image_processing;
       }
     },
 
@@ -929,6 +974,140 @@ function cmsApp() {
         alert('Failed to delete redirect');
       }
     },
+
+    // Assets
+    async loadAssets() {
+      const params = new URLSearchParams({
+        page: this.assetPage,
+        per_page: 24
+      });
+      if (this.assetSearch) params.append('search', this.assetSearch);
+      if (this.assetTypeFilter) params.append('type', this.assetTypeFilter);
+
+      const response = await fetch(`/api/assets?${params}`);
+      const data = await response.json();
+      this.assets = data.assets;
+      this.assetPagination = data.pagination;
+    },
+
+    selectAsset(asset) {
+      this.selectedAsset = { ...asset };
+    },
+
+    async uploadAsset(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+
+      this.uploading = true;
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/assets', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            alert(error.error || 'Upload failed');
+          }
+        } catch (e) {
+          alert('Upload failed: ' + e.message);
+        }
+      }
+
+      this.uploading = false;
+      event.target.value = '';
+      this.loadAssets();
+    },
+
+    async updateAssetAltText() {
+      if (!this.selectedAsset) return;
+
+      await fetch(`/api/assets/${this.selectedAsset.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alt_text: this.selectedAsset.alt_text })
+      });
+    },
+
+    async deleteAsset(asset) {
+      if (!confirm(`Delete "${asset.filename}"? This cannot be undone.`)) return;
+
+      await fetch(`/api/assets/${asset.id}`, { method: 'DELETE' });
+      this.selectedAsset = null;
+      this.loadAssets();
+    },
+
+    formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    },
+
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+    },
+
+    // Media Library Modal
+    openMediaLibrary(callback) {
+      this.mediaCallback = callback;
+      this.selectedMediaAsset = null;
+      this.showMediaLibrary = true;
+      this.loadMediaLibrary();
+    },
+
+    closeMediaLibrary() {
+      this.showMediaLibrary = false;
+      this.mediaCallback = null;
+    },
+
+    async loadMediaLibrary() {
+      const params = new URLSearchParams({ per_page: 40 });
+      if (this.mediaSearch) params.append('search', this.mediaSearch);
+      if (this.mediaTypeFilter) params.append('type', this.mediaTypeFilter);
+
+      const response = await fetch(`/api/assets?${params}`);
+      const data = await response.json();
+      this.mediaAssets = data.assets;
+    },
+
+    selectMediaAsset(asset) {
+      this.selectedMediaAsset = asset;
+    },
+
+    async uploadMediaAsset(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/assets', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const asset = await response.json();
+        this.selectedMediaAsset = asset;
+        this.loadMediaLibrary();
+      }
+
+      event.target.value = '';
+    },
+
+    insertSelectedMedia() {
+      if (this.selectedMediaAsset && this.mediaCallback) {
+        this.mediaCallback(this.selectedMediaAsset);
+      }
+      this.closeMediaLibrary();
+    },
+
+    // Validation
     markTouched(form, field) {
       this.touchedFields[form].add(field);
     },
