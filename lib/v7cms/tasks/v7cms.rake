@@ -421,4 +421,109 @@ namespace :v7cms do
     require_relative '../version'
     puts "v7cms #{V7CMS::VERSION}"
   end
+
+  desc 'Import existing uploads into the assets database'
+  task :import_assets do
+    require_relative '../../v7cms'
+
+    upload_dir = File.join(V7CMS.project_root, 'upload')
+
+    unless Dir.exist?(upload_dir)
+      puts "Upload directory not found: #{upload_dir}"
+      exit 1
+    end
+
+    puts "Scanning #{upload_dir} for assets..."
+
+    imported = 0
+    skipped = 0
+    errors = 0
+    batch = []
+
+    # Determine allowed extensions from content types
+    extension_map = {
+      '.jpg' => 'image/jpeg',
+      '.jpeg' => 'image/jpeg',
+      '.png' => 'image/png',
+      '.gif' => 'image/gif',
+      '.webp' => 'image/webp',
+      '.svg' => 'image/svg+xml',
+      '.pdf' => 'application/pdf',
+      '.doc' => 'application/msword',
+      '.docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xls' => 'application/vnd.ms-excel',
+      '.xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.mp3' => 'audio/mpeg',
+      '.mp4' => 'video/mp4',
+      '.zip' => 'application/zip'
+    }
+
+    Dir.glob(File.join(upload_dir, '**', '*')).each do |file_path|
+      next if File.directory?(file_path)
+      next if file_path.include?('/.cache/')
+
+      storage_key = file_path.sub("#{upload_dir}/", '')
+      ext = File.extname(file_path).downcase
+
+      # Skip unsupported file types
+      content_type = extension_map[ext]
+      unless content_type
+        puts "  Skipped (unsupported type): #{storage_key}"
+        skipped += 1
+        next
+      end
+
+      # Skip if already in database
+      if V7CMS::Asset.exists?(storage_key: storage_key)
+        skipped += 1
+        next
+      end
+
+      begin
+        file_size = File.size(file_path)
+        filename = File.basename(file_path)
+
+        # Get dimensions for images
+        width, height = nil, nil
+        if content_type.start_with?('image/') && !content_type.include?('svg')
+          require 'fastimage'
+          size = FastImage.size(file_path)
+          width, height = size if size
+        end
+
+        batch << {
+          filename: filename,
+          original_filename: filename,
+          content_type: content_type,
+          file_size: file_size,
+          storage_key: storage_key,
+          width: width,
+          height: height,
+          created_at: File.mtime(file_path),
+          updated_at: Time.now
+        }
+
+        imported += 1
+
+        # Insert in batches of 100
+        if batch.size >= 100
+          V7CMS::Asset.insert_all(batch)
+          batch = []
+          puts "  Progress: #{imported} imported, #{skipped} skipped, #{errors} errors"
+        end
+      rescue => e
+        puts "  Error: #{storage_key} - #{e.message}"
+        errors += 1
+      end
+    end
+
+    # Insert remaining batch
+    V7CMS::Asset.insert_all(batch) if batch.any?
+
+    puts
+    puts "Import complete!"
+    puts "  Imported: #{imported}"
+    puts "  Skipped: #{skipped}"
+    puts "  Errors: #{errors}"
+  end
 end

@@ -1126,6 +1126,248 @@ module V7CMS
       json({ success: true })
     end
 
+    # ============================================================================
+    # Upload File Serving Route
+    # ============================================================================
+
+    # GET /upload/* - Serve uploaded files with optional transformations
+    get '/upload/*' do
+      path = params[:splat].first
+      adapter = V7CMS::Asset.storage_adapter
+
+      # Check if file exists
+      unless adapter.exists?(path)
+        halt 404, 'File not found'
+      end
+
+      # Parse transform params
+      transform_params = V7CMS::ImageTransformer.parse_params(params)
+      cache_key = V7CMS::ImageTransformer.cache_key(transform_params)
+
+      file_path = File.join(adapter.base_path, path)
+
+      # If transforms requested and available, try to serve/create cached version
+      if cache_key && V7CMS::ImageTransformer.available?
+        cache_dir = File.join(adapter.base_path, '.cache', cache_key)
+        cached_path = File.join(cache_dir, path)
+
+        unless File.exist?(cached_path)
+          V7CMS::ImageTransformer.transform(file_path, transform_params, cached_path)
+        end
+
+        if File.exist?(cached_path)
+          file_path = cached_path
+        end
+      end
+
+      # Determine content type
+      ext = File.extname(path).downcase
+      content_type = case ext
+                     when '.jpg', '.jpeg' then 'image/jpeg'
+                     when '.png' then 'image/png'
+                     when '.gif' then 'image/gif'
+                     when '.webp' then 'image/webp'
+                     when '.svg' then 'image/svg+xml'
+                     when '.pdf' then 'application/pdf'
+                     when '.mp3' then 'audio/mpeg'
+                     when '.mp4' then 'video/mp4'
+                     when '.zip' then 'application/zip'
+                     when '.doc' then 'application/msword'
+                     when '.docx' then 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                     when '.xls' then 'application/vnd.ms-excel'
+                     when '.xlsx' then 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                     else 'application/octet-stream'
+                     end
+
+      content_type content_type
+      send_file file_path
+    end
+
+    # =========================================================================
+    # Assets API Routes
+    # =========================================================================
+
+    # Helper for asset JSON serialization
+    def asset_json(asset)
+      {
+        id: asset.id,
+        filename: asset.filename,
+        original_filename: asset.original_filename,
+        url: asset.url,
+        content_type: asset.content_type,
+        file_size: asset.file_size,
+        width: asset.width,
+        height: asset.height,
+        alt_text: asset.alt_text,
+        type: asset.file_type_category,
+        created_at: asset.created_at.iso8601,
+        uploaded_by: asset.uploaded_by&.name
+      }
+    end
+
+    # GET /api/assets/capabilities - Check asset system capabilities
+    get '/api/assets/capabilities' do
+      json({
+        image_processing: V7CMS::ImageTransformer.available?,
+        max_upload_size: V7CMS::Setting.instance.max_upload_size
+      })
+    end
+
+    # GET /api/assets - List assets with pagination and filtering
+    get '/api/assets' do
+      page = (params[:page] || 1).to_i
+      per_page = [[params[:per_page].to_i, 1].max, 100].min
+      per_page = 20 if per_page == 0
+
+      assets = V7CMS::Asset.all
+
+      # Filter by type
+      case params[:type]
+      when 'image'
+        assets = assets.images
+      when 'document'
+        assets = assets.documents
+      when 'audio'
+        assets = assets.audio
+      when 'video'
+        assets = assets.video
+      when 'archive'
+        assets = assets.archives
+      end
+
+      # Search by filename
+      if params[:search].present?
+        search_term = "%#{params[:search]}%"
+        assets = assets.where('filename LIKE ? OR original_filename LIKE ?', search_term, search_term)
+      end
+
+      # Sorting
+      assets = case params[:sort]
+               when 'oldest'
+                 assets.order(created_at: :asc)
+               when 'filename'
+                 assets.order(filename: :asc)
+               when 'size'
+                 assets.order(file_size: :desc)
+               else
+                 assets.recent
+               end
+
+      total = assets.count
+      assets = assets.offset((page - 1) * per_page).limit(per_page)
+
+      json({
+        assets: assets.map { |a| asset_json(a) },
+        pagination: {
+          page: page,
+          per_page: per_page,
+          total: total,
+          pages: (total.to_f / per_page).ceil
+        }
+      })
+    end
+
+    # GET /api/assets/:id - Get single asset
+    get '/api/assets/:id' do
+      asset = V7CMS::Asset.find_by(id: params[:id])
+      halt 404, json({ error: 'Asset not found' }) unless asset
+
+      json(asset_json(asset))
+    end
+
+    # POST /api/assets - Upload new asset
+    post '/api/assets' do
+      require_login
+
+      unless params[:file] && params[:file][:tempfile]
+        halt 400, json({ error: 'No file provided' })
+      end
+
+      file = params[:file][:tempfile]
+      original_filename = params[:file][:filename]
+      content_type = params[:file][:type] || 'application/octet-stream'
+      file_size = file.size
+
+      # Validate file size
+      max_size = V7CMS::Setting.instance.max_upload_size
+      if file_size > max_size
+        halt 400, json({ error: "File too large. Maximum size is #{max_size / 1_048_576}MB" })
+      end
+
+      # Validate content type
+      unless V7CMS::Asset::ALLOWED_CONTENT_TYPES.include?(content_type)
+        halt 400, json({ error: 'File type not allowed' })
+      end
+
+      # Generate unique storage key
+      adapter = V7CMS::Asset.storage_adapter
+      storage_key = adapter.generate_unique_key(original_filename)
+
+      # Store file
+      adapter.store(file, storage_key)
+
+      # Get image dimensions if applicable
+      width, height = nil, nil
+      if content_type.start_with?('image/') && !content_type.include?('svg')
+        begin
+          require 'fastimage'
+          size = FastImage.size(File.join(adapter.base_path, storage_key))
+          width, height = size if size
+        rescue => e
+          warn "Failed to get image dimensions: #{e.message}"
+        end
+      end
+
+      # Create asset record
+      asset = V7CMS::Asset.create!(
+        filename: File.basename(storage_key),
+        original_filename: original_filename,
+        content_type: content_type,
+        file_size: file_size,
+        storage_key: storage_key,
+        width: width,
+        height: height,
+        uploaded_by: current_user
+      )
+
+      status 201
+      json(asset_json(asset))
+    end
+
+    # PUT /api/assets/:id - Update asset metadata
+    put '/api/assets/:id' do
+      require_login
+
+      asset = V7CMS::Asset.find_by(id: params[:id])
+      halt 404, json({ error: 'Asset not found' }) unless asset
+
+      data = JSON.parse(request.body.read) rescue {}
+
+      # Only allow updating alt_text
+      if data.key?('alt_text')
+        asset.update!(alt_text: data['alt_text'])
+      end
+
+      json(asset_json(asset))
+    end
+
+    # DELETE /api/assets/:id - Delete asset
+    delete '/api/assets/:id' do
+      require_login
+
+      asset = V7CMS::Asset.find_by(id: params[:id])
+      halt 404, json({ error: 'Asset not found' }) unless asset
+
+      # Delete file from storage
+      adapter = V7CMS::Asset.storage_adapter
+      adapter.delete(asset.storage_key)
+
+      # Delete database record
+      asset.destroy!
+
+      json({ success: true })
+    end
+
     # =========================================================================
     # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
     # =========================================================================
