@@ -25,7 +25,7 @@ module V7CMS
     }
 
     validates :github_url, :social_url, format: {
-      with: /\A(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?\z/i,
+      with: /\A(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?\z/i,
       allow_blank: true,
       message: 'must be a valid URL'
     }
