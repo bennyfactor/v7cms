@@ -999,6 +999,46 @@ module V7CMS
     end
 
     # =========================================================================
+    # Version History API Routes
+    # =========================================================================
+
+    # GET /api/posts/:id/versions - List versions for a post
+    get '/api/posts/:id/versions' do
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      versions = if params[:all] == 'true'
+        post.content_versions
+      else
+        post.content_versions.permanent
+      end
+
+      json({
+        versions: versions.map { |v| version_json(v) }
+      })
+    end
+
+    # GET /api/pages/:id/versions - List versions for a page
+    get '/api/pages/:id/versions' do
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      versions = if params[:all] == 'true'
+        page.content_versions
+      else
+        page.content_versions.permanent
+      end
+
+      json({
+        versions: versions.map { |v| version_json(v) }
+      })
+    end
+
+    # =========================================================================
     # Comments API Routes
     # =========================================================================
 
@@ -1560,6 +1600,25 @@ module V7CMS
           slug: comment.post.slug
         }
       }
+    end
+
+    # Version serialization helper
+    def version_json(version, include_content: false)
+      result = {
+        version_number: version.version_number,
+        version_type: version.version_type,
+        workflow_state: version.workflow_state,
+        title: version.title,
+        permanent: version.permanent?,
+        expires_at: version.expires_at&.iso8601,
+        created_at: version.created_at.iso8601,
+        created_by: version.created_by&.name || 'Unknown'
+      }
+      if include_content
+        result[:content] = version.content
+        result[:metadata] = version.metadata_hash
+      end
+      result
     end
 
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
