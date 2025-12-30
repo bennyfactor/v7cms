@@ -67,7 +67,7 @@ module V7CMS
     end
 
     def should_create_auto_version?
-      saved_change_to_title? || saved_change_to_content?
+      !previously_new_record? && (saved_change_to_title? || saved_change_to_content?)
     end
 
     def version_metadata
