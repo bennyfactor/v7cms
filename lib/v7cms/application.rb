@@ -489,7 +489,7 @@ module V7CMS
         end
 
         # Safety: Must keep at least one admin
-        if new_admin_value == false && V7CMS::User.where(admin: true).count == 1 && user.admin?
+        if new_admin_value == false && V7CMS::User.where(admin: true).one? && user.admin?
           halt 400, json({ error: 'Cannot revoke - at least one admin must remain' })
         end
 
