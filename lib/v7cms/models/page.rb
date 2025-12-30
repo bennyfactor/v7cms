@@ -1,5 +1,7 @@
 module V7CMS
   class Page < ActiveRecord::Base
+    include V7CMS::Versionable
+
     # Self-referential association for hierarchical pages
     belongs_to :parent, class_name: 'V7CMS::Page', optional: true
     has_many :children, class_name: 'V7CMS::Page', foreign_key: 'parent_id', dependent: :destroy
@@ -26,6 +28,10 @@ module V7CMS
 
     # Callbacks
     before_validation :generate_slug, if: -> { slug.blank? && title.present? }
+
+    # Workflow versioning callbacks
+    after_save :create_publish_version, if: :just_published?
+    after_save :create_unpublish_version, if: :just_unpublished?
 
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
@@ -146,6 +152,34 @@ module V7CMS
 
     def remove_static_file
       PageRenderer.delete_static_file(self)
+    end
+
+    def version_metadata
+      {
+        slug: slug,
+        page_type: page_type,
+        content_source: content_source,
+        items_limit: items_limit,
+        position: position,
+        parent_id: parent_id,
+        hero_image_url: hero_image_url
+      }
+    end
+
+    def just_published?
+      saved_change_to_published? && published? && !previously_new_record?
+    end
+
+    def just_unpublished?
+      saved_change_to_published? && !published? && !previously_new_record?
+    end
+
+    def create_publish_version
+      create_workflow_version!(workflow_state: 'published')
+    end
+
+    def create_unpublish_version
+      create_workflow_version!(workflow_state: 'unpublished')
     end
   end
 end

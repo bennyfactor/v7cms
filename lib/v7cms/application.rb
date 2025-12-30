@@ -489,7 +489,7 @@ module V7CMS
         end
 
         # Safety: Must keep at least one admin
-        if new_admin_value == false && V7CMS::User.where(admin: true).count == 1 && user.admin?
+        if new_admin_value == false && V7CMS::User.where(admin: true).one? && user.admin?
           halt 400, json({ error: 'Cannot revoke - at least one admin must remain' })
         end
 
@@ -996,6 +996,136 @@ module V7CMS
 
       page.destroy
       status 204
+    end
+
+    # =========================================================================
+    # Version History API Routes
+    # =========================================================================
+
+    # GET /api/posts/:id/versions - List versions for a post
+    get '/api/posts/:id/versions' do
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      versions = if params[:all] == 'true'
+        post.content_versions
+      else
+        post.content_versions.permanent
+      end
+
+      json({
+        versions: versions.map { |v| version_json(v) }
+      })
+    end
+
+    # GET /api/pages/:id/versions - List versions for a page
+    get '/api/pages/:id/versions' do
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      versions = if params[:all] == 'true'
+        page.content_versions
+      else
+        page.content_versions.permanent
+      end
+
+      json({
+        versions: versions.map { |v| version_json(v) }
+      })
+    end
+
+    # GET /api/posts/:id/versions/:num - Get specific version with content
+    get '/api/posts/:id/versions/:num' do
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      version = post.version_at(params[:num].to_i)
+      halt 404, json({ error: 'Version not found' }) unless version
+
+      json({ version: version_json(version, include_content: true) })
+    end
+
+    # GET /api/pages/:id/versions/:num - Get specific version with content
+    get '/api/pages/:id/versions/:num' do
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      version = page.version_at(params[:num].to_i)
+      halt 404, json({ error: 'Version not found' }) unless version
+
+      json({ version: version_json(version, include_content: true) })
+    end
+
+    # POST /api/posts/:id/versions/:num/restore - Restore post to version
+    post '/api/posts/:id/versions/:num/restore' do
+      require_ajax_header
+      require_login
+
+      post_record = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post_record
+
+      begin
+        post_record.restore_version!(params[:num].to_i)
+        post_record.reload
+        json({ post: post_json(post_record) })
+      rescue ActiveRecord::RecordNotFound => e
+        halt 404, json({ error: e.message })
+      end
+    end
+
+    # POST /api/pages/:id/versions/:num/restore - Restore page to version
+    post '/api/pages/:id/versions/:num/restore' do
+      require_ajax_header
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      begin
+        page.restore_version!(params[:num].to_i)
+        page.reload
+        json({ page: page_json(page) })
+      rescue ActiveRecord::RecordNotFound => e
+        halt 404, json({ error: e.message })
+      end
+    end
+
+    # POST /api/posts/:id/versions/:num/keep - Mark version as permanent
+    post '/api/posts/:id/versions/:num/keep' do
+      require_ajax_header
+      require_login
+
+      post_record = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post_record
+
+      version = post_record.version_at(params[:num].to_i)
+      halt 404, json({ error: 'Version not found' }) unless version
+
+      version.mark_permanent!
+      json({ version: version_json(version) })
+    end
+
+    # POST /api/pages/:id/versions/:num/keep - Mark version as permanent
+    post '/api/pages/:id/versions/:num/keep' do
+      require_ajax_header
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      version = page.version_at(params[:num].to_i)
+      halt 404, json({ error: 'Version not found' }) unless version
+
+      version.mark_permanent!
+      json({ version: version_json(version) })
     end
 
     # =========================================================================
@@ -1560,6 +1690,25 @@ module V7CMS
           slug: comment.post.slug
         }
       }
+    end
+
+    # Version serialization helper
+    def version_json(version, include_content: false)
+      result = {
+        version_number: version.version_number,
+        version_type: version.version_type,
+        workflow_state: version.workflow_state,
+        title: version.title,
+        permanent: version.permanent?,
+        expires_at: version.expires_at&.iso8601,
+        created_at: version.created_at.iso8601,
+        created_by: version.created_by&.name || 'Unknown'
+      }
+      if include_content
+        result[:content] = version.content
+        result[:metadata] = version.metadata_hash
+      end
+      result
     end
 
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3

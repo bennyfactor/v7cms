@@ -20,6 +20,8 @@ Comment = V7CMS::Comment
 Setting = V7CMS::Setting
 Theme = V7CMS::Theme
 Redirect = V7CMS::Redirect
+Asset = V7CMS::Asset
+ContentVersion = V7CMS::ContentVersion
 
 # Expose services for backward compatibility
 FeedGenerator = V7CMS::FeedGenerator

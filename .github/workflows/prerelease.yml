@@ -1,0 +1,125 @@
+name: Prerelease
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: prerelease-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-prerelease:
+    name: Build Prerelease Gem
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install FastCGI development headers
+        run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Generate prerelease version
+        id: version
+        run: |
+          BASE_VERSION=$(ruby -e "require './lib/v7cms/version'; puts V7CMS::VERSION")
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PRERELEASE_VERSION="${BASE_VERSION}.pre.${PR_NUMBER}"
+          echo "base=${BASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "prerelease=${PRERELEASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated prerelease version: ${PRERELEASE_VERSION}"
+
+      - name: Update version for prerelease
+        run: |
+          sed -i "s/VERSION = '.*'/VERSION = '${{ steps.version.outputs.prerelease }}'/" lib/v7cms/version.rb
+          cat lib/v7cms/version.rb
+
+      - name: Build gem
+        run: gem build v7cms.gemspec
+
+      - name: Publish to GitHub Packages
+        run: |
+          mkdir -p ~/.gem
+          echo "---" > ~/.gem/credentials
+          echo ":github: Bearer ${{ secrets.GITHUB_TOKEN }}" >> ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          gem push --key github \
+            --host https://rubygems.pkg.github.com/${{ github.repository_owner }} \
+            v7cms-${{ steps.version.outputs.prerelease }}.gem
+        continue-on-error: true  # Don't fail if package already exists
+
+      - name: Upload gem as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7cms-${{ steps.version.outputs.prerelease }}.gem
+          path: v7cms-${{ steps.version.outputs.prerelease }}.gem
+          retention-days: 30
+
+      - name: Comment on PR with install instructions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.prerelease }}';
+            const owner = context.repo.owner;
+
+            const body = `## Prerelease Gem Built
+
+            **Version:** \`${version}\`
+
+            ### Install from GitHub Packages
+
+            Add to your Gemfile:
+            \`\`\`ruby
+            source "https://rubygems.pkg.github.com/${owner}" do
+              gem "v7cms", "${version}"
+            end
+            \`\`\`
+
+            Or install directly:
+            \`\`\`bash
+            gem install v7cms -v "${version}" --source "https://rubygems.pkg.github.com/${owner}"
+            \`\`\`
+
+            ### Download Artifact
+
+            The gem is also available as a build artifact on this workflow run.
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Prerelease Gem Built')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
