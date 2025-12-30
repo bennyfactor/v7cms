@@ -175,18 +175,14 @@ module V7CMS
       return if layout_homepage.blank?
 
       available = self.class.available_layouts
-      unless available.include?(layout_homepage)
-        errors.add(:layout_homepage, "must be a valid layout option (available: #{available.join(', ')})")
-      end
+      errors.add(:layout_homepage, "must be a valid layout option (available: #{available.join(', ')})") unless available.include?(layout_homepage)
     end
 
     def layout_post_must_be_available
       return if layout_post.blank?
 
       available = self.class.available_post_layouts
-      unless available.include?(layout_post)
-        errors.add(:layout_post, "must be a valid layout option (available: #{available.join(', ')})")
-      end
+      errors.add(:layout_post, "must be a valid layout option (available: #{available.join(', ')})") unless available.include?(layout_post)
     end
 
     def regenerate_feeds

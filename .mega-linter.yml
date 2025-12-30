@@ -1,0 +1,74 @@
+# MegaLinter Configuration
+# https://megalinter.io/latest/configuration/
+
+# Use Ruby flavor for optimized Docker image
+FLAVOR: ruby
+
+# Enable specific language linters
+ENABLE:
+  - RUBY
+  - JAVASCRIPT
+  - HTML
+  - CSS
+  - JSON
+  - YAML
+  - MARKDOWN
+
+# Specific linters to use
+ENABLE_LINTERS:
+  # Ruby
+  - RUBY_RUBOCOP
+  - RUBY_BRAKEMAN
+  # JavaScript
+  - JAVASCRIPT_ES
+  # HTML
+  - HTML_HTMLHINT
+  # JSON
+  - JSON_JSONLINT
+  # YAML
+  - YAML_YAMLLINT
+  # Markdown
+  - MARKDOWN_MARKDOWNLINT
+  # GitHub Actions
+  - ACTION_ACTIONLINT
+
+# Disable noisy or unnecessary linters
+DISABLE_LINTERS:
+  - SPELL_CSPELL
+  - SPELL_MISSPELL
+  - COPYPASTE_JSCPD
+  - RUBY_RUBOCOP_RSPEC_EXTRA  # We use gitlab-styles rspec config
+
+# Don't auto-fix, just report
+APPLY_FIXES: none
+
+# Show elapsed time
+SHOW_ELAPSED_TIME: true
+
+# Generate SARIF report for GitHub Security tab
+SARIF_REPORTER: true
+
+# Fail on linter errors
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: false
+
+# File patterns
+FILTER_REGEX_INCLUDE: "(lib|app|spec|public)/.*"
+FILTER_REGEX_EXCLUDE: "(vendor|node_modules|tmp|db/.*\\.sqlite3)"
+
+# RuboCop already configured via .rubocop.yml
+RUBY_RUBOCOP_CONFIG_FILE: .rubocop.yml
+
+# Brakeman configuration
+RUBY_BRAKEMAN_ARGUMENTS: "--force --no-pager"
+
+# ESLint configuration
+JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.json
+
+# HTMLHint configuration
+HTML_HTMLHINT_ARGUMENTS: "--ignore public/admin/index.html"
+
+# YAML configuration - be lenient with formatting
+YAML_YAMLLINT_ARGUMENTS: "-d relaxed"
+
+# Markdown configuration
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json

@@ -54,4 +54,12 @@ group :development do
   gem 'rerun', '~> 0.14'
   gem 'puma', '~> 6.0'
   gem 'gem-release', '~> 2.2'
+
+  # Linting and security analysis
+  gem 'rubocop', '~> 1.71', require: false
+  gem 'rubocop-performance', '~> 1.21', require: false
+  gem 'rubocop-rspec', '~> 3.0', require: false
+  gem 'rubocop-factory_bot', '~> 2.26', require: false
+  gem 'brakeman', '~> 6.2', require: false
+  gem 'bundler-audit', '~> 0.9', require: false
 end
