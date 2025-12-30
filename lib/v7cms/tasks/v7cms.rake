@@ -526,4 +526,12 @@ namespace :v7cms do
     puts "  Skipped: #{skipped}"
     puts "  Errors: #{errors}"
   end
+
+  desc 'Clean up expired content versions'
+  task :cleanup_versions do
+    require 'v7cms'
+
+    deleted = V7CMS::ContentVersion.cleanup_expired!
+    puts "Deleted #{deleted} expired content versions"
+  end
 end
