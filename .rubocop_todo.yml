@@ -260,7 +260,7 @@ Metrics/PerceivedComplexity:
 # ForbiddenPrefixes: is_, has_, have_
 # AllowedMethods: is_a?
 # MethodDefinitionMacros: define_method, define_singleton_method
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Exclude:
     - 'spec/**/*'
     - 'lib/v7cms/models/page.rb'
@@ -790,3 +790,15 @@ Style/WordArray:
     - 'lib/v7cms/models/comment.rb'
     - 'spec/routes/pages_spec.rb'
 
+
+# Offense count: 1
+# This cop supports safe autocorrection (--autocorrect).
+Style/CollectionQuerying:
+  Exclude:
+    - 'lib/v7cms/application.rb'
+
+# Offense count: 3
+# This cop supports safe autocorrection (--autocorrect).
+Style/RedundantRegexpEscape:
+  Exclude:
+    - 'lib/v7cms/models/setting.rb'

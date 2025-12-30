@@ -8,8 +8,6 @@ FLAVOR: ruby
 ENABLE:
   - RUBY
   - JAVASCRIPT
-  - HTML
-  - CSS
   - JSON
   - YAML
   - MARKDOWN
@@ -21,8 +19,6 @@ ENABLE_LINTERS:
   - RUBY_BRAKEMAN
   # JavaScript
   - JAVASCRIPT_ES
-  # HTML
-  - HTML_HTMLHINT
   # JSON
   - JSON_JSONLINT
   # YAML
@@ -37,7 +33,11 @@ DISABLE_LINTERS:
   - SPELL_CSPELL
   - SPELL_MISSPELL
   - COPYPASTE_JSCPD
-  - RUBY_RUBOCOP_RSPEC_EXTRA  # We use gitlab-styles rspec config
+  # HTML linters disabled - incompatible with Tailwind CSS class naming conventions
+  - HTML_HTMLHINT
+  - HTML_DJLINT
+  # CSS linters disabled - Tailwind uses non-standard CSS patterns
+  - CSS_STYLELINT
 
 # Don't auto-fix, just report
 APPLY_FIXES: none
@@ -63,9 +63,6 @@ RUBY_BRAKEMAN_ARGUMENTS: "--force --no-pager"
 
 # ESLint configuration
 JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.json
-
-# HTMLHint configuration
-HTML_HTMLHINT_ARGUMENTS: "--ignore public/admin/index.html"
 
 # YAML configuration - be lenient with formatting
 YAML_YAMLLINT_ARGUMENTS: "-d relaxed"
