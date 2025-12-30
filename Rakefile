@@ -2,6 +2,9 @@ require 'dotenv/load' if ENV['RACK_ENV'] != 'production'
 
 ENV['RACK_ENV'] ||= 'development'
 
+# Add lib to load path so 'require v7cms' works in rake tasks
+$LOAD_PATH.unshift(File.expand_path('lib', __dir__))
+
 # Set up Sinatra environment for ActiveRecord
 require 'sinatra'
 require 'sinatra/activerecord'

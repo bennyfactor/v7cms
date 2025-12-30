@@ -483,4 +483,43 @@ RSpec.describe Page, type: :model do
       expect(page.uses_layout_template?).to be false
     end
   end
+
+  describe 'versioning' do
+    it 'includes Versionable concern' do
+      expect(Page.ancestors).to include(V7CMS::Versionable)
+    end
+
+    it 'creates auto version when title changes' do
+      page = Page.create!(title: 'Original', slug: 'test', content: 'Content')
+      page.update!(title: 'Updated')
+
+      expect(page.content_versions.count).to eq(1)
+    end
+
+    it 'stores page-specific metadata' do
+      page = Page.create!(
+        title: 'Test',
+        slug: 'test',
+        content: 'Content',
+        page_type: 'blog_grid',
+        content_source: 'posts',
+        items_limit: 10
+      )
+      page.update!(title: 'Updated')
+
+      metadata = page.latest_version.metadata_hash
+      expect(metadata['page_type']).to eq('blog_grid')
+      expect(metadata['content_source']).to eq('posts')
+      expect(metadata['items_limit']).to eq(10)
+    end
+
+    it 'creates workflow version on publish' do
+      page = Page.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
+      page.update!(published: true)
+
+      workflow_versions = page.content_versions.where(version_type: 'workflow')
+      expect(workflow_versions.count).to eq(1)
+      expect(workflow_versions.first.workflow_state).to eq('published')
+    end
+  end
 end

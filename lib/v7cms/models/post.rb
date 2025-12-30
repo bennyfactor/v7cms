@@ -1,5 +1,7 @@
 module V7CMS
   class Post < ActiveRecord::Base
+    include V7CMS::Versionable
+
     has_many :comments, class_name: 'V7CMS::Comment', dependent: :destroy
 
     validates :title, presence: true
@@ -7,6 +9,10 @@ module V7CMS
     validates :comments_enabled, inclusion: { in: [true, false] }
 
     before_validation :generate_slug, on: :create
+
+    # Workflow versioning callbacks
+    after_save :create_publish_version, if: :just_published?
+    after_save :create_unpublish_version, if: :just_unpublished?
 
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
@@ -54,6 +60,29 @@ module V7CMS
 
     def regenerate_feeds
       FeedGenerator.write_feeds
+    end
+
+    def version_metadata
+      {
+        slug: slug,
+        comments_enabled: comments_enabled
+      }
+    end
+
+    def just_published?
+      !previously_new_record? && saved_change_to_published? && published?
+    end
+
+    def just_unpublished?
+      !previously_new_record? && saved_change_to_published? && !published?
+    end
+
+    def create_publish_version
+      create_workflow_version!(workflow_state: 'published')
+    end
+
+    def create_unpublish_version
+      create_workflow_version!(workflow_state: 'unpublished')
     end
   end
 end

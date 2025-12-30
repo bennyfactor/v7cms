@@ -29,9 +29,7 @@ module V7CMS
       end
       reserved_paths = RESERVED_PATHS if reserved_paths.empty?
 
-      if reserved_paths.any? { |r| short_path == r || short_path.start_with?("#{r}/") }
-        errors.add(:short_path, "conflicts with reserved path")
-      end
+      errors.add(:short_path, "conflicts with reserved path") if reserved_paths.any? { |r| short_path == r || short_path.start_with?("#{r}/") }
     end
 
     def regenerate_htaccess

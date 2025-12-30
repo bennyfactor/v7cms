@@ -229,4 +229,59 @@ RSpec.describe Post, type: :model do
       expect(File.exist?(static_file_path)).to be true
     end
   end
+
+  describe 'versioning' do
+    it 'includes Versionable concern' do
+      expect(Post.ancestors).to include(V7CMS::Versionable)
+    end
+
+    it 'creates auto version when title changes' do
+      post = Post.create!(title: 'Original', slug: 'test', content: 'Content')
+      post.update!(title: 'Updated')
+
+      expect(post.content_versions.count).to eq(1)
+      expect(post.latest_version.title).to eq('Updated')
+    end
+
+    it 'creates auto version when content changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Original')
+      post.update!(content: 'Updated')
+
+      expect(post.content_versions.count).to eq(1)
+    end
+
+    it 'does not create version when only published changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
+      post.update!(published: true)
+
+      # Should only have workflow version, no auto version
+      auto_versions = post.content_versions.where(version_type: 'auto')
+      expect(auto_versions.count).to eq(0)
+    end
+
+    it 'stores comments_enabled in metadata' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', comments_enabled: true)
+      post.update!(title: 'Updated')
+
+      expect(post.latest_version.metadata_hash['comments_enabled']).to eq(true)
+    end
+
+    it 'creates workflow version on publish' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
+      post.update!(published: true)
+
+      workflow_versions = post.content_versions.where(version_type: 'workflow')
+      expect(workflow_versions.count).to eq(1)
+      expect(workflow_versions.first.workflow_state).to eq('published')
+    end
+
+    it 'creates workflow version on unpublish' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true)
+      post.update!(published: false)
+
+      workflow_versions = post.content_versions.where(version_type: 'workflow')
+      expect(workflow_versions.count).to eq(1)
+      expect(workflow_versions.first.workflow_state).to eq('unpublished')
+    end
+  end
 end

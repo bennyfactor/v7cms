@@ -84,6 +84,16 @@ function cmsApp() {
     },
     showValidationSummary: false,
 
+    // Version history
+    showVersionHistory: false,
+    showAllVersions: false,
+    loadingVersions: false,
+    permanentVersions: [],
+    temporaryVersions: [],
+    versionPreview: null,
+    versionPreviewType: null,
+    versionPreviewId: null,
+
     // Computed
     get validationSummaryErrors() {
       const errors = [];
@@ -1251,6 +1261,104 @@ function cmsApp() {
       if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
       if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
       return this.formatDate(dateString);
+    },
+
+    // Version History
+    async loadVersions(type, id) {
+      this.loadingVersions = true;
+      try {
+        const allParam = this.showAllVersions ? '?all=true' : '';
+        const response = await fetch(`/api/${type}s/${id}/versions${allParam}`);
+        if (!response.ok) throw new Error('Failed to load versions');
+
+        const data = await response.json();
+        this.permanentVersions = data.versions.filter(v => v.permanent);
+        this.temporaryVersions = data.versions.filter(v => !v.permanent);
+      } catch (error) {
+        console.error('Error loading versions:', error);
+        this.permanentVersions = [];
+        this.temporaryVersions = [];
+      } finally {
+        this.loadingVersions = false;
+      }
+    },
+
+    async previewVersion(type, id, versionNumber) {
+      try {
+        const response = await fetch(`/api/${type}s/${id}/versions/${versionNumber}`);
+        if (!response.ok) throw new Error('Failed to load version');
+
+        const data = await response.json();
+        this.versionPreview = data.version;
+        this.versionPreviewType = type;
+        this.versionPreviewId = id;
+      } catch (error) {
+        console.error('Error loading version:', error);
+        alert('Failed to load version');
+      }
+    },
+
+    async restoreVersion(type, id, versionNumber) {
+      if (!confirm(`Restore to version ${versionNumber}? Current changes will be overwritten.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/${type}s/${id}/versions/${versionNumber}/restore`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to restore version');
+
+        const data = await response.json();
+
+        // Update the editing item
+        if (type === 'post' && this.editingPost) {
+          this.currentPost = data.post;
+          if (this.quillInstance) {
+            this.quillInstance.root.innerHTML = data.post.content || '';
+          }
+        } else if (type === 'page' && this.editingPage) {
+          this.currentPage = data.page;
+          if (this.quillPageInstance) {
+            this.quillPageInstance.root.innerHTML = data.page.content || '';
+          }
+        }
+
+        // Reload versions list
+        this.loadVersions(type, id);
+
+        alert('Version restored successfully');
+      } catch (error) {
+        console.error('Error restoring version:', error);
+        alert('Failed to restore version');
+      }
+    },
+
+    async keepVersion(type, id, versionNumber) {
+      try {
+        const response = await fetch(`/api/${type}s/${id}/versions/${versionNumber}/keep`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to keep version');
+
+        // Reload versions list
+        this.loadVersions(type, id);
+
+        alert('Version marked as permanent');
+      } catch (error) {
+        console.error('Error keeping version:', error);
+        alert('Failed to keep version');
+      }
     }
   };
 }

@@ -1,0 +1,30 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "globals": {
+    "Alpine": "readonly",
+    "Quill": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-undef": "error",
+    "no-console": "off",
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "indent": ["warn", 2],
+    "comma-dangle": ["warn", "never"],
+    "no-trailing-spaces": "warn",
+    "eol-last": ["warn", "always"]
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "vendor/",
+    "public/css/output.css"
+  ]
+}
