@@ -1,0 +1,105 @@
+# frozen_string_literal: true
+
+# RuboCop configuration for v7cms
+# Uses standard rubocop with performance and rspec extensions
+
+require:
+  - rubocop-performance
+  - rubocop-rspec
+  - rubocop-factory_bot
+
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'db/schema.rb'
+    - 'bin/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+
+# LineLength: configured in .rubocop_todo.yml to allow existing long lines
+# Gradually reduce Max value as code is cleaned up
+
+# Disable some overly strict metrics for a small gem
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/v7cms/tasks/**/*'
+    - 'lib/tasks/**/*'
+    - '*.gemspec'
+
+Metrics/MethodLength:
+  Max: 35
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/v7cms/application.rb'
+    - 'lib/v7cms/services/image_transformer.rb'
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/AbcSize:
+  Max: 25
+
+# RSpec configuration
+RSpec/ExampleLength:
+  Max: 20
+
+RSpec/MultipleExpectations:
+  Max: 5
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/routes/**/*'
+    - 'spec/services/**/*'
+    - 'spec/lib/**/*'
+    - 'spec/middleware/**/*'
+
+# RSpec/FilePath was split into these cops
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+RSpec/SpecFilePathSuffix:
+  Enabled: false
+
+# Style preferences
+Style/Documentation:
+  Enabled: false  # Not needed for small gems
+
+# FrozenStringLiteralComment: disabled in todo due to many existing files
+# Can be enabled gradually by removing exclusions from .rubocop_todo.yml
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+# Naming
+Naming/FileName:
+  Exclude:
+    - 'Gemfile'
+    - 'Rakefile'
+
+# Security - these are important, keep enabled
+Security/Eval:
+  Enabled: true
+
+Security/JSONLoad:
+  Enabled: true
+
+Security/Open:
+  Enabled: true
+
+Security/YAMLLoad:
+  Enabled: true
