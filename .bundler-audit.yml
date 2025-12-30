@@ -1,0 +1,11 @@
+# Bundle Audit Configuration
+# https://github.com/rubysec/bundler-audit
+
+ignore:
+  # Sinatra 3.x -> 4.x is a major version upgrade that requires careful testing
+  # These CVEs will be addressed in a separate upgrade task
+  # CVE-2024-21510: Path traversal in Sinatra static file serving
+  # CVE-2025-61921: Additional Sinatra vulnerability
+  # TODO: Upgrade to Sinatra 4.x in a dedicated PR with full regression testing
+  - CVE-2024-21510
+  - CVE-2025-61921

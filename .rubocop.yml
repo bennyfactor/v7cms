@@ -3,10 +3,9 @@
 # RuboCop configuration for v7cms
 # Uses standard rubocop with performance and rspec extensions
 
-require:
+plugins:
   - rubocop-performance
   - rubocop-rspec
-  - rubocop-factory_bot
 
 inherit_from: .rubocop_todo.yml
 
