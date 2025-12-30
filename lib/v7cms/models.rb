@@ -2,6 +2,7 @@
 
 # Load all V7CMS model files
 # Models are namespaced under V7CMS (e.g., V7CMS::User, V7CMS::Post)
+require_relative 'models/concerns/versionable'
 require_relative 'models/user'
 require_relative 'models/post'
 require_relative 'models/page'
