@@ -153,9 +153,11 @@ RSpec.describe ContentVersion, type: :model do
     it 'restores title and content to parent' do
       post.update!(title: 'Updated Title', content: 'Updated Content')
 
+      # Use next version number after auto-created version
+      next_version = (post.content_versions.maximum(:version_number) || 0) + 1
       version = ContentVersion.create!(
         versionable: post,
-        version_number: 1,
+        version_number: next_version,
         version_type: 'workflow',
         title: 'Original Title',
         content: 'Original Content',
@@ -170,9 +172,10 @@ RSpec.describe ContentVersion, type: :model do
     end
 
     it 'restores metadata fields' do
+      next_version = (post.content_versions.maximum(:version_number) || 0) + 1
       version = ContentVersion.create!(
         versionable: post,
-        version_number: 1,
+        version_number: next_version,
         version_type: 'workflow',
         title: 'Test',
         content: 'Content',
