@@ -321,7 +321,7 @@ RSpec.describe Setting do
       end
 
       it 'defines all expected post layouts' do
-        expected_layouts = %w[standard magazine minimal full_width]
+        expected_layouts = %w[standard minimal]
         expect(Setting::POST_LAYOUTS).to match_array(expected_layouts)
       end
     end
@@ -450,6 +450,25 @@ RSpec.describe Setting do
       setting.update!(layout_homepage: 'magazine')
       setting.reset_to_defaults!
       expect(setting.layout_homepage).to eq('blog_list')
+    end
+
+    it 'resets layout_post to defaults' do
+      setting = Setting.instance
+      setting.update!(layout_post: 'minimal')
+      setting.reset_to_defaults!
+      expect(setting.layout_post).to eq('standard')
+    end
+  end
+
+  describe '.available_post_layouts' do
+    it 'returns all built-in post layouts' do
+      layouts = Setting.available_post_layouts
+      expect(layouts).to include('standard', 'minimal')
+    end
+
+    it 'returns layouts in sorted order' do
+      layouts = Setting.available_post_layouts
+      expect(layouts).to eq(layouts.sort)
     end
   end
 end
