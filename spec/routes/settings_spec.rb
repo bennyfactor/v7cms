@@ -171,7 +171,7 @@ RSpec.describe 'Settings Routes' do
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
       expect(data['layouts']).to be_an(Array)
-      expect(data['layouts'].length).to be >= 4
+      expect(data['layouts'].length).to be >= 2
     end
 
     it 'includes all built-in layouts' do
@@ -179,7 +179,7 @@ RSpec.describe 'Settings Routes' do
 
       data = JSON.parse(last_response.body)
       layout_names = data['layouts'].map { |l| l['name'] }
-      expect(layout_names).to include('standard', 'magazine', 'minimal', 'full_width')
+      expect(layout_names).to include('standard', 'minimal')
     end
 
     it 'marks built-in layouts correctly' do
@@ -194,8 +194,8 @@ RSpec.describe 'Settings Routes' do
       get '/api/settings/post-layouts'
 
       data = JSON.parse(last_response.body)
-      full_width = data['layouts'].find { |l| l['name'] == 'full_width' }
-      expect(full_width['label']).to eq('Full Width')
+      minimal = data['layouts'].find { |l| l['name'] == 'minimal' }
+      expect(minimal['label']).to eq('Minimal')
     end
 
     it 'works without authentication' do
@@ -222,12 +222,12 @@ RSpec.describe 'Settings Routes' do
     context 'when logged in' do
       it 'updates layout_post setting' do
         put '/api/settings',
-          { layout_post: 'magazine' }.to_json,
+          { layout_post: 'minimal' }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response).to be_ok
         data = JSON.parse(last_response.body)
-        expect(data['settings']['layout_post']).to eq('magazine')
+        expect(data['settings']['layout_post']).to eq('minimal')
       end
 
       it 'rejects invalid layout_post values' do
@@ -241,7 +241,7 @@ RSpec.describe 'Settings Routes' do
       end
 
       it 'resets layout_post to default on reset' do
-        Setting.instance.update!(layout_post: 'magazine')
+        Setting.instance.update!(layout_post: 'minimal')
 
         post '/api/settings/reset',
           {},

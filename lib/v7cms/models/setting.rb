@@ -52,7 +52,7 @@ module V7CMS
     HOMEPAGE_LAYOUTS = %w[blog_list blog_grid hero_grid magazine minimal portfolio landing].freeze
 
     # Built-in post layouts (shipped with gem)
-    POST_LAYOUTS = %w[standard magazine minimal full_width].freeze
+    POST_LAYOUTS = %w[standard minimal].freeze
 
     # Validate layout_homepage against all available layouts (built-in + custom)
     validate :layout_homepage_must_be_available
