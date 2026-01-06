@@ -5,6 +5,61 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.43] - 2026-01-05
+
+### Changed
+- Simplified blog post layouts to standard and minimal options (Phase 1)
+- Removed unused magazine and full_width layout templates
+- Updated admin UI layout picker to 2-column grid
+
+### Fixed
+- Prerelease versioning now uses next version (0.1.43.pre.X instead of 0.1.42.pre.X)
+
+---
+
+## [0.1.42] - 2025-12-30
+
+### Added
+- **CI/CD Enhancements**: Prerelease gem builds on PRs, MegaLinter integration
+- Prerelease gems published to GitHub Packages for testing before merge
+- RuboCop and ESLint linting in CI pipeline
+
+---
+
+## [0.1.41] - 2025-12-30
+
+### Added
+- **Content History**: Hybrid versioning system for posts and pages
+  - Versionable concern with auto-versioning on save
+  - ContentVersion model with validations and scopes
+  - Version list, restore, and compare API endpoints
+  - Admin UI version history panel with diff viewer
+  - Cleanup rake task for expired auto-versions
+
+---
+
+## [0.1.38-0.1.40] - 2025-12-26
+
+### Added
+- **Image/Asset Uploads** (PR #60)
+  - Upload API with file serving and optional transformations
+  - Media Library modal for editor image insertion
+  - Assets tab in admin UI with upload/browse/delete
+  - Upload settings section with size limit and processing status
+  - Rake task for importing existing uploads
+  - Image processing gems (mini_magick, ruby-vips)
+
+---
+
+## [0.1.36-0.1.37] - 2025-12-08
+
+### Added
+- **Blog Post Layouts**: Selectable post layout templates (standard, minimal)
+- **Admin Load More**: Pagination for posts and pages lists
+- **Page Hero Images**: Optional hero_image_url field for pages
+
+---
+
 ## [Unreleased]
 
 ### Added
