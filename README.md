@@ -3,7 +3,7 @@
 [![Ruby](https://img.shields.io/badge/Ruby-3.2-red?logo=ruby)](https://www.ruby-lang.org/)
 [![Sinatra](https://img.shields.io/badge/Sinatra-3.0-lightgrey?logo=ruby)](https://sinatrarb.com/)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
-[![Tests](https://img.shields.io/badge/Tests-649%20passing-brightgreen)](spec/)
+[![Tests](https://img.shields.io/badge/Tests-848%20passing-brightgreen)](spec/)
 [![RSpec](https://img.shields.io/badge/Tested%20with-RSpec-red?logo=ruby)](https://rspec.info/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -17,6 +17,8 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 - Draft and publish workflow
 - Automatic URL slug generation
 - RSS and Atom feed generation
+- Content version history with restore and compare
+- Image/asset uploads with media library
 
 **Admin Interface**
 - Single-page application with Alpine.js
@@ -26,8 +28,10 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 - Comment moderation with spam detection
 - Site settings customization
 - Theme customization (40+ CSS properties)
+- Selectable blog post layouts (standard, minimal)
 - URL redirect management with .htaccess generation
 - Gravatar integration for user avatars
+- Assets tab with media library
 
 **Performance**
 - Static HTML generation for posts and pages
@@ -37,7 +41,7 @@ A minimal, hierarchical content management system built with Ruby and Sinatra. F
 
 **Developer Experience**
 - RESTful JSON API with OpenAPI documentation
-- Comprehensive test suite (649 tests)
+- Comprehensive test suite (848 tests)
 - Docker development environment
 - Rake tasks for common operations
 
@@ -510,7 +514,7 @@ v7cms/
 ├── db/
 │   └── migrate/                  # ActiveRecord migrations
 ├── public/                       # Development static assets
-├── spec/                         # Test suite (649 tests)
+├── spec/                         # Test suite (848 tests)
 ├── v7cms.gemspec                 # Gem specification
 ├── Dockerfile
 ├── docker-compose.yml
