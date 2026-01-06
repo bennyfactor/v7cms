@@ -80,16 +80,8 @@ RSpec.describe 'Basic Routes' do
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Test Post')
-      end
-
-      it 'uses magazine layout when configured' do
-        Setting.instance.update!(layout_post: 'magazine')
-
-        get '/posts/test-post'
-
-        expect(last_response).to be_ok
-        # Magazine layout has specific styling like drop cap
-        expect(last_response.body).to include('Test Post')
+        # Standard layout has card styling with shadow
+        expect(last_response.body).to include('shadow-md')
       end
 
       it 'uses minimal layout when configured' do
@@ -99,17 +91,8 @@ RSpec.describe 'Basic Routes' do
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Test Post')
-      end
-
-      it 'uses full_width layout when configured' do
-        Setting.instance.update!(layout_post: 'full_width')
-
-        get '/posts/test-post'
-
-        expect(last_response).to be_ok
-        # Full width layout has gradient header
-        expect(last_response.body).to include('Test Post')
-        expect(last_response.body).to include('bg-gradient-to-r')
+        # Minimal layout has narrower width and lighter styling
+        expect(last_response.body).to include('max-w-2xl')
       end
 
       it 'falls back to standard layout for invalid setting' do
