@@ -362,4 +362,81 @@ RSpec.describe Post, type: :model do
       expect(post.has_unpublished_changes?).to be true
     end
   end
+
+  describe '#publish!' do
+    it 'creates a workflow version with published state' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+
+      expect { post.publish! }.to change { post.content_versions.count }.by(1)
+
+      version = post.content_versions.last
+      expect(version.version_type).to eq('workflow')
+      expect(version.workflow_state).to eq('published')
+    end
+
+    it 'sets published_version_id to the new version' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+      post.publish!
+
+      expect(post.published_version_id).to eq(post.content_versions.last.id)
+    end
+
+    it 'sets status to published' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+      post.publish!
+
+      expect(post.status).to eq('published')
+    end
+
+    it 'stores current title and content in the version' do
+      post = Post.create!(title: 'My Title', slug: 'test', content: '<p>My Content</p>', status: 'ready')
+      post.publish!
+
+      expect(post.published_version.title).to eq('My Title')
+      expect(post.published_version.content).to eq('<p>My Content</p>')
+    end
+  end
+
+  describe '#unpublish!' do
+    it 'creates a workflow version with unpublished state' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      # Set up a published version
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect { post.unpublish! }.to change { post.content_versions.count }.by(1)
+
+      new_version = post.content_versions.order(version_number: :desc).first
+      expect(new_version.workflow_state).to eq('unpublished')
+    end
+
+    it 'clears published_version_id' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.unpublish!
+
+      expect(post.published_version_id).to be_nil
+    end
+
+    it 'sets status to draft' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.unpublish!
+
+      expect(post.status).to eq('draft')
+    end
+  end
 end

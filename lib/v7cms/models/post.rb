@@ -38,6 +38,16 @@ module V7CMS
       title != published_version.title || content != published_version.content
     end
 
+    def publish!
+      version = create_workflow_version!(workflow_state: 'published')
+      update!(status: 'published', published_version_id: version.id)
+    end
+
+    def unpublish!
+      create_workflow_version!(workflow_state: 'unpublished')
+      update!(status: 'draft', published_version_id: nil)
+    end
+
     private
 
     def generate_slug
