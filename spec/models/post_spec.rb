@@ -305,4 +305,61 @@ RSpec.describe Post, type: :model do
       expect(workflow_versions.first.workflow_state).to eq('unpublished')
     end
   end
+
+  describe '#published_version' do
+    it 'returns nil when published_version_id is nil' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      expect(post.published_version).to be_nil
+    end
+
+    it 'returns the content version when published_version_id is set' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Published Title',
+        content: 'Published Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.published_version).to eq(version)
+      expect(post.published_version.title).to eq('Published Title')
+    end
+  end
+
+  describe '#has_unpublished_changes?' do
+    it 'returns false when not published' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      expect(post.has_unpublished_changes?).to be false
+    end
+
+    it 'returns false when published and no changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Test',
+        content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.has_unpublished_changes?).to be false
+    end
+
+    it 'returns true when working draft differs from published version' do
+      post = Post.create!(title: 'Updated Title', slug: 'test', content: 'Content', status: 'draft')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Original Title',
+        content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.has_unpublished_changes?).to be true
+    end
+  end
 end
