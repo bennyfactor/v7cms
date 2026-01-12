@@ -2,10 +2,13 @@ module V7CMS
   class Post < ActiveRecord::Base
     include V7CMS::Versionable
 
+    STATUSES = %w[draft ready published].freeze
+
     has_many :comments, class_name: 'V7CMS::Comment', dependent: :destroy
 
     validates :title, presence: true
     validates :slug, presence: true, uniqueness: true
+    validates :status, inclusion: { in: STATUSES }
     validates :comments_enabled, inclusion: { in: [true, false] }
 
     before_validation :generate_slug, on: :create
