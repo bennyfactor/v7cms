@@ -439,4 +439,53 @@ RSpec.describe Post, type: :model do
       expect(post.status).to eq('draft')
     end
   end
+
+  describe 'editing published posts' do
+    it 'flips status to draft when title changes on published post' do
+      post = Post.create!(title: 'Original', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Original', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(title: 'Updated')
+
+      expect(post.status).to eq('draft')
+      expect(post.published_version_id).to eq(version.id) # Still points to published version
+    end
+
+    it 'flips status to draft when content changes on published post' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Original', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Original'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(content: 'Updated')
+
+      expect(post.status).to eq('draft')
+    end
+
+    it 'does not flip status when only comments_enabled changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published', comments_enabled: true)
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(comments_enabled: false)
+
+      expect(post.status).to eq('published')
+    end
+
+    it 'does not flip status on draft posts' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.update!(title: 'Updated')
+
+      expect(post.status).to eq('draft')
+    end
+  end
 end

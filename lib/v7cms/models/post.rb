@@ -13,6 +13,7 @@ module V7CMS
     validates :comments_enabled, inclusion: { in: [true, false] }
 
     before_validation :generate_slug, on: :create
+    before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
 
     # Workflow versioning callbacks
     after_save :create_publish_version, if: :just_published?
@@ -102,6 +103,14 @@ module V7CMS
 
     def create_unpublish_version
       create_workflow_version!(workflow_state: 'unpublished')
+    end
+
+    def should_flip_to_draft?
+      !new_record? && status == 'published' && (will_save_change_to_title? || will_save_change_to_content?)
+    end
+
+    def flip_to_draft_on_content_change
+      self.status = 'draft'
     end
   end
 end
