@@ -230,6 +230,27 @@ RSpec.describe Post, type: :model do
     end
   end
 
+  describe 'status' do
+    it 'defaults status to draft' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      expect(post.status).to eq('draft')
+    end
+
+    it 'validates status inclusion' do
+      post = Post.new(title: 'Test', status: 'invalid')
+      expect(post).not_to be_valid
+      expect(post.errors[:status]).to include('is not included in the list')
+    end
+
+    it 'accepts valid statuses' do
+      %w[draft ready published].each do |status|
+        post = Post.new(title: 'Test', status: status)
+        post.valid?
+        expect(post.errors[:status]).to be_empty
+      end
+    end
+  end
+
   describe 'versioning' do
     it 'includes Versionable concern' do
       expect(Post.ancestors).to include(V7CMS::Versionable)
