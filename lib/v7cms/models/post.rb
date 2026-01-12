@@ -5,6 +5,7 @@ module V7CMS
     STATUSES = %w[draft ready published].freeze
 
     has_many :comments, class_name: 'V7CMS::Comment', dependent: :destroy
+    belongs_to :published_version, class_name: 'V7CMS::ContentVersion', optional: true
 
     validates :title, presence: true
     validates :slug, presence: true, uniqueness: true
@@ -30,6 +31,11 @@ module V7CMS
 
     def comments_allowed?
       comments_enabled && V7CMS::Setting.instance.allow_comments
+    end
+
+    def has_unpublished_changes?
+      return false unless published_version_id.present?
+      title != published_version.title || content != published_version.content
     end
 
     private
