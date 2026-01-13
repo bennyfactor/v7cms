@@ -84,9 +84,9 @@ RSpec.describe Post, type: :model do
   end
 
   describe 'default values' do
-    it 'defaults published to false' do
+    it 'defaults published_version_id to nil' do
       post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
-      expect(post.published).to be false
+      expect(post.published_version_id).to be_nil
     end
   end
 
@@ -164,9 +164,9 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
     end
@@ -176,7 +176,7 @@ RSpec.describe Post, type: :model do
         title: 'Test Post',
         slug: 'test-post',
         content: '<p>Content</p>',
-        published: false
+        status: 'draft'
       )
 
       expect(File.exist?(static_file_path)).to be false
@@ -186,13 +186,14 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Original</p>',
-        published: true
+        content: '<p>Original</p>'
       )
+      post.publish!
 
       original_content = File.read(static_file_path)
 
       post.update!(content: '<p>Updated</p>')
+      post.publish!
 
       updated_content = File.read(static_file_path)
       expect(updated_content).not_to eq(original_content)
@@ -203,13 +204,13 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
 
-      post.update!(published: false)
+      post.unpublish!
 
       expect(File.exist?(static_file_path)).to be false
     end
@@ -218,9 +219,9 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
 
@@ -234,12 +235,12 @@ RSpec.describe Post, type: :model do
         title: 'Test Post',
         slug: 'test-post',
         content: '<p>Content</p>',
-        published: false
+        status: 'draft'
       )
 
       expect(File.exist?(static_file_path)).to be false
 
-      post.update!(published: true)
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
     end
@@ -286,11 +287,11 @@ RSpec.describe Post, type: :model do
       expect(post.content_versions.count).to eq(1)
     end
 
-    it 'does not create version when only published changes' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
-      post.update!(published: true)
+    it 'does not create auto version when only status changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.update!(status: 'ready')
 
-      # Should only have workflow version, no auto version
+      # Should have no auto versions
       auto_versions = post.content_versions.where(version_type: 'auto')
       expect(auto_versions.count).to eq(0)
     end
@@ -303,8 +304,8 @@ RSpec.describe Post, type: :model do
     end
 
     it 'creates workflow version on publish' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
-      post.update!(published: true)
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.publish!
 
       workflow_versions = post.content_versions.where(version_type: 'workflow')
       expect(workflow_versions.count).to eq(1)
@@ -312,12 +313,16 @@ RSpec.describe Post, type: :model do
     end
 
     it 'creates workflow version on unpublish' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true)
-      post.update!(published: false)
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.publish!
+      post.unpublish!
 
       workflow_versions = post.content_versions.where(version_type: 'workflow')
-      expect(workflow_versions.count).to eq(1)
-      expect(workflow_versions.first.workflow_state).to eq('unpublished')
+      expect(workflow_versions.count).to eq(2)
+
+      states = workflow_versions.pluck(:workflow_state)
+      expect(states).to include('published')
+      expect(states).to include('unpublished')
     end
   end
 

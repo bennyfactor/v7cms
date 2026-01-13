@@ -15,10 +15,6 @@ module V7CMS
     before_validation :generate_slug, on: :create
     before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
 
-    # Workflow versioning callbacks
-    after_save :create_publish_version, if: :just_published?
-    after_save :create_unpublish_version, if: :just_unpublished?
-
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
     after_commit :remove_static_file, if: :should_remove_static_file?
@@ -49,6 +45,11 @@ module V7CMS
       update!(status: 'draft', published_version_id: nil)
     end
 
+    # Backward compatibility
+    def published?
+      published_version_id.present?
+    end
+
     private
 
     def generate_slug
@@ -63,11 +64,11 @@ module V7CMS
     end
 
     def should_generate_static_file?
-      published? && !destroyed?
+      published_version_id.present? && !destroyed?
     end
 
     def should_remove_static_file?
-      !destroyed? && saved_change_to_published? && !published?
+      !destroyed? && saved_change_to_published_version_id? && published_version_id.nil?
     end
 
     def generate_static_file
@@ -87,22 +88,6 @@ module V7CMS
         slug: slug,
         comments_enabled: comments_enabled
       }
-    end
-
-    def just_published?
-      !previously_new_record? && saved_change_to_published? && published?
-    end
-
-    def just_unpublished?
-      !previously_new_record? && saved_change_to_published? && !published?
-    end
-
-    def create_publish_version
-      create_workflow_version!(workflow_state: 'published')
-    end
-
-    def create_unpublish_version
-      create_workflow_version!(workflow_state: 'unpublished')
     end
 
     def should_flip_to_draft?
