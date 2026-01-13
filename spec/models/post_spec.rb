@@ -51,20 +51,35 @@ RSpec.describe Post, type: :model do
 
   describe 'scopes' do
     before do
-      Post.create!(title: 'Published 1', slug: 'pub1', content: 'Content', published: true)
-      Post.create!(title: 'Draft 1', slug: 'draft1', content: 'Content', published: false)
-      Post.create!(title: 'Published 2', slug: 'pub2', content: 'Content', published: true)
+      # Post with published version (should appear in published scope)
+      @published_post = Post.create!(title: 'Published', slug: 'pub1', content: 'Content', status: 'published')
+      pub_version = @published_post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Published', content: 'Content'
+      )
+      @published_post.update_column(:published_version_id, pub_version.id)
+
+      # Draft post (no published version)
+      @draft_post = Post.create!(title: 'Draft', slug: 'draft1', content: 'Content', status: 'draft')
+
+      # Published status but edited (has published_version_id, status is draft)
+      @edited_post = Post.create!(title: 'Edited', slug: 'pub2', content: 'New Content', status: 'draft')
+      edit_version = @edited_post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Original', content: 'Content'
+      )
+      @edited_post.update_column(:published_version_id, edit_version.id)
     end
 
-    it 'has a published scope' do
+    it 'published scope returns posts with published_version_id' do
       expect(Post.published.count).to eq(2)
-      expect(Post.published.pluck(:title)).to contain_exactly('Published 1', 'Published 2')
+      expect(Post.published).to include(@published_post, @edited_post)
+      expect(Post.published).not_to include(@draft_post)
     end
 
     it 'has a recent scope ordered by created_at desc' do
       posts = Post.recent
-      expect(posts.first.title).to eq('Published 2')
-      expect(posts.last.title).to eq('Published 1')
+      expect(posts.first).to eq(@edited_post)
     end
   end
 

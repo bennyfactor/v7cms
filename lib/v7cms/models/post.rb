@@ -27,7 +27,7 @@ module V7CMS
     # Feed regeneration callback
     after_commit :regenerate_feeds
 
-    scope :published, -> { where(published: true) }
+    scope :published, -> { where.not(published_version_id: nil) }
     scope :recent, -> { order(created_at: :desc) }
 
     def comments_allowed?
