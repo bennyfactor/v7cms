@@ -625,6 +625,56 @@ module V7CMS
       status 204
     end
 
+    # PUT /api/posts/:id/status - Update post status (draft/ready)
+    put '/api/posts/:id/status' do
+      require_ajax_header
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      new_status = data['status']
+      unless %w[draft ready].include?(new_status)
+        halt 422, json({ errors: ['Invalid status. Must be draft or ready.'] })
+      end
+
+      if post.update(status: new_status)
+        json({ post: post_json(post) })
+      else
+        halt 422, json({ errors: post.errors.full_messages })
+      end
+    end
+
+    # POST /api/posts/:id/publish - Publish a post
+    post '/api/posts/:id/publish' do
+      require_ajax_header
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      post.publish!
+      json({ post: post_json(post) })
+    end
+
+    # POST /api/posts/:id/unpublish - Unpublish a post
+    post '/api/posts/:id/unpublish' do
+      require_ajax_header
+      require_login
+
+      post = V7CMS::Post.find_by(id: params[:id])
+      halt 404, json({ error: 'Post not found' }) unless post
+
+      post.unpublish!
+      json({ post: post_json(post) })
+    end
+
     # =========================================================================
     # Settings API Routes
     # =========================================================================
@@ -1557,7 +1607,10 @@ module V7CMS
         title: post.title,
         slug: post.slug,
         content: post.content,
-        published: post.published,
+        published: post.published?,
+        status: post.status,
+        published_version_id: post.published_version_id,
+        has_unpublished_changes: post.has_unpublished_changes?,
         created_at: post.created_at,
         updated_at: post.updated_at,
         comments_enabled: post.comments_enabled,

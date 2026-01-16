@@ -392,4 +392,79 @@ RSpec.describe 'Posts API Routes' do
       end
     end
   end
+
+  describe 'PUT /api/posts/:id/status' do
+    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google', uid: '123', admin: true) }
+    let(:post_record) { Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft') }
+
+    it 'updates status to ready' do
+      put "/api/posts/#{post_record.id}/status",
+        { status: 'ready' }.to_json,
+        { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response).to be_ok
+      expect(post_record.reload.status).to eq('ready')
+    end
+
+    it 'rejects invalid status' do
+      put "/api/posts/#{post_record.id}/status",
+        { status: 'invalid' }.to_json,
+        { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(422)
+    end
+
+    it 'requires authentication' do
+      put "/api/posts/#{post_record.id}/status",
+        { status: 'ready' }.to_json,
+        { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(401)
+    end
+  end
+
+  describe 'POST /api/posts/:id/publish' do
+    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google', uid: '123', admin: true) }
+    let(:post_record) { Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready') }
+
+    it 'publishes the post' do
+      post "/api/posts/#{post_record.id}/publish",
+        nil,
+        { 'rack.session' => { user_id: user.id }, 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response).to be_ok
+      post_record.reload
+      expect(post_record.status).to eq('published')
+      expect(post_record.published_version_id).not_to be_nil
+    end
+
+    it 'requires authentication' do
+      post "/api/posts/#{post_record.id}/publish",
+        nil,
+        { 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response.status).to eq(401)
+    end
+  end
+
+  describe 'POST /api/posts/:id/unpublish' do
+    let(:user) { User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google', uid: '123', admin: true) }
+    let(:post_record) do
+      p = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      v = p.content_versions.create!(version_number: 1, version_type: 'workflow', workflow_state: 'published', title: 'Test', content: 'Content')
+      p.update_column(:published_version_id, v.id)
+      p
+    end
+
+    it 'unpublishes the post' do
+      post "/api/posts/#{post_record.id}/unpublish",
+        nil,
+        { 'rack.session' => { user_id: user.id }, 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+      expect(last_response).to be_ok
+      post_record.reload
+      expect(post_record.status).to eq('draft')
+      expect(post_record.published_version_id).to be_nil
+    end
+  end
 end
