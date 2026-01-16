@@ -269,7 +269,7 @@ module V7CMS
 
     # View a single post by slug
     get '/posts/:slug' do
-      @post = V7CMS::Post.published.find_by(slug: params[:slug])
+      @post = V7CMS::Post.find_by(slug: params[:slug])
 
       if @post.nil?
         status 404
@@ -277,8 +277,28 @@ module V7CMS
         return erb :'404'
       end
 
-      @title = @post.title
-      @description = @post.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+      # Check if post has a published version
+      published_version = @post.published_version
+
+      if published_version.nil?
+        # No published version - 404 for public, preview for admin
+        if logged_in?
+          @preview_mode = true
+          @title = @post.title
+          @post_content = @post.content
+          @description = @post.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+        else
+          status 404
+          @title = '404 - Page Not Found'
+          return erb :'404'
+        end
+      else
+        # Serve published version content
+        @title = published_version.title
+        @post_content = published_version.content
+        @description = published_version.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+      end
+
       @settings = V7CMS::Setting.instance
 
       # Use post layout from settings, default to 'standard'
