@@ -49,7 +49,15 @@ RSpec.describe 'Basic Routes' do
   end
 
   describe 'GET /posts/:slug' do
-    let!(:post) { Post.create!(title: 'Test Post', slug: 'test-post', content: '<p>Test content</p>', published: true) }
+    let!(:post) do
+      post = Post.create!(title: 'Test Post', slug: 'test-post', content: '<p>Test content</p>', status: 'draft')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test Post', content: '<p>Test content</p>'
+      )
+      post.update_column(:published_version_id, version.id)
+      post
+    end
 
     it 'returns the post page' do
       get '/posts/test-post'
@@ -66,7 +74,7 @@ RSpec.describe 'Basic Routes' do
     end
 
     it 'returns 404 for unpublished posts' do
-      draft = Post.create!(title: 'Draft', slug: 'draft', content: 'Draft', published: false)
+      draft = Post.create!(title: 'Draft', slug: 'draft', content: 'Draft', status: 'draft')
       get '/posts/draft'
 
       expect(last_response.status).to eq(404)
@@ -103,6 +111,44 @@ RSpec.describe 'Basic Routes' do
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Test Post')
+      end
+    end
+
+    describe 'serves published version' do
+      it 'displays published version content, not working draft' do
+        versioned_post = Post.create!(title: 'Draft Title', slug: 'versioned-post', content: '<p>Draft Content</p>', status: 'draft')
+        version = versioned_post.content_versions.create!(
+          version_number: 1, version_type: 'workflow', workflow_state: 'published',
+          title: 'Published Title', content: '<p>Published Content</p>'
+        )
+        versioned_post.update_column(:published_version_id, version.id)
+
+        get '/posts/versioned-post'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Published Title')
+        expect(last_response.body).to include('Published Content')
+        expect(last_response.body).not_to include('Draft Title')
+        expect(last_response.body).not_to include('Draft Content')
+      end
+
+      it 'returns 404 for post without published version' do
+        Post.create!(title: 'Draft', slug: 'unpublished-post', content: 'Content', status: 'draft')
+
+        get '/posts/unpublished-post'
+
+        expect(last_response.status).to eq(404)
+      end
+
+      it 'shows preview for logged-in admin on unpublished post' do
+        user = User.create!(email: 'admin@test.com', name: 'Admin', provider: 'google', uid: '123', admin: true)
+        Post.create!(title: 'Draft', slug: 'preview-post', content: '<p>Preview Content</p>', status: 'draft')
+
+        get '/posts/preview-post', nil, { 'rack.session' => { user_id: user.id } }
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Preview Content')
+        expect(last_response.body).to include('Preview') # Should have preview banner
       end
     end
   end
