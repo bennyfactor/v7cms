@@ -266,7 +266,7 @@ class PagePaths
             key :required, [:status]
             property :status do
               key :type, :string
-              key :enum, ['draft', 'ready']
+              key :enum, %w[draft ready]
               key :description, 'New status for the page'
             end
           end
