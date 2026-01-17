@@ -27,6 +27,10 @@ module V7CMS
     def initialize(page)
       @page = page
       @settings = V7CMS::Setting.instance
+      # Use published version for rendering if available
+      @version = page.published_version
+      @title = @version ? @version.title : page.title
+      @content = @version ? @version.content : page.content
     end
 
     def render_html
@@ -99,10 +103,10 @@ module V7CMS
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title><%= @page.title %> - <%= @settings.site_title %></title>
+            <title><%= @title %> - <%= @settings.site_title %></title>
             <script src="https://cdn.tailwindcss.com"></script>
 
-            <meta name="description" content="<%= @page.content.to_s.gsub(/<[^>]*>/, '')[0..150] %>">
+            <meta name="description" content="<%= @content.to_s.gsub(/<[^>]*>/, '')[0..150] %>">
 
             <% if @settings.meta_keywords.present? %>
             <meta name="keywords" content="<%= @settings.meta_keywords %>">
@@ -157,7 +161,7 @@ module V7CMS
                             <% end %>
 
                             <header class="mb-8 border-b pb-6">
-                                <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @page.title %></h1>
+                                <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @title %></h1>
                                 <div class="flex items-center text-gray-600 text-sm">
                                     <time datetime="<%= @page.created_at.iso8601 %>">
                                         Published on <%= @page.created_at.strftime(@settings.date_format) %>
@@ -170,7 +174,7 @@ module V7CMS
                             </header>
 
                             <div class="prose prose-lg max-w-none">
-                                <%= @page.content %>
+                                <%= @content %>
                             </div>
 
                             <% if @page.has_children? %>

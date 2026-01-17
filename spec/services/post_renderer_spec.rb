@@ -6,7 +6,7 @@ RSpec.describe PostRenderer do
       title: 'Test Post',
       slug: 'test-post',
       content: '<p>This is test content.</p>',
-      published: false # Create as draft to avoid triggering callbacks
+      status: 'draft' # Create as draft to avoid triggering callbacks
     )
   end
 
@@ -144,7 +144,9 @@ RSpec.describe PostRenderer do
       original_content = File.read(static_file_path)
 
       post.update(content: '<p>Updated content</p>')
-      renderer.write_file
+      # Create new renderer instance after update to pick up new content
+      new_renderer = PostRenderer.new(post)
+      new_renderer.write_file
 
       new_content = File.read(static_file_path)
       expect(new_content).not_to eq(original_content)
@@ -202,8 +204,25 @@ RSpec.describe PostRenderer do
     end
   end
 
+  describe 'renders from published version' do
+    it 'uses published version content for static file' do
+      post = Post.create!(title: 'Draft', slug: 'test', content: '<p>Draft</p>', status: 'draft')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Published', content: '<p>Published</p>'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      PostRenderer.write_static_file(post)
+
+      content = File.read(File.join(PostRenderer::STATIC_DIR, 'test.html'))
+      expect(content).to include('Published')
+      expect(content).not_to include('Draft')
+    end
+  end
+
   describe 'error handling' do
-    let(:post) { Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true) }
+    let(:post) { Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published') }
 
     describe '#write_file' do
       it 'returns true when file write succeeds' do

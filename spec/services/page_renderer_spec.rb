@@ -6,7 +6,7 @@ RSpec.describe PageRenderer do
       title: 'Test Page',
       slug: 'test-page',
       content: '<p>This is test content.</p>',
-      published: true
+      status: 'published'
     )
   end
 
@@ -25,6 +25,23 @@ RSpec.describe PageRenderer do
   after do
     # Clean up any generated files
     FileUtils.rm_rf(PageRenderer::STATIC_DIR) if Dir.exist?(PageRenderer::STATIC_DIR)
+  end
+
+  describe 'renders from published version' do
+    it 'uses published version content for static file' do
+      page = Page.create!(title: 'Draft', slug: 'test', content: '<p>Draft</p>', status: 'draft')
+      version = page.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Published', content: '<p>Published</p>'
+      )
+      page.update_column(:published_version_id, version.id)
+
+      PageRenderer.write_static_file(page)
+
+      content = File.read(File.join(PageRenderer::STATIC_DIR, 'test.html'))
+      expect(content).to include('Published')
+      expect(content).not_to include('Draft')
+    end
   end
 
   describe 'error handling' do
@@ -92,8 +109,8 @@ RSpec.describe PageRenderer do
       end
 
       it 'cleans up empty parent directories when deleting files' do
-        parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
-        child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+        parent = Page.create!(title: 'Parent', slug: 'parent', status: 'published')
+        child = Page.create!(title: 'Child', slug: 'child', parent: parent, status: 'published')
 
         renderer = PageRenderer.new(child)
         renderer.write_file
@@ -110,9 +127,9 @@ RSpec.describe PageRenderer do
       end
 
       it 'does not remove parent directories that still contain files' do
-        parent = Page.create!(title: 'Services', slug: 'services', published: true)
-        child1 = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
-        child2 = Page.create!(title: 'Consulting', slug: 'consulting', parent: parent, published: true)
+        parent = Page.create!(title: 'Services', slug: 'services', status: 'published')
+        child1 = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, status: 'published')
+        child2 = Page.create!(title: 'Consulting', slug: 'consulting', parent: parent, status: 'published')
 
         renderer1 = PageRenderer.new(child1)
         renderer2 = PageRenderer.new(child2)
@@ -158,8 +175,8 @@ RSpec.describe PageRenderer do
     end
 
     it 'uses parent directory in file path for nested pages' do
-      parent = Page.create!(title: 'Services', slug: 'services', published: true)
-      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
+      parent = Page.create!(title: 'Services', slug: 'services', status: 'published')
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, status: 'published')
 
       renderer = PageRenderer.new(child)
       path = renderer.send(:static_file_path)
@@ -170,9 +187,9 @@ RSpec.describe PageRenderer do
     end
 
     it 'generates correct nested directory structure' do
-      grandparent = Page.create!(title: 'GP', slug: 'gp', published: true)
-      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent, published: true)
-      child = Page.create!(title: 'C', slug: 'c', parent: parent, published: true)
+      grandparent = Page.create!(title: 'GP', slug: 'gp', status: 'published')
+      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent, status: 'published')
+      child = Page.create!(title: 'C', slug: 'c', parent: parent, status: 'published')
 
       renderer = PageRenderer.new(child)
       path = renderer.send(:static_file_path)
@@ -183,7 +200,7 @@ RSpec.describe PageRenderer do
     end
 
     it 'handles top-level pages correctly' do
-      page = Page.create!(title: 'About', slug: 'about', published: true)
+      page = Page.create!(title: 'About', slug: 'about', status: 'published')
 
       renderer = PageRenderer.new(page)
       path = renderer.send(:static_file_path)
@@ -194,8 +211,8 @@ RSpec.describe PageRenderer do
     end
 
     it 'creates nested directories when writing files' do
-      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
-      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent', status: 'published')
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent, status: 'published')
 
       renderer = PageRenderer.new(child)
       result = renderer.write_file
