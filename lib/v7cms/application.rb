@@ -565,7 +565,7 @@ module V7CMS
       end
 
       # Only allow viewing unpublished posts if logged in
-      if !post.published && !logged_in?
+      if !post.published? && !logged_in?
         halt 404, json({ error: 'Post not found' })
       end
 
@@ -587,7 +587,7 @@ module V7CMS
         title: data['title'],
         slug: data['slug'],
         content: data['content'],
-        published: data['published'] || false,
+        status: data['status'] || 'draft',
         comments_enabled: data.key?('comments_enabled') ? data['comments_enabled'] : true
       )
 
@@ -620,7 +620,7 @@ module V7CMS
       post.title = data['title'] if data.key?('title')
       post.slug = data['slug'] if data.key?('slug')
       post.content = data['content'] if data.key?('content')
-      post.published = data['published'] if data.key?('published')
+      post.status = data['status'] if data.key?('status')
       post.comments_enabled = data['comments_enabled'] if data.key?('comments_enabled')
 
       if post.save

@@ -10,9 +10,11 @@ RSpec.describe 'Posts API Routes' do
   describe 'GET /api/posts' do
     context 'when posts exist' do
       before do
-        Post.create!(title: 'Published Post', slug: 'published', content: 'Content', published: true)
-        Post.create!(title: 'Draft Post', slug: 'draft', content: 'Draft content', published: false)
-        Post.create!(title: 'Another Published', slug: 'another', content: 'More content', published: true)
+        post1 = Post.create!(title: 'Published Post', slug: 'published', content: 'Content', status: 'ready')
+        post1.publish!
+        Post.create!(title: 'Draft Post', slug: 'draft', content: 'Draft content', status: 'draft')
+        post2 = Post.create!(title: 'Another Published', slug: 'another', content: 'More content', status: 'ready')
+        post2.publish!
       end
 
       it 'returns all published posts by default' do
@@ -35,8 +37,9 @@ RSpec.describe 'Posts API Routes' do
 
     context 'when logged in as admin' do
       before do
-        Post.create!(title: 'Published Post', slug: 'published', content: 'Content', published: true)
-        Post.create!(title: 'Draft Post', slug: 'draft', content: 'Draft content', published: false)
+        post1 = Post.create!(title: 'Published Post', slug: 'published', content: 'Content', status: 'ready')
+        post1.publish!
+        Post.create!(title: 'Draft Post', slug: 'draft', content: 'Draft content', status: 'draft')
       end
 
       it 'can request all posts including drafts' do
@@ -62,12 +65,13 @@ RSpec.describe 'Posts API Routes' do
       before do
         # Create 25 posts to test pagination
         25.times do |i|
-          Post.create!(
+          post = Post.create!(
             title: "Post #{i}",
             slug: "post-#{i}",
             content: 'Content',
-            published: true
+            status: 'ready'
           )
+          post.publish!
         end
       end
 
@@ -135,7 +139,7 @@ RSpec.describe 'Posts API Routes' do
       end
 
       it 'works with include_drafts filter' do
-        Post.create!(title: 'Draft', slug: 'draft', content: 'Content', published: false)
+        Post.create!(title: 'Draft', slug: 'draft', content: 'Content', status: 'draft')
 
         get '/api/posts?include_drafts=true&limit=10', {}, login_as_user
 
@@ -146,7 +150,11 @@ RSpec.describe 'Posts API Routes' do
   end
 
   describe 'GET /api/posts/:id' do
-    let!(:post) { Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test content', published: true) }
+    let!(:post) do
+      p = Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test content', status: 'ready')
+      p.publish!
+      p
+    end
 
     it 'returns a specific post by id' do
       get "/api/posts/#{post.id}"
@@ -176,14 +184,16 @@ RSpec.describe 'Posts API Routes' do
     end
 
     it 'includes comments_enabled in response' do
-      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: false)
+      post = Post.create!(title: 'Test', slug: 'test', comments_enabled: false, status: 'ready')
+      post.publish!
       get "/api/posts/#{post.id}"
       json = JSON.parse(last_response.body)
       expect(json['post']['comments_enabled']).to eq(false)
     end
 
     it 'includes comments_allowed computed field in response' do
-      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: true)
+      post = Post.create!(title: 'Test', slug: 'test', comments_enabled: true, status: 'ready')
+      post.publish!
       Setting.instance.update!(allow_comments: false)
       get "/api/posts/#{post.id}"
       json = JSON.parse(last_response.body)
@@ -191,7 +201,7 @@ RSpec.describe 'Posts API Routes' do
     end
 
     context 'with draft post' do
-      let!(:draft) { Post.create!(title: 'Draft', slug: 'draft', content: 'Draft', published: false) }
+      let!(:draft) { Post.create!(title: 'Draft', slug: 'draft', content: 'Draft', status: 'draft') }
 
       it 'returns 404 for unpublished posts when not logged in' do
         get "/api/posts/#{draft.id}"
@@ -236,12 +246,12 @@ RSpec.describe 'Posts API Routes' do
 
       it 'can create a published post' do
         post '/api/posts',
-          { title: 'Published Post', content: 'Content', published: true }.to_json,
+          { title: 'Published Post', content: 'Content', status: 'published' }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response.status).to eq(201)
         data = JSON.parse(last_response.body)
-        expect(data['post']['published']).to be true
+        expect(data['post']['status']).to eq('published')
       end
 
       it 'can specify a custom slug' do
@@ -289,7 +299,7 @@ RSpec.describe 'Posts API Routes' do
   end
 
   describe 'PUT /api/posts/:id' do
-    let!(:post) { Post.create!(title: 'Original Title', slug: 'original', content: 'Original content', published: false) }
+    let!(:post) { Post.create!(title: 'Original Title', slug: 'original', content: 'Original content', status: 'draft') }
 
     context 'when not logged in' do
       it 'returns 401 unauthorized' do
@@ -316,12 +326,12 @@ RSpec.describe 'Posts API Routes' do
 
       it 'can publish a draft post' do
         put "/api/posts/#{post.id}",
-          { published: true }.to_json,
+          { status: 'published' }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response).to be_ok
         post.reload
-        expect(post.published).to be true
+        expect(post.status).to eq('published')
       end
 
       it 'returns 404 for non-existent post' do
@@ -366,7 +376,7 @@ RSpec.describe 'Posts API Routes' do
   end
 
   describe 'DELETE /api/posts/:id' do
-    let!(:post) { Post.create!(title: 'To Delete', slug: 'to-delete', content: 'Content', published: false) }
+    let!(:post) { Post.create!(title: 'To Delete', slug: 'to-delete', content: 'Content', status: 'draft') }
 
     context 'when not logged in' do
       it 'returns 401 unauthorized' do

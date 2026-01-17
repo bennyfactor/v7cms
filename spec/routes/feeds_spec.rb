@@ -11,15 +11,17 @@ RSpec.describe 'Feed Routes', type: :request do
       title: 'First Post',
       slug: 'first-post',
       content: '<p>This is the first post content.</p>',
-      published: true
+      status: 'ready'
     )
+    @post1.publish!
 
     @post2 = Post.create!(
       title: 'Second Post',
       slug: 'second-post',
       content: '<p>This is the second post content.</p>',
-      published: true
+      status: 'ready'
     )
+    @post2.publish!
 
     # Generate feeds
     FeedGenerator.write_feeds
