@@ -14,13 +14,15 @@ RSpec.describe FeedGenerator do
 
   let!(:posts) do
     3.times.map do |i|
-      Post.create!(
+      post = Post.create!(
         title: "Test Post #{i + 1}",
         slug: "test-post-#{i + 1}",
         content: "<p>This is test post #{i + 1} content.</p>",
-        published: true,
+        status: 'ready',
         created_at: Time.now - (i * 3600) # Stagger creation times
       )
+      post.publish!
+      post
     end
   end
 
@@ -149,7 +151,7 @@ RSpec.describe FeedGenerator do
         title: 'Draft Post',
         slug: 'draft-post',
         content: '<p>Draft content</p>',
-        published: false
+        status: 'draft'
       )
 
       rss = FeedGenerator.generate_rss
@@ -159,12 +161,13 @@ RSpec.describe FeedGenerator do
     it 'limits to most recent 20 posts' do
       # Create 25 posts (we already have 3)
       22.times do |i|
-        Post.create!(
+        post = Post.create!(
           title: "Extra Post #{i}",
           slug: "extra-post-#{i}",
           content: '<p>Extra content</p>',
-          published: true
+          status: 'ready'
         )
+        post.publish!
       end
 
       rss = FeedGenerator.generate_rss
@@ -349,7 +352,11 @@ RSpec.describe FeedGenerator do
   end
 
   describe 'error handling' do
-    let!(:post) { Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true) }
+    let!(:post) do
+      p = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+      p.publish!
+      p
+    end
 
     describe '#write_feeds' do
       it 'returns true when both feed writes succeed' do

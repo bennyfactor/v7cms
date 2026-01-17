@@ -1,7 +1,11 @@
 require_relative '../spec_helper'
 
 RSpec.describe Comment do
-  let(:post) { Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test', published: true) }
+  let(:post) do
+    post = Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test', status: 'ready')
+    post.publish!
+    post
+  end
 
   describe 'validations' do
     it 'requires author_name' do

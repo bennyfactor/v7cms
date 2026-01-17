@@ -1,7 +1,11 @@
 require_relative '../spec_helper'
 
 RSpec.describe 'Comments API' do
-  let(:test_post) { Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test content', published: true) }
+  let(:test_post) do
+    post = Post.create!(title: 'Test Post', slug: 'test-post', content: 'Test content', status: 'ready')
+    post.publish!
+    post
+  end
 
   describe 'GET /api/posts/:id/comments' do
     before do
@@ -193,7 +197,8 @@ RSpec.describe 'Comments API' do
 
     it 'returns 403 when comments are disabled globally' do
       allow_any_instance_of(CMS).to receive(:verify_recaptcha_v3).and_return(0.9)
-      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: true)
+      post = Post.create!(title: 'Test', slug: 'test', comments_enabled: true, status: 'ready')
+      post.publish!
       Setting.instance.update!(allow_comments: false)
 
       post "/api/posts/#{post.id}/comments", {
@@ -210,7 +215,8 @@ RSpec.describe 'Comments API' do
 
     it 'returns 403 when comments are disabled for post' do
       allow_any_instance_of(CMS).to receive(:verify_recaptcha_v3).and_return(0.9)
-      post = Post.create!(title: 'Test', slug: 'test', published: true, comments_enabled: false)
+      post = Post.create!(title: 'Test', slug: 'test', comments_enabled: false, status: 'ready')
+      post.publish!
       Setting.instance.update!(allow_comments: true)
 
       post "/api/posts/#{post.id}/comments", {
