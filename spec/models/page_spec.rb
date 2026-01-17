@@ -134,7 +134,7 @@ RSpec.describe Page, type: :model do
 
   describe 'circular reference prevention' do
     it 'prevents a page from being its own parent' do
-      page = Page.create!(title: 'Page', slug: 'page', published: true)
+      page = Page.create!(title: 'Page', slug: 'page')
       page.parent_id = page.id
 
       expect(page.valid?).to be false
@@ -142,9 +142,9 @@ RSpec.describe Page, type: :model do
     end
 
     it 'prevents a page from being a child of its own descendant' do
-      grandparent = Page.create!(title: 'Grandparent', slug: 'grandparent', published: true)
-      parent = Page.create!(title: 'Parent', slug: 'parent', parent: grandparent, published: true)
-      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+      grandparent = Page.create!(title: 'Grandparent', slug: 'grandparent')
+      parent = Page.create!(title: 'Parent', slug: 'parent', parent: grandparent)
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent)
 
       # Try to make grandparent a child of child (creates circular reference)
       grandparent.parent_id = child.id
@@ -154,8 +154,8 @@ RSpec.describe Page, type: :model do
     end
 
     it 'allows valid parent-child relationships' do
-      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
-      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent')
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent)
 
       expect(child.valid?).to be true
     end
@@ -220,8 +220,9 @@ RSpec.describe Page, type: :model do
 
   describe 'scopes' do
     before do
-      @published = Page.create!(title: 'Published', slug: 'published', published: true)
-      @draft = Page.create!(title: 'Draft', slug: 'draft', published: false)
+      @published = Page.create!(title: 'Published', slug: 'published')
+      @published.publish!
+      @draft = Page.create!(title: 'Draft', slug: 'draft', status: 'draft')
 
       @parent = Page.create!(title: 'Parent', slug: 'parent')
       @child = Page.create!(title: 'Child', slug: 'child', parent: @parent)
@@ -346,9 +347,9 @@ RSpec.describe Page, type: :model do
   end
 
   describe 'defaults' do
-    it 'defaults published to false' do
+    it 'defaults status to draft' do
       page = Page.new(title: 'Test', slug: 'test')
-      expect(page.published).to be false
+      expect(page.status).to eq('draft')
     end
 
     it 'defaults position to 0' do
@@ -364,8 +365,8 @@ RSpec.describe Page, type: :model do
 
   describe 'foreign key constraint' do
     it 'cascades delete to children when parent is deleted (due to dependent: :destroy)' do
-      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
-      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent')
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent)
 
       expect {
         parent.destroy
@@ -376,13 +377,13 @@ RSpec.describe Page, type: :model do
 
     it 'prevents invalid parent_id references' do
       expect {
-        Page.create!(title: 'Orphan', slug: 'orphan', parent_id: 99999, published: true)
+        Page.create!(title: 'Orphan', slug: 'orphan', parent_id: 99999)
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
 
     it 'prevents manual deletion of parent when children exist (without using destroy)' do
-      parent = Page.create!(title: 'Parent', slug: 'parent', published: true)
-      child = Page.create!(title: 'Child', slug: 'child', parent: parent, published: true)
+      parent = Page.create!(title: 'Parent', slug: 'parent')
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent)
 
       # Direct SQL delete bypasses dependent: :destroy and triggers foreign key constraint
       expect {
@@ -394,11 +395,11 @@ RSpec.describe Page, type: :model do
   describe 'query optimization' do
     it 'ancestors method executes only one query regardless of depth' do
       # Create 5-level hierarchy
-      level1 = Page.create!(title: 'L1', slug: 'l1', published: true)
-      level2 = Page.create!(title: 'L2', slug: 'l2', parent: level1, published: true)
-      level3 = Page.create!(title: 'L3', slug: 'l3', parent: level2, published: true)
-      level4 = Page.create!(title: 'L4', slug: 'l4', parent: level3, published: true)
-      level5 = Page.create!(title: 'L5', slug: 'l5', parent: level4, published: true)
+      level1 = Page.create!(title: 'L1', slug: 'l1')
+      level2 = Page.create!(title: 'L2', slug: 'l2', parent: level1)
+      level3 = Page.create!(title: 'L3', slug: 'l3', parent: level2)
+      level4 = Page.create!(title: 'L4', slug: 'l4', parent: level3)
+      level5 = Page.create!(title: 'L5', slug: 'l5', parent: level4)
 
       # Reload to clear any associations
       level5.reload
@@ -421,29 +422,41 @@ RSpec.describe Page, type: :model do
 
   describe '#full_slug_path' do
     it 'returns just slug for top-level pages' do
-      page = Page.create!(title: 'About', slug: 'about', published: true)
+      page = Page.create!(title: 'About', slug: 'about')
       expect(page.full_slug_path).to eq('about')
     end
 
     it 'returns parent/child for one level deep' do
-      parent = Page.create!(title: 'Services', slug: 'services', published: true)
-      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, published: true)
+      parent = Page.create!(title: 'Services', slug: 'services')
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent)
       expect(child.full_slug_path).to eq('services/web-dev')
     end
 
     it 'returns full path for deeply nested pages' do
-      grandparent = Page.create!(title: 'GP', slug: 'gp', published: true)
-      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent, published: true)
-      child = Page.create!(title: 'C', slug: 'c', parent: parent, published: true)
+      grandparent = Page.create!(title: 'GP', slug: 'gp')
+      parent = Page.create!(title: 'P', slug: 'p', parent: grandparent)
+      child = Page.create!(title: 'C', slug: 'c', parent: parent)
       expect(child.full_slug_path).to eq('gp/p/c')
     end
   end
 
   describe '#items_for_display' do
-    let!(:parent_page) { Page.create!(title: 'Parent', slug: 'parent', published: true, page_type: 'blog_grid') }
-    let!(:child1) { Page.create!(title: 'Child 1', slug: 'child-1', published: true, parent: parent_page, position: 1) }
-    let!(:child2) { Page.create!(title: 'Child 2', slug: 'child-2', published: false, parent: parent_page, position: 2) }
-    let!(:child3) { Page.create!(title: 'Child 3', slug: 'child-3', published: true, parent: parent_page, position: 0) }
+    let!(:parent_page) do
+      page = Page.create!(title: 'Parent', slug: 'parent', page_type: 'blog_grid')
+      page.publish!
+      page
+    end
+    let!(:child1) do
+      page = Page.create!(title: 'Child 1', slug: 'child-1', parent: parent_page, position: 1)
+      page.publish!
+      page
+    end
+    let!(:child2) { Page.create!(title: 'Child 2', slug: 'child-2', status: 'draft', parent: parent_page, position: 2) }
+    let!(:child3) do
+      page = Page.create!(title: 'Child 3', slug: 'child-3', parent: parent_page, position: 0)
+      page.publish!
+      page
+    end
 
     it 'returns published children ordered by position when content_source is children' do
       parent_page.update!(content_source: 'children')
@@ -457,8 +470,9 @@ RSpec.describe Page, type: :model do
     end
 
     it 'returns published posts when content_source is posts' do
-      post1 = V7CMS::Post.create!(title: 'Post 1', slug: 'post-1', published: true)
-      post2 = V7CMS::Post.create!(title: 'Post 2', slug: 'post-2', published: false)
+      post1 = V7CMS::Post.create!(title: 'Post 1', slug: 'post-1')
+      post1.publish!
+      post2 = V7CMS::Post.create!(title: 'Post 2', slug: 'post-2', status: 'draft')
       parent_page.update!(content_source: 'posts')
       items = parent_page.items_for_display
       expect(items.map(&:title)).to include('Post 1')
@@ -466,7 +480,10 @@ RSpec.describe Page, type: :model do
     end
 
     it 'respects items_limit for posts' do
-      5.times { |i| V7CMS::Post.create!(title: "Post #{i}", slug: "post-#{i}", published: true) }
+      5.times do |i|
+        post = V7CMS::Post.create!(title: "Post #{i}", slug: "post-#{i}")
+        post.publish!
+      end
       parent_page.update!(content_source: 'posts', items_limit: 3)
       expect(parent_page.items_for_display.count).to eq(3)
     end
@@ -514,12 +531,167 @@ RSpec.describe Page, type: :model do
     end
 
     it 'creates workflow version on publish' do
-      page = Page.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
-      page.update!(published: true)
+      page = Page.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      page.publish!
 
       workflow_versions = page.content_versions.where(version_type: 'workflow')
       expect(workflow_versions.count).to eq(1)
       expect(workflow_versions.first.workflow_state).to eq('published')
+    end
+  end
+
+  describe 'editorial workflow' do
+    describe 'status validation' do
+      it 'requires a valid status' do
+        page = Page.new(title: 'Test', slug: 'test', status: 'invalid')
+        expect(page).not_to be_valid
+        expect(page.errors[:status]).to include('is not included in the list')
+      end
+
+      it 'accepts draft status' do
+        page = Page.new(title: 'Test', slug: 'test', status: 'draft')
+        expect(page).to be_valid
+      end
+
+      it 'accepts ready status' do
+        page = Page.new(title: 'Test', slug: 'test', status: 'ready')
+        expect(page).to be_valid
+      end
+
+      it 'accepts published status' do
+        page = Page.new(title: 'Test', slug: 'test', status: 'published')
+        expect(page).to be_valid
+      end
+    end
+
+    describe '#published?' do
+      it 'returns false when published_version_id is nil' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        expect(page.published?).to be false
+      end
+
+      it 'returns true when published_version_id is present' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        expect(page.published?).to be true
+      end
+    end
+
+    describe '#publish!' do
+      it 'creates a workflow version' do
+        page = Page.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+
+        expect {
+          page.publish!
+        }.to change { page.content_versions.where(version_type: 'workflow').count }.by(1)
+      end
+
+      it 'sets status to published' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        expect(page.status).to eq('published')
+      end
+
+      it 'sets published_version_id' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        expect(page.published_version_id).not_to be_nil
+      end
+
+      it 'captures current title and content in version' do
+        page = Page.create!(title: 'Original', slug: 'test', content: 'Original content', status: 'draft')
+        page.publish!
+
+        version = page.published_version
+        expect(version.title).to eq('Original')
+        expect(version.content).to eq('Original content')
+      end
+    end
+
+    describe '#unpublish!' do
+      it 'creates an unpublish workflow version' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+
+        expect {
+          page.unpublish!
+        }.to change { page.content_versions.where(version_type: 'workflow', workflow_state: 'unpublished').count }.by(1)
+      end
+
+      it 'sets status to draft' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        page.unpublish!
+        expect(page.status).to eq('draft')
+      end
+
+      it 'clears published_version_id' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        page.unpublish!
+        expect(page.published_version_id).to be_nil
+      end
+    end
+
+    describe '#has_unpublished_changes?' do
+      it 'returns false when not published' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        expect(page.has_unpublished_changes?).to be false
+      end
+
+      it 'returns false when published with no changes' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'draft')
+        page.publish!
+        expect(page.has_unpublished_changes?).to be false
+      end
+
+      it 'returns true when title changed after publish' do
+        page = Page.create!(title: 'Original', slug: 'test', status: 'draft')
+        page.publish!
+        page.title = 'Updated'
+        page.save!
+        expect(page.has_unpublished_changes?).to be true
+      end
+
+      it 'returns true when content changed after publish' do
+        page = Page.create!(title: 'Test', slug: 'test', content: 'Original', status: 'draft')
+        page.publish!
+        page.content = 'Updated'
+        page.save!
+        expect(page.has_unpublished_changes?).to be true
+      end
+    end
+
+    describe 'auto-flip to draft on content change' do
+      it 'changes status from published to draft when title changes' do
+        page = Page.create!(title: 'Original', slug: 'test', status: 'draft')
+        page.publish!
+
+        page.update!(title: 'Updated')
+        expect(page.status).to eq('draft')
+      end
+
+      it 'changes status from published to draft when content changes' do
+        page = Page.create!(title: 'Test', slug: 'test', content: 'Original', status: 'draft')
+        page.publish!
+
+        page.update!(content: 'Updated')
+        expect(page.status).to eq('draft')
+      end
+
+      it 'does not flip to draft when other fields change' do
+        page = Page.create!(title: 'Test', slug: 'test', position: 0, status: 'draft')
+        page.publish!
+
+        page.update!(position: 1)
+        expect(page.status).to eq('published')
+      end
+
+      it 'does not flip to draft for non-published pages' do
+        page = Page.create!(title: 'Test', slug: 'test', status: 'ready')
+        page.update!(title: 'Updated')
+        expect(page.status).to eq('ready')
+      end
     end
   end
 end
