@@ -978,7 +978,7 @@ module V7CMS
       end
 
       # Only allow viewing unpublished pages if logged in
-      if !page.published && !logged_in?
+      if !page.published? && !logged_in?
         halt 404, json({ error: 'Page not found' })
       end
 
@@ -1000,7 +1000,7 @@ module V7CMS
         title: data['title'],
         slug: data['slug'],
         content: data['content'],
-        published: data['published'] || false,
+        status: data['status'] || 'draft',
         parent_id: data['parent_id'],
         position: data['position'] || 0,
         page_type: data['page_type'] || 'standard',
@@ -1038,7 +1038,7 @@ module V7CMS
       page.title = data['title'] if data.key?('title')
       page.slug = data['slug'] if data.key?('slug')
       page.content = data['content'] if data.key?('content')
-      page.published = data['published'] if data.key?('published')
+      page.status = data['status'] if data.key?('status')
       page.parent_id = data['parent_id'] if data.key?('parent_id')
       page.position = data['position'] if data.key?('position')
       page.page_type = data['page_type'] if data.key?('page_type')
@@ -1066,6 +1066,56 @@ module V7CMS
 
       page.destroy
       status 204
+    end
+
+    # PUT /api/pages/:id/status - Update page status
+    put '/api/pages/:id/status' do
+      require_ajax_header
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      new_status = data['status']
+      unless V7CMS::Page::STATUSES.include?(new_status)
+        halt 422, json({ errors: ["Invalid status. Must be one of: #{V7CMS::Page::STATUSES.join(', ')}"] })
+      end
+
+      if page.update(status: new_status)
+        json({ page: page_json(page, include_relations: true) })
+      else
+        halt 422, json({ errors: page.errors.full_messages })
+      end
+    end
+
+    # POST /api/pages/:id/publish - Publish a page
+    post '/api/pages/:id/publish' do
+      require_ajax_header
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      page.publish!
+      json({ page: page_json(page, include_relations: true) })
+    end
+
+    # POST /api/pages/:id/unpublish - Unpublish a page
+    post '/api/pages/:id/unpublish' do
+      require_ajax_header
+      require_login
+
+      page = V7CMS::Page.find_by(id: params[:id])
+      halt 404, json({ error: 'Page not found' }) unless page
+
+      page.unpublish!
+      json({ page: page_json(page, include_relations: true) })
     end
 
     # =========================================================================
@@ -1710,7 +1760,10 @@ module V7CMS
         title: page.title,
         slug: page.slug,
         content: page.content,
-        published: page.published,
+        published: page.published?,
+        status: page.status,
+        published_version_id: page.published_version_id,
+        has_unpublished_changes: page.has_unpublished_changes?,
         parent_id: page.parent_id,
         position: page.position,
         page_type: page.page_type,
@@ -1725,7 +1778,7 @@ module V7CMS
         result[:depth] = page.depth
         result[:has_children] = page.has_children?
         result[:parent] = page.parent ? { id: page.parent.id, title: page.parent.title, slug: page.parent.slug } : nil
-        result[:children] = page.children.ordered.map { |c| { id: c.id, title: c.title, slug: c.slug, published: c.published } }
+        result[:children] = page.children.ordered.map { |c| { id: c.id, title: c.title, slug: c.slug, published: c.published? } }
         result[:breadcrumb_trail] = page.breadcrumb_trail.map { |p| { id: p.id, title: p.title, slug: p.slug } }
       end
 

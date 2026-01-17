@@ -2,9 +2,12 @@ module V7CMS
   class Page < ActiveRecord::Base
     include V7CMS::Versionable
 
+    STATUSES = %w[draft ready published].freeze
+
     # Self-referential association for hierarchical pages
     belongs_to :parent, class_name: 'V7CMS::Page', optional: true
     has_many :children, class_name: 'V7CMS::Page', foreign_key: 'parent_id', dependent: :destroy
+    belongs_to :published_version, class_name: 'V7CMS::ContentVersion', optional: true
 
     # Static page types + all homepage layout types
     STATIC_PAGE_TYPES = %w[standard contact].freeze
@@ -16,6 +19,7 @@ module V7CMS
     # Validations
     validates :title, presence: true
     validates :slug, presence: true, uniqueness: true, format: { with: /\A[a-z0-9-]+\z/, message: 'only allows lowercase letters, numbers, and hyphens' }
+    validates :status, inclusion: { in: STATUSES }
     validates :page_type, inclusion: { in: VALID_PAGE_TYPES, message: '%{value} is not a valid page type' }
     validates :content_source, inclusion: { in: VALID_CONTENT_SOURCES, message: '%{value} is not a valid content source' }
     validates :items_limit, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
@@ -28,10 +32,7 @@ module V7CMS
 
     # Callbacks
     before_validation :generate_slug, if: -> { slug.blank? && title.present? }
-
-    # Workflow versioning callbacks
-    after_save :create_publish_version, if: :just_published?
-    after_save :create_unpublish_version, if: :just_unpublished?
+    before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
 
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
@@ -39,7 +40,7 @@ module V7CMS
     after_destroy :remove_static_file
 
     # Scopes
-    scope :published, -> { where(published: true) }
+    scope :published, -> { where.not(published_version_id: nil) }
     scope :top_level, -> { where(parent_id: nil) }
     scope :ordered, -> { order(:position, :title) }
 
@@ -56,6 +57,26 @@ module V7CMS
       else # 'children' is default
         children.published.ordered.limit(items_limit)
       end
+    end
+
+    def has_unpublished_changes?
+      return false unless published_version_id.present?
+      title != published_version.title || content != published_version.content
+    end
+
+    def publish!
+      version = create_workflow_version!(workflow_state: 'published')
+      update!(status: 'published', published_version_id: version.id)
+    end
+
+    def unpublish!
+      create_workflow_version!(workflow_state: 'unpublished')
+      update!(status: 'draft', published_version_id: nil)
+    end
+
+    # Backward compatibility
+    def published?
+      published_version_id.present?
     end
 
     # Generate URL-friendly slug from title
@@ -139,11 +160,11 @@ module V7CMS
     end
 
     def should_generate_static_file?
-      published? && !destroyed?
+      published_version_id.present? && !destroyed?
     end
 
     def should_remove_static_file?
-      !destroyed? && saved_change_to_published? && !published?
+      !destroyed? && saved_change_to_published_version_id? && published_version_id.nil?
     end
 
     def generate_static_file
@@ -166,20 +187,12 @@ module V7CMS
       }
     end
 
-    def just_published?
-      saved_change_to_published? && published? && !previously_new_record?
+    def should_flip_to_draft?
+      !new_record? && status == 'published' && (will_save_change_to_title? || will_save_change_to_content?)
     end
 
-    def just_unpublished?
-      saved_change_to_published? && !published? && !previously_new_record?
-    end
-
-    def create_publish_version
-      create_workflow_version!(workflow_state: 'published')
-    end
-
-    def create_unpublish_version
-      create_workflow_version!(workflow_state: 'unpublished')
+    def flip_to_draft_on_content_change
+      self.status = 'draft'
     end
   end
 end
