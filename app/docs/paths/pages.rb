@@ -240,4 +240,175 @@ class PagePaths
       end
     end
   end
+
+  swagger_path '/api/pages/{id}/status' do
+    operation :put do
+      key :summary, 'Update page status'
+      key :description, 'Update the status of a page (draft or ready). Requires authentication.'
+      key :operationId, 'updatePageStatus'
+      key :tags, ['Pages']
+
+      parameter do
+        key :name, :id
+        key :in, :path
+        key :description, 'Page ID'
+        key :required, true
+        schema do
+          key :type, :integer
+        end
+      end
+
+      request_body do
+        key :required, true
+        content 'application/json' do
+          schema do
+            key :type, :object
+            key :required, [:status]
+            property :status do
+              key :type, :string
+              key :enum, ['draft', 'ready']
+              key :description, 'New status for the page'
+            end
+          end
+        end
+      end
+
+      response 200 do
+        key :description, 'Page status updated successfully'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Page
+          end
+        end
+      end
+      response 401 do
+        key :description, 'Unauthorized'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 404 do
+        key :description, 'Page not found'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 422 do
+        key :description, 'Invalid status value'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+    end
+  end
+
+  swagger_path '/api/pages/{id}/publish' do
+    operation :post do
+      key :summary, 'Publish page'
+      key :description, 'Publish a page, creating a new version. Requires authentication.'
+      key :operationId, 'publishPage'
+      key :tags, ['Pages']
+
+      parameter do
+        key :name, :id
+        key :in, :path
+        key :description, 'Page ID'
+        key :required, true
+        schema do
+          key :type, :integer
+        end
+      end
+
+      response 200 do
+        key :description, 'Page published successfully'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Page
+          end
+        end
+      end
+      response 401 do
+        key :description, 'Unauthorized'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 404 do
+        key :description, 'Page not found'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 422 do
+        key :description, 'Page cannot be published (validation error)'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+    end
+  end
+
+  swagger_path '/api/pages/{id}/unpublish' do
+    operation :post do
+      key :summary, 'Unpublish page'
+      key :description, 'Unpublish a page, removing it from public view. Requires authentication.'
+      key :operationId, 'unpublishPage'
+      key :tags, ['Pages']
+
+      parameter do
+        key :name, :id
+        key :in, :path
+        key :description, 'Page ID'
+        key :required, true
+        schema do
+          key :type, :integer
+        end
+      end
+
+      response 200 do
+        key :description, 'Page unpublished successfully'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Page
+          end
+        end
+      end
+      response 401 do
+        key :description, 'Unauthorized'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 404 do
+        key :description, 'Page not found'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+      response 422 do
+        key :description, 'Page is not published'
+        content 'application/json' do
+          schema do
+            key :'$ref', :Error
+          end
+        end
+      end
+    end
+  end
 end
