@@ -230,7 +230,7 @@ function cmsApp() {
     },
 
     createNewPost() {
-      this.currentPost = { title: '', slug: '', content: '', published: false, comments_enabled: true };
+      this.currentPost = { title: '', slug: '', content: '', workflow_state: 'draft', published: false, comments_enabled: true };
       this.editingPost = true;
       this.resetValidation('post');
       this.$nextTick(() => this.initQuill());
@@ -306,6 +306,75 @@ function cmsApp() {
       } catch (error) {
         console.error('Error deleting post:', error);
         alert('Failed to delete post');
+      }
+    },
+
+    async markPostReady(id) {
+      try {
+        const response = await fetch(`/api/posts/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'ready' })
+        });
+        if (!response.ok) {
+          console.error('Failed to mark post ready:', response.status, response.statusText);
+          alert('Failed to mark post ready');
+          return;
+        }
+        const data = await response.json();
+        this.currentPost = data.post;
+        await this.fetchPosts();
+      } catch (error) {
+        console.error('Error marking post ready:', error);
+        alert('Failed to mark post ready');
+      }
+    },
+
+    async publishPost(id) {
+      try {
+        const response = await fetch(`/api/posts/${id}/publish`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to publish post:', response.status, response.statusText);
+          alert('Failed to publish post');
+          return;
+        }
+        const data = await response.json();
+        this.currentPost = data.post;
+        await this.fetchPosts();
+      } catch (error) {
+        console.error('Error publishing post:', error);
+        alert('Failed to publish post');
+      }
+    },
+
+    async unpublishPost(id) {
+      if (!confirm('Unpublish this post? It will no longer be visible to the public.')) return;
+
+      try {
+        const response = await fetch(`/api/posts/${id}/unpublish`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to unpublish post:', response.status, response.statusText);
+          alert('Failed to unpublish post');
+          return;
+        }
+        const data = await response.json();
+        this.currentPost = data.post;
+        await this.fetchPosts();
+      } catch (error) {
+        console.error('Error unpublishing post:', error);
+        alert('Failed to unpublish post');
       }
     },
 
@@ -407,7 +476,7 @@ function cmsApp() {
     },
 
     createNewPage() {
-      this.currentPage = { title: '', slug: '', content: '', parent_id: null, page_type: 'standard', content_source: 'children', items_limit: 10, position: 0, hero_image_url: '', published: false };
+      this.currentPage = { title: '', slug: '', content: '', parent_id: null, page_type: 'standard', content_source: 'children', items_limit: 10, position: 0, hero_image_url: '', workflow_state: 'draft', published: false };
       this.editingPage = true;
       this.resetValidation('page');
       this.$nextTick(() => this.initPageQuill());
@@ -483,6 +552,75 @@ function cmsApp() {
       } catch (error) {
         console.error('Error deleting page:', error);
         alert('Failed to delete page');
+      }
+    },
+
+    async markPageReady(id) {
+      try {
+        const response = await fetch(`/api/pages/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'ready' })
+        });
+        if (!response.ok) {
+          console.error('Failed to mark page ready:', response.status, response.statusText);
+          alert('Failed to mark page ready');
+          return;
+        }
+        const data = await response.json();
+        this.currentPage = data.page;
+        await this.fetchPages();
+      } catch (error) {
+        console.error('Error marking page ready:', error);
+        alert('Failed to mark page ready');
+      }
+    },
+
+    async publishPage(id) {
+      try {
+        const response = await fetch(`/api/pages/${id}/publish`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to publish page:', response.status, response.statusText);
+          alert('Failed to publish page');
+          return;
+        }
+        const data = await response.json();
+        this.currentPage = data.page;
+        await this.fetchPages();
+      } catch (error) {
+        console.error('Error publishing page:', error);
+        alert('Failed to publish page');
+      }
+    },
+
+    async unpublishPage(id) {
+      if (!confirm('Unpublish this page? It will no longer be visible to the public.')) return;
+
+      try {
+        const response = await fetch(`/api/pages/${id}/unpublish`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          console.error('Failed to unpublish page:', response.status, response.statusText);
+          alert('Failed to unpublish page');
+          return;
+        }
+        const data = await response.json();
+        this.currentPage = data.page;
+        await this.fetchPages();
+      } catch (error) {
+        console.error('Error unpublishing page:', error);
+        alert('Failed to unpublish page');
       }
     },
 
