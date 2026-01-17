@@ -6,22 +6,22 @@ RSpec.describe 'Feed Routes', type: :request do
     FileUtils.rm_f(File.join(Dir.pwd, 'public', 'feed.xml'))
     FileUtils.rm_f(File.join(Dir.pwd, 'public', 'atom.xml'))
 
-    # Create test posts
-    @post1 = Post.create!(
+    # Create and publish test posts
+    post1 = Post.create!(
       title: 'First Post',
       slug: 'first-post',
       content: '<p>This is the first post content.</p>',
       status: 'ready'
     )
-    @post1.publish!
+    post1.publish!
 
-    @post2 = Post.create!(
+    post2 = Post.create!(
       title: 'Second Post',
       slug: 'second-post',
       content: '<p>This is the second post content.</p>',
       status: 'ready'
     )
-    @post2.publish!
+    post2.publish!
 
     # Generate feeds
     FeedGenerator.write_feeds

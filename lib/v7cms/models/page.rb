@@ -59,10 +59,13 @@ module V7CMS
       end
     end
 
+    # rubocop:disable Naming/PredicatePrefix
     def has_unpublished_changes?
       return false unless published_version_id.present?
+
       title != published_version.title || content != published_version.content
     end
+    # rubocop:enable Naming/PredicatePrefix
 
     def publish!
       version = create_workflow_version!(workflow_state: 'published')
@@ -127,9 +130,11 @@ module V7CMS
     end
 
     # Check if this page has children
+    # rubocop:disable Naming/PredicatePrefix
     def has_children?
       children.any?
     end
+    # rubocop:enable Naming/PredicatePrefix
 
     # Get depth level (0 for top-level pages)
     def depth

@@ -21,7 +21,7 @@ class PostSchemas
     end
     property :status do
       key :type, :string
-      key :enum, ['draft', 'ready', 'published']
+      key :enum, %w[draft ready published]
       key :description, 'Current status of the post'
     end
     property :published do
@@ -97,7 +97,7 @@ class PostSchemas
     end
     property :status do
       key :type, :string
-      key :enum, ['draft', 'ready']
+      key :enum, %w[draft ready]
       key :default, 'draft'
       key :description, 'Status of the post (use publish endpoint to set to published)'
     end

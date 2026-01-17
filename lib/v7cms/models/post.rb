@@ -30,10 +30,13 @@ module V7CMS
       comments_enabled && V7CMS::Setting.instance.allow_comments
     end
 
+    # rubocop:disable Naming/PredicatePrefix
     def has_unpublished_changes?
       return false unless published_version_id.present?
+
       title != published_version.title || content != published_version.content
     end
+    # rubocop:enable Naming/PredicatePrefix
 
     def publish!
       version = create_workflow_version!(workflow_state: 'published')

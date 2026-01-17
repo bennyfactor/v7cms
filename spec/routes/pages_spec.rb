@@ -322,7 +322,7 @@ RSpec.describe 'Pages API', type: :request do
 
       data = JSON.parse(last_response.body)
       expect(data['page']['title']).to eq('Updated Title')
-      # Note: Page should auto-flip to draft on content change
+      # NOTE: Page should auto-flip to draft on content change
       expect(data['page']['status']).to eq('draft')
 
       # Verify in database
