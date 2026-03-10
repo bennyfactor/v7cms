@@ -2,17 +2,18 @@ module V7CMS
   class Post < ActiveRecord::Base
     include V7CMS::Versionable
 
+    STATUSES = %w[draft ready published].freeze
+
     has_many :comments, class_name: 'V7CMS::Comment', dependent: :destroy
+    belongs_to :published_version, class_name: 'V7CMS::ContentVersion', optional: true
 
     validates :title, presence: true
     validates :slug, presence: true, uniqueness: true
+    validates :status, inclusion: { in: STATUSES }
     validates :comments_enabled, inclusion: { in: [true, false] }
 
     before_validation :generate_slug, on: :create
-
-    # Workflow versioning callbacks
-    after_save :create_publish_version, if: :just_published?
-    after_save :create_unpublish_version, if: :just_unpublished?
+    before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
 
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
@@ -22,11 +23,34 @@ module V7CMS
     # Feed regeneration callback
     after_commit :regenerate_feeds
 
-    scope :published, -> { where(published: true) }
+    scope :published, -> { where.not(published_version_id: nil) }
     scope :recent, -> { order(created_at: :desc) }
 
     def comments_allowed?
       comments_enabled && V7CMS::Setting.instance.allow_comments
+    end
+
+    # rubocop:disable Naming/PredicatePrefix
+    def has_unpublished_changes?
+      return false unless published_version_id.present?
+
+      title != published_version.title || content != published_version.content
+    end
+    # rubocop:enable Naming/PredicatePrefix
+
+    def publish!
+      version = create_workflow_version!(workflow_state: 'published')
+      update!(status: 'published', published_version_id: version.id)
+    end
+
+    def unpublish!
+      create_workflow_version!(workflow_state: 'unpublished')
+      update!(status: 'draft', published_version_id: nil)
+    end
+
+    # Backward compatibility
+    def published?
+      published_version_id.present?
     end
 
     private
@@ -43,11 +67,11 @@ module V7CMS
     end
 
     def should_generate_static_file?
-      published? && !destroyed?
+      published_version_id.present? && !destroyed?
     end
 
     def should_remove_static_file?
-      !destroyed? && saved_change_to_published? && !published?
+      !destroyed? && saved_change_to_published_version_id? && published_version_id.nil?
     end
 
     def generate_static_file
@@ -69,20 +93,12 @@ module V7CMS
       }
     end
 
-    def just_published?
-      !previously_new_record? && saved_change_to_published? && published?
+    def should_flip_to_draft?
+      !new_record? && status == 'published' && (will_save_change_to_title? || will_save_change_to_content?)
     end
 
-    def just_unpublished?
-      !previously_new_record? && saved_change_to_published? && !published?
-    end
-
-    def create_publish_version
-      create_workflow_version!(workflow_state: 'published')
-    end
-
-    def create_unpublish_version
-      create_workflow_version!(workflow_state: 'unpublished')
+    def flip_to_draft_on_content_change
+      self.status = 'draft'
     end
   end
 end

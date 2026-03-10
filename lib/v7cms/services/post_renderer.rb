@@ -27,6 +27,10 @@ module V7CMS
     def initialize(post)
       @post = post
       @settings = V7CMS::Setting.instance
+      # Use published version for rendering if available
+      @version = post.published_version
+      @title = @version ? @version.title : post.title
+      @content = @version ? @version.content : post.content
     end
 
     def render_html
@@ -78,7 +82,7 @@ module V7CMS
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title><%= @post.title %> - <%= @settings.site_title %></title>
+            <title><%= @title %> - <%= @settings.site_title %></title>
             <script src="https://cdn.tailwindcss.com"></script>
 
             <meta name="description" content="<%= @settings.meta_description %>">
@@ -119,7 +123,7 @@ module V7CMS
                     <article class="bg-white rounded-lg shadow-md overflow-hidden">
                         <div class="p-8">
                             <header class="mb-8 border-b pb-6">
-                                <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @post.title %></h1>
+                                <h1 class="text-4xl font-bold text-gray-900 mb-4"><%= @title %></h1>
                                 <div class="flex items-center text-gray-600 text-sm">
                                     <time datetime="<%= @post.created_at.iso8601 %>">
                                         Published on <%= @post.created_at.strftime(@settings.date_format) %>
@@ -132,7 +136,7 @@ module V7CMS
                             </header>
 
                             <div class="prose prose-lg max-w-none">
-                                <%= @post.content %>
+                                <%= @content %>
                             </div>
 
                             <footer class="mt-12 pt-6 border-t">
