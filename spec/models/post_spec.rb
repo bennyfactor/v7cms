@@ -50,28 +50,44 @@ RSpec.describe Post, type: :model do
   end
 
   describe 'scopes' do
-    before do
-      Post.create!(title: 'Published 1', slug: 'pub1', content: 'Content', published: true)
-      Post.create!(title: 'Draft 1', slug: 'draft1', content: 'Content', published: false)
-      Post.create!(title: 'Published 2', slug: 'pub2', content: 'Content', published: true)
+    let!(:published_post) do
+      post = Post.create!(title: 'Published', slug: 'pub1', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Published', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+      post
     end
 
-    it 'has a published scope' do
+    let!(:draft_post) { Post.create!(title: 'Draft', slug: 'draft1', content: 'Content', status: 'draft') }
+
+    let!(:edited_post) do
+      post = Post.create!(title: 'Edited', slug: 'pub2', content: 'New Content', status: 'draft')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Original', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+      post
+    end
+
+    it 'published scope returns posts with published_version_id' do
       expect(Post.published.count).to eq(2)
-      expect(Post.published.pluck(:title)).to contain_exactly('Published 1', 'Published 2')
+      expect(Post.published).to include(published_post, edited_post)
+      expect(Post.published).not_to include(draft_post)
     end
 
     it 'has a recent scope ordered by created_at desc' do
       posts = Post.recent
-      expect(posts.first.title).to eq('Published 2')
-      expect(posts.last.title).to eq('Published 1')
+      expect(posts.first).to eq(edited_post)
     end
   end
 
   describe 'default values' do
-    it 'defaults published to false' do
+    it 'defaults published_version_id to nil' do
       post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
-      expect(post.published).to be false
+      expect(post.published_version_id).to be_nil
     end
   end
 
@@ -149,9 +165,9 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
     end
@@ -161,7 +177,7 @@ RSpec.describe Post, type: :model do
         title: 'Test Post',
         slug: 'test-post',
         content: '<p>Content</p>',
-        published: false
+        status: 'draft'
       )
 
       expect(File.exist?(static_file_path)).to be false
@@ -171,13 +187,14 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Original</p>',
-        published: true
+        content: '<p>Original</p>'
       )
+      post.publish!
 
       original_content = File.read(static_file_path)
 
       post.update!(content: '<p>Updated</p>')
+      post.publish!
 
       updated_content = File.read(static_file_path)
       expect(updated_content).not_to eq(original_content)
@@ -188,13 +205,13 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
 
-      post.update!(published: false)
+      post.unpublish!
 
       expect(File.exist?(static_file_path)).to be false
     end
@@ -203,9 +220,9 @@ RSpec.describe Post, type: :model do
       post = Post.create!(
         title: 'Test Post',
         slug: 'test-post',
-        content: '<p>Content</p>',
-        published: true
+        content: '<p>Content</p>'
       )
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
 
@@ -219,14 +236,35 @@ RSpec.describe Post, type: :model do
         title: 'Test Post',
         slug: 'test-post',
         content: '<p>Content</p>',
-        published: false
+        status: 'draft'
       )
 
       expect(File.exist?(static_file_path)).to be false
 
-      post.update!(published: true)
+      post.publish!
 
       expect(File.exist?(static_file_path)).to be true
+    end
+  end
+
+  describe 'status' do
+    it 'defaults status to draft' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      expect(post.status).to eq('draft')
+    end
+
+    it 'validates status inclusion' do
+      post = Post.new(title: 'Test', status: 'invalid')
+      expect(post).not_to be_valid
+      expect(post.errors[:status]).to include('is not included in the list')
+    end
+
+    it 'accepts valid statuses' do
+      %w[draft ready published].each do |status|
+        post = Post.new(title: 'Test', status: status)
+        post.valid?
+        expect(post.errors[:status]).to be_empty
+      end
     end
   end
 
@@ -250,11 +288,11 @@ RSpec.describe Post, type: :model do
       expect(post.content_versions.count).to eq(1)
     end
 
-    it 'does not create version when only published changes' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
-      post.update!(published: true)
+    it 'does not create auto version when only status changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.update!(status: 'ready')
 
-      # Should only have workflow version, no auto version
+      # Should have no auto versions
       auto_versions = post.content_versions.where(version_type: 'auto')
       expect(auto_versions.count).to eq(0)
     end
@@ -267,8 +305,8 @@ RSpec.describe Post, type: :model do
     end
 
     it 'creates workflow version on publish' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: false)
-      post.update!(published: true)
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.publish!
 
       workflow_versions = post.content_versions.where(version_type: 'workflow')
       expect(workflow_versions.count).to eq(1)
@@ -276,12 +314,199 @@ RSpec.describe Post, type: :model do
     end
 
     it 'creates workflow version on unpublish' do
-      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', published: true)
-      post.update!(published: false)
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.publish!
+      post.unpublish!
 
       workflow_versions = post.content_versions.where(version_type: 'workflow')
-      expect(workflow_versions.count).to eq(1)
-      expect(workflow_versions.first.workflow_state).to eq('unpublished')
+      expect(workflow_versions.count).to eq(2)
+
+      states = workflow_versions.pluck(:workflow_state)
+      expect(states).to include('published')
+      expect(states).to include('unpublished')
+    end
+  end
+
+  describe '#published_version' do
+    it 'returns nil when published_version_id is nil' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      expect(post.published_version).to be_nil
+    end
+
+    it 'returns the content version when published_version_id is set' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Published Title',
+        content: 'Published Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.published_version).to eq(version)
+      expect(post.published_version.title).to eq('Published Title')
+    end
+  end
+
+  describe '#has_unpublished_changes?' do
+    it 'returns false when not published' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      expect(post.has_unpublished_changes?).to be false
+    end
+
+    it 'returns false when published and no changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Test',
+        content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.has_unpublished_changes?).to be false
+    end
+
+    it 'returns true when working draft differs from published version' do
+      post = Post.create!(title: 'Updated Title', slug: 'test', content: 'Content', status: 'draft')
+      version = post.content_versions.create!(
+        version_number: 1,
+        version_type: 'workflow',
+        workflow_state: 'published',
+        title: 'Original Title',
+        content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect(post.has_unpublished_changes?).to be true
+    end
+  end
+
+  describe '#publish!' do
+    it 'creates a workflow version with published state' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+
+      expect { post.publish! }.to change { post.content_versions.count }.by(1)
+
+      version = post.content_versions.last
+      expect(version.version_type).to eq('workflow')
+      expect(version.workflow_state).to eq('published')
+    end
+
+    it 'sets published_version_id to the new version' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+      post.publish!
+
+      expect(post.published_version_id).to eq(post.content_versions.last.id)
+    end
+
+    it 'sets status to published' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'ready')
+      post.publish!
+
+      expect(post.status).to eq('published')
+    end
+
+    it 'stores current title and content in the version' do
+      post = Post.create!(title: 'My Title', slug: 'test', content: '<p>My Content</p>', status: 'ready')
+      post.publish!
+
+      expect(post.published_version.title).to eq('My Title')
+      expect(post.published_version.content).to eq('<p>My Content</p>')
+    end
+  end
+
+  describe '#unpublish!' do
+    it 'creates a workflow version with unpublished state' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      # Set up a published version
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      expect { post.unpublish! }.to change { post.content_versions.count }.by(1)
+
+      new_version = post.content_versions.order(version_number: :desc).first
+      expect(new_version.workflow_state).to eq('unpublished')
+    end
+
+    it 'clears published_version_id' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.unpublish!
+
+      expect(post.published_version_id).to be_nil
+    end
+
+    it 'sets status to draft' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.unpublish!
+
+      expect(post.status).to eq('draft')
+    end
+  end
+
+  describe 'editing published posts' do
+    it 'flips status to draft when title changes on published post' do
+      post = Post.create!(title: 'Original', slug: 'test', content: 'Content', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Original', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(title: 'Updated')
+
+      expect(post.status).to eq('draft')
+      expect(post.published_version_id).to eq(version.id) # Still points to published version
+    end
+
+    it 'flips status to draft when content changes on published post' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Original', status: 'published')
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Original'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(content: 'Updated')
+
+      expect(post.status).to eq('draft')
+    end
+
+    it 'does not flip status when only comments_enabled changes' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'published', comments_enabled: true)
+      version = post.content_versions.create!(
+        version_number: 1, version_type: 'workflow', workflow_state: 'published',
+        title: 'Test', content: 'Content'
+      )
+      post.update_column(:published_version_id, version.id)
+
+      post.update!(comments_enabled: false)
+
+      expect(post.status).to eq('published')
+    end
+
+    it 'does not flip status on draft posts' do
+      post = Post.create!(title: 'Test', slug: 'test', content: 'Content', status: 'draft')
+      post.update!(title: 'Updated')
+
+      expect(post.status).to eq('draft')
     end
   end
 end
