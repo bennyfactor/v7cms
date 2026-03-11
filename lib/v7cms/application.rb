@@ -914,6 +914,80 @@ module V7CMS
     end
 
     # =========================================================================
+    # Tags API Routes
+    # =========================================================================
+
+    # GET /api/tags - List all tags
+    get '/api/tags' do
+      tags = V7CMS::Tag.ordered
+      json({ tags: tags.map { |t| tag_json(t) } })
+    end
+
+    # POST /api/tags - Create a tag
+    post '/api/tags' do
+      require_ajax_header
+      require_login
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      tag = V7CMS::Tag.new(name: data['name'])
+
+      if tag.save
+        status 201
+        json({ tag: tag_json(tag) })
+      else
+        halt 422, json({ errors: tag.errors.full_messages })
+      end
+    end
+
+    # PUT /api/tags/:id - Rename a tag
+    put '/api/tags/:id' do
+      require_ajax_header
+      require_login
+
+      tag = V7CMS::Tag.find_by(id: params[:id])
+      halt 404, json({ error: 'Tag not found' }) unless tag
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      tag.name = data['name'] if data.key?('name')
+
+      if tag.save
+        json({ tag: tag_json(tag) })
+      else
+        halt 422, json({ errors: tag.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/tags/:id - Delete a tag
+    delete '/api/tags/:id' do
+      require_ajax_header
+      require_login
+
+      tag = V7CMS::Tag.find_by(id: params[:id])
+      halt 404, json({ error: 'Tag not found' }) unless tag
+
+      if tag.posts.any?
+        halt 409, json({ error: "Cannot delete tag with #{tag.posts_count} posts. Remove the tag from all posts first." })
+      end
+
+      # Nullify any pages using this tag as content filter
+      V7CMS::Page.where(content_filter_tag_id: tag.id).update_all(content_filter_tag_id: nil)
+
+      tag.destroy
+      status 204
+      body ''
+    end
+
+    # =========================================================================
     # Pages API Routes
     # =========================================================================
 
@@ -1685,6 +1759,16 @@ module V7CMS
         updated_at: post.updated_at,
         comments_enabled: post.comments_enabled,
         comments_allowed: post.comments_allowed?
+      }
+    end
+
+    # Tag serialization helper
+    def tag_json(tag)
+      {
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        posts_count: tag.posts_count
       }
     end
 
