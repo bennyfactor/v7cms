@@ -1374,6 +1374,44 @@
                             </div>
                         </div>
 
+                        <!-- Tags Section -->
+                        <div class="border-t pt-6">
+                            <h3 class="text-lg font-semibold mb-4">Tags</h3>
+                            <p class="text-sm text-gray-500 mb-4">Manage tags for organizing blog posts</p>
+
+                            <!-- Add new tag -->
+                            <div class="flex gap-2 mb-4">
+                                <input x-model="newTagName"
+                                       @keydown.enter.prevent="createTag()"
+                                       type="text"
+                                       placeholder="New tag name..."
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <button type="button" @click="createTag()"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium whitespace-nowrap">
+                                    Add Tag
+                                </button>
+                            </div>
+
+                            <!-- Tag list -->
+                            <div x-show="tags.length > 0" class="border border-gray-200 rounded-lg overflow-hidden">
+                                <template x-for="tag in tags" :key="tag.id">
+                                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-sm font-medium text-gray-900" x-text="tag.name"></span>
+                                            <span class="text-xs text-gray-400" x-text="tag.slug"></span>
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                                                  x-text="tag.posts_count + ' post' + (tag.posts_count !== 1 ? 's' : '')"></span>
+                                        </div>
+                                        <div class="flex gap-3">
+                                            <button type="button" @click="renameTag(tag)" class="text-sm text-blue-600 hover:text-blue-800">Rename</button>
+                                            <button type="button" @click="deleteTag(tag)" class="text-sm text-red-600 hover:text-red-800">Delete</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <p x-show="tags.length === 0" class="text-sm text-gray-500 italic">No tags yet. Add one above.</p>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="flex gap-2 pt-4 border-t">
                             <button type="submit"
