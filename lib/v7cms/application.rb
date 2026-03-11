@@ -592,6 +592,10 @@ module V7CMS
       )
 
       if post.save
+        if data.key?('tag_ids') && data['tag_ids'].is_a?(Array)
+          valid_tags = V7CMS::Tag.where(id: data['tag_ids'])
+          post.tags = valid_tags
+        end
         status 201
         json({ post: post_json(post) })
       else
@@ -624,6 +628,10 @@ module V7CMS
       post.comments_enabled = data['comments_enabled'] if data.key?('comments_enabled')
 
       if post.save
+        if data.key?('tag_ids') && data['tag_ids'].is_a?(Array)
+          valid_tags = V7CMS::Tag.where(id: data['tag_ids'])
+          post.tags = valid_tags
+        end
         json({ post: post_json(post) })
       else
         halt 422, json({ errors: post.errors.full_messages })
@@ -1758,7 +1766,8 @@ module V7CMS
         created_at: post.created_at,
         updated_at: post.updated_at,
         comments_enabled: post.comments_enabled,
-        comments_allowed: post.comments_allowed?
+        comments_allowed: post.comments_allowed?,
+        tags: post.tags.map { |t| { id: t.id, name: t.name, slug: t.slug } }
       }
     end
 
