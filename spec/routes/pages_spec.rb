@@ -746,6 +746,29 @@ RSpec.describe 'Pages API', type: :request do
         expect(data['page']['content_filter_tag']).to be_nil
       end
 
+      it 'rejects invalid content_filter_tag_id on create' do
+        login_as(user)
+        post '/api/pages',
+          { title: 'Bad Tag', slug: 'bad-tag', content_filter_tag_id: 99999 }.to_json,
+          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Content filter tag not found')
+      end
+
+      it 'rejects invalid content_filter_tag_id on update' do
+        login_as(user)
+        page = Page.create!(title: 'Test FK', slug: 'test-fk-page')
+        put "/api/pages/#{page.id}",
+          { content_filter_tag_id: 99999 }.to_json,
+          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Content filter tag not found')
+      end
+
       it 'does not change content_filter_tag_id when not provided' do
         login_as(user)
         page.update!(content_filter_tag_id: tag.id)
