@@ -694,4 +694,69 @@ RSpec.describe Page, type: :model do
       end
     end
   end
+
+  describe 'content_filter_tag association' do
+    it 'belongs to a content_filter_tag (optional)' do
+      page = V7CMS::Page.create!(title: 'Blog', slug: 'blog', page_type: 'blog_grid', content_source: 'posts')
+      expect(page.content_filter_tag).to be_nil
+    end
+
+    it 'can be assigned a tag' do
+      tag = V7CMS::Tag.create!(name: 'Ruby')
+      page = V7CMS::Page.create!(title: 'Ruby Posts', slug: 'ruby-posts', page_type: 'blog_grid', content_source: 'posts', content_filter_tag: tag)
+      expect(page.content_filter_tag).to eq(tag)
+    end
+  end
+
+  describe '#items_for_display with tag filtering' do
+    let(:ruby_tag) { V7CMS::Tag.create!(name: 'Ruby') }
+    let(:js_tag) { V7CMS::Tag.create!(name: 'JavaScript') }
+
+    before do
+      @ruby_post = V7CMS::Post.create!(title: 'Ruby Post')
+      @ruby_post.tags << ruby_tag
+      @ruby_post.publish!
+
+      @js_post = V7CMS::Post.create!(title: 'JS Post')
+      @js_post.tags << js_tag
+      @js_post.publish!
+
+      @both_post = V7CMS::Post.create!(title: 'Both Post')
+      @both_post.tags << ruby_tag
+      @both_post.tags << js_tag
+      @both_post.publish!
+    end
+
+    it 'returns all published posts when no tag filter set' do
+      page = V7CMS::Page.create!(title: 'All Posts', slug: 'all', page_type: 'blog_list', content_source: 'posts')
+      expect(page.items_for_display.count).to eq(3)
+    end
+
+    it 'returns only posts with the filtered tag' do
+      page = V7CMS::Page.create!(title: 'Ruby Posts', slug: 'ruby', page_type: 'blog_list', content_source: 'posts', content_filter_tag: ruby_tag)
+      items = page.items_for_display
+      expect(items.count).to eq(2)
+      expect(items).to include(@ruby_post, @both_post)
+      expect(items).not_to include(@js_post)
+    end
+
+    it 'does not filter when content_source is children' do
+      parent = V7CMS::Page.create!(title: 'Parent', slug: 'parent', content_filter_tag: ruby_tag)
+      child = V7CMS::Page.create!(title: 'Child', slug: 'child', parent: parent)
+      child.publish!
+
+      expect(parent.items_for_display).to include(child)
+    end
+
+    it 'respects items_limit with tag filter' do
+      page = V7CMS::Page.create!(title: 'Ruby Posts', slug: 'ruby', page_type: 'blog_list', content_source: 'posts', content_filter_tag: ruby_tag, items_limit: 1)
+      expect(page.items_for_display.count).to eq(1)
+    end
+
+    it 'does not return duplicate posts when post has multiple tags' do
+      page = V7CMS::Page.create!(title: 'Ruby Posts', slug: 'ruby', page_type: 'blog_list', content_source: 'posts', content_filter_tag: ruby_tag)
+      items = page.items_for_display
+      expect(items.count).to eq(items.distinct.count)
+    end
+  end
 end
