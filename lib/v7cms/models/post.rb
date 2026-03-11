@@ -5,6 +5,8 @@ module V7CMS
     STATUSES = %w[draft ready published].freeze
 
     has_many :comments, class_name: 'V7CMS::Comment', dependent: :destroy
+    has_many :post_tags, class_name: 'V7CMS::PostTag', dependent: :destroy
+    has_many :tags, through: :post_tags, class_name: 'V7CMS::Tag'
     belongs_to :published_version, class_name: 'V7CMS::ContentVersion', optional: true
 
     validates :title, presence: true
