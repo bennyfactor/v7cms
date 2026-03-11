@@ -22,11 +22,10 @@ module V7CMS
       return if slug.present? || name.blank?
 
       self.slug = name.downcase
-        .gsub(/[^a-z0-9\s-]/, '')
-        .gsub(/\s+/, '-')
-        .gsub(/-+/, '-')
-        .strip
-        .gsub(/^-|-$/, '')
+                      .gsub(/[^a-z0-9\s-]/, '')
+                      .gsub(/\s+/, '-').squeeze('-')
+                      .strip
+                      .gsub(/^-|-$/, '')
     end
   end
 end
