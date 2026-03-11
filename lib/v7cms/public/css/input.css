@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Theme Configuration
+ * When using compiled CSS mode, theme values will be injected here by ThemeGenerator
+ * For CDN mode, theme values are in layout.erb <style type="text/tailwindcss">
+ */
+@theme {
+  /* Default theme values - will be replaced when theme is saved */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-secondary: #8b5cf6;
+  --color-secondary-hover: #7c3aed;
+  --color-background: #ffffff;
+  --color-surface: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-text: #1f2937;
+  --color-text-muted: #6b7280;
+  --color-text-subtle: #9ca3af;
+  --color-heading: #111827;
+  --color-link: #2563eb;
+  --color-link-hover: #1d4ed8;
+  --color-link-visited: #7c3aed;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-focus: #3b82f6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #06b6d4;
+  --font-heading: system-ui, -apple-system, sans-serif;
+  --font-body: system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --font-size-base: 16px;
+  --line-height-base: 1.6;
+  --line-height-tight: 1.25;
+  --line-height-loose: 1.75;
+  --container-max: 1200px;
+  --spacing-unit: 1rem;
+  --spacing-section: 4rem;
+  --radius-sm: 4px;
+  --radius-default: 8px;
+  --radius-lg: 16px;
+  --border-width: 1px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Custom admin styles */
+.editor-container {
+  min-height: 400px;
+}
+
+.ql-editor {
+  min-height: 350px;
+}
