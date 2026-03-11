@@ -927,7 +927,7 @@ module V7CMS
 
     # GET /api/tags - List all tags
     get '/api/tags' do
-      tags = V7CMS::Tag.ordered
+      tags = V7CMS::Tag.ordered.left_joins(:posts).group(:id).select('tags.*, COUNT(posts.id) AS cached_posts_count')
       json({ tags: tags.map { |t| tag_json(t) } })
     end
 
@@ -983,8 +983,9 @@ module V7CMS
       tag = V7CMS::Tag.find_by(id: params[:id])
       halt 404, json({ error: 'Tag not found' }) unless tag
 
-      if tag.posts.any?
-        halt 409, json({ error: "Cannot delete tag with #{tag.posts_count} posts. Remove the tag from all posts first." })
+      count = tag.posts.count
+      if count > 0
+        halt 409, json({ error: "Cannot delete tag with #{count} posts. Remove the tag from all posts first." })
       end
 
       # Nullify any pages using this tag as content filter
@@ -1078,6 +1079,10 @@ module V7CMS
         halt 422, json({ errors: ['Invalid JSON'] })
       end
 
+      if data['content_filter_tag_id'].present? && !V7CMS::Tag.exists?(data['content_filter_tag_id'])
+        halt 422, json({ errors: ['Content filter tag not found'] })
+      end
+
       page = V7CMS::Page.new(
         title: data['title'],
         slug: data['slug'],
@@ -1128,7 +1133,12 @@ module V7CMS
       page.content_source = data['content_source'] if data.key?('content_source')
       page.items_limit = data['items_limit'] if data.key?('items_limit')
       page.hero_image_url = data['hero_image_url'] if data.key?('hero_image_url')
-      page.content_filter_tag_id = data['content_filter_tag_id'] if data.key?('content_filter_tag_id')
+      if data.key?('content_filter_tag_id')
+        if data['content_filter_tag_id'].present? && !V7CMS::Tag.exists?(data['content_filter_tag_id'])
+          halt 422, json({ errors: ['Content filter tag not found'] })
+        end
+        page.content_filter_tag_id = data['content_filter_tag_id']
+      end
 
       if page.save
         json({ page: page_json(page, include_relations: true) })
@@ -1779,7 +1789,7 @@ module V7CMS
         id: tag.id,
         name: tag.name,
         slug: tag.slug,
-        posts_count: tag.posts_count
+        posts_count: tag.respond_to?(:cached_posts_count) ? tag.cached_posts_count : tag.posts.count
       }
     end
 
