@@ -1088,7 +1088,8 @@ module V7CMS
         page_type: data['page_type'] || 'standard',
         content_source: data['content_source'] || 'children',
         items_limit: data['items_limit'] || 10,
-        hero_image_url: data['hero_image_url']
+        hero_image_url: data['hero_image_url'],
+        content_filter_tag_id: data['content_filter_tag_id']
       )
 
       if page.save
@@ -1127,6 +1128,7 @@ module V7CMS
       page.content_source = data['content_source'] if data.key?('content_source')
       page.items_limit = data['items_limit'] if data.key?('items_limit')
       page.hero_image_url = data['hero_image_url'] if data.key?('hero_image_url')
+      page.content_filter_tag_id = data['content_filter_tag_id'] if data.key?('content_filter_tag_id')
 
       if page.save
         json({ page: page_json(page, include_relations: true) })
@@ -1863,6 +1865,8 @@ module V7CMS
         content_source: page.content_source,
         items_limit: page.items_limit,
         hero_image_url: page.hero_image_url,
+        content_filter_tag_id: page.content_filter_tag_id,
+        content_filter_tag: page.content_filter_tag ? { id: page.content_filter_tag.id, name: page.content_filter_tag.name, slug: page.content_filter_tag.slug } : nil,
         created_at: page.created_at,
         updated_at: page.updated_at
       }
