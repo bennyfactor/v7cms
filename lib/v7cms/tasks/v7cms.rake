@@ -365,7 +365,7 @@ namespace :v7cms do
   task :assets do
     require 'v7cms'
 
-    gem_public = File.join(V7CMS.gem_root, 'public')
+    gem_public = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public')
     project_public = File.join(V7CMS.project_root, 'public')
 
     unless File.directory?(gem_public)
