@@ -5,6 +5,8 @@
 require_relative 'models/concerns/versionable'
 require_relative 'models/user'
 require_relative 'models/post'
+require_relative 'models/tag'
+require_relative 'models/post_tag'
 require_relative 'models/page'
 require_relative 'models/comment'
 require_relative 'models/setting'

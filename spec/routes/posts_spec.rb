@@ -477,4 +477,122 @@ RSpec.describe 'Posts API Routes' do
       expect(post_record.published_version_id).to be_nil
     end
   end
+
+  describe 'tag support' do
+    let(:tag1) { Tag.create!(name: 'Ruby', slug: 'ruby') }
+    let(:tag2) { Tag.create!(name: 'Sinatra', slug: 'sinatra') }
+    let(:post_record) { Post.create!(title: 'Tagged Post', slug: 'tagged-post', content: 'Content', status: 'ready') }
+
+    describe 'GET /api/posts/:id' do
+      it 'includes tags array in response' do
+        post_record.tags << tag1
+        post_record.tags << tag2
+        post_record.publish!
+
+        get "/api/posts/#{post_record.id}"
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        tags = data['post']['tags']
+        expect(tags).to be_an(Array)
+        expect(tags.length).to eq(2)
+        tag_names = tags.map { |t| t['name'] }
+        expect(tag_names).to match_array(['Ruby', 'Sinatra'])
+      end
+
+      it 'includes id, name, and slug for each tag' do
+        post_record.tags << tag1
+        post_record.publish!
+
+        get "/api/posts/#{post_record.id}"
+
+        data = JSON.parse(last_response.body)
+        tag = data['post']['tags'].first
+        expect(tag).to include('id', 'name', 'slug')
+        expect(tag['name']).to eq('Ruby')
+        expect(tag['slug']).to eq('ruby')
+      end
+
+      it 'returns empty tags array when post has no tags' do
+        post_record.publish!
+
+        get "/api/posts/#{post_record.id}"
+
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags']).to eq([])
+      end
+    end
+
+    describe 'POST /api/posts' do
+      it 'assigns tags via tag_ids' do
+        post '/api/posts',
+          { title: 'New Post', content: 'Content', tag_ids: [tag1.id, tag2.id] }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(201)
+        data = JSON.parse(last_response.body)
+        tag_names = data['post']['tags'].map { |t| t['name'] }
+        expect(tag_names).to match_array(['Ruby', 'Sinatra'])
+      end
+
+      it 'ignores invalid tag_ids' do
+        post '/api/posts',
+          { title: 'New Post', content: 'Content', tag_ids: [tag1.id, 99999] }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(201)
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags'].length).to eq(1)
+        expect(data['post']['tags'].first['name']).to eq('Ruby')
+      end
+
+      it 'creates post with no tags when tag_ids not provided' do
+        post '/api/posts',
+          { title: 'New Post', content: 'Content' }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response.status).to eq(201)
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags']).to eq([])
+      end
+    end
+
+    describe 'PUT /api/posts/:id' do
+      before do
+        post_record.tags << tag1
+      end
+
+      it 'replaces tags when tag_ids provided' do
+        put "/api/posts/#{post_record.id}",
+          { tag_ids: [tag2.id] }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags'].length).to eq(1)
+        expect(data['post']['tags'].first['name']).to eq('Sinatra')
+      end
+
+      it 'clears tags when tag_ids is empty array' do
+        put "/api/posts/#{post_record.id}",
+          { tag_ids: [] }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags']).to eq([])
+      end
+
+      it 'does not change tags when tag_ids is not provided' do
+        put "/api/posts/#{post_record.id}",
+          { title: 'Updated Title' }.to_json,
+          { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['post']['tags'].length).to eq(1)
+        expect(data['post']['tags'].first['name']).to eq('Ruby')
+      end
+    end
+  end
 end
