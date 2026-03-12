@@ -8,6 +8,7 @@ module V7CMS
     belongs_to :parent, class_name: 'V7CMS::Page', optional: true
     has_many :children, class_name: 'V7CMS::Page', foreign_key: 'parent_id', dependent: :destroy
     belongs_to :published_version, class_name: 'V7CMS::ContentVersion', optional: true
+    belongs_to :content_filter_tag, class_name: 'V7CMS::Tag', optional: true
 
     # Static page types + all homepage layout types
     STATIC_PAGE_TYPES = %w[standard contact].freeze
@@ -53,7 +54,9 @@ module V7CMS
     def items_for_display
       case content_source
       when 'posts'
-        V7CMS::Post.published.order(created_at: :desc).limit(items_limit)
+        scope = V7CMS::Post.published.order(created_at: :desc)
+        scope = scope.joins(:tags).where(tags: { id: content_filter_tag_id }).distinct if content_filter_tag_id.present?
+        scope.limit(items_limit)
       else # 'children' is default
         children.published.ordered.limit(items_limit)
       end
@@ -188,7 +191,8 @@ module V7CMS
         items_limit: items_limit,
         position: position,
         parent_id: parent_id,
-        hero_image_url: hero_image_url
+        hero_image_url: hero_image_url,
+        content_filter_tag_id: content_filter_tag_id
       }
     end
 

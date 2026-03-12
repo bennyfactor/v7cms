@@ -662,4 +662,125 @@ RSpec.describe 'Pages API', type: :request do
       expect(last_response.status).to eq(404)
     end
   end
+
+  describe 'content_filter_tag support' do
+    let(:tag) { Tag.create!(name: 'Ruby', slug: 'ruby') }
+
+    describe 'GET /api/pages/:id' do
+      it 'includes content_filter_tag_id and content_filter_tag in response' do
+        page = Page.create!(title: 'Tag Page', slug: 'tag-page', content_filter_tag_id: tag.id)
+        page.publish!
+
+        get "/api/pages/#{page.id}"
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to eq(tag.id)
+        expect(data['page']['content_filter_tag']).to include(
+          'id' => tag.id,
+          'name' => 'Ruby',
+          'slug' => 'ruby'
+        )
+      end
+
+      it 'returns null content_filter_tag when not set' do
+        page = Page.create!(title: 'No Tag Page', slug: 'no-tag-page')
+        page.publish!
+
+        get "/api/pages/#{page.id}"
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to be_nil
+        expect(data['page']['content_filter_tag']).to be_nil
+      end
+    end
+
+    describe 'POST /api/pages' do
+      it 'accepts content_filter_tag_id when creating a page' do
+        login_as(user)
+
+        page_data = {
+          title: 'Filtered Page',
+          content: 'Content',
+          content_filter_tag_id: tag.id
+        }
+
+        post '/api/pages', page_data.to_json,
+             { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+        expect(last_response.status).to eq(201)
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to eq(tag.id)
+        expect(data['page']['content_filter_tag']['name']).to eq('Ruby')
+      end
+    end
+
+    describe 'PUT /api/pages/:id' do
+      let!(:page) { Page.create!(title: 'Test Page', slug: 'test-page') }
+
+      it 'updates content_filter_tag_id' do
+        login_as(user)
+
+        put "/api/pages/#{page.id}",
+            { content_filter_tag_id: tag.id }.to_json,
+            { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to eq(tag.id)
+        expect(data['page']['content_filter_tag']['name']).to eq('Ruby')
+      end
+
+      it 'clears content_filter_tag_id when set to null' do
+        login_as(user)
+        page.update!(content_filter_tag_id: tag.id)
+
+        put "/api/pages/#{page.id}",
+            { content_filter_tag_id: nil }.to_json,
+            { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to be_nil
+        expect(data['page']['content_filter_tag']).to be_nil
+      end
+
+      it 'rejects invalid content_filter_tag_id on create' do
+        login_as(user)
+        post '/api/pages',
+          { title: 'Bad Tag', slug: 'bad-tag', content_filter_tag_id: 99999 }.to_json,
+          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Content filter tag not found')
+      end
+
+      it 'rejects invalid content_filter_tag_id on update' do
+        login_as(user)
+        page = Page.create!(title: 'Test FK', slug: 'test-fk-page')
+        put "/api/pages/#{page.id}",
+          { content_filter_tag_id: 99999 }.to_json,
+          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+
+        expect(last_response.status).to eq(422)
+        data = JSON.parse(last_response.body)
+        expect(data['errors']).to include('Content filter tag not found')
+      end
+
+      it 'does not change content_filter_tag_id when not provided' do
+        login_as(user)
+        page.update!(content_filter_tag_id: tag.id)
+
+        put "/api/pages/#{page.id}",
+            { title: 'Updated Title' }.to_json,
+            { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+
+        expect(last_response).to be_ok
+        data = JSON.parse(last_response.body)
+        expect(data['page']['content_filter_tag_id']).to eq(tag.id)
+      end
+    end
+  end
 end

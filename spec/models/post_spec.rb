@@ -461,6 +461,27 @@ RSpec.describe Post, type: :model do
     end
   end
 
+  describe 'tag associations' do
+    it 'can have multiple tags' do
+      post = V7CMS::Post.create!(title: 'Test Post')
+      tag1 = V7CMS::Tag.create!(name: 'Ruby')
+      tag2 = V7CMS::Tag.create!(name: 'Rails')
+      post.tags << tag1
+      post.tags << tag2
+
+      expect(post.tags.count).to eq(2)
+      expect(post.tags).to include(tag1, tag2)
+    end
+
+    it 'destroys post_tags when post is destroyed' do
+      post = V7CMS::Post.create!(title: 'Test Post')
+      tag = V7CMS::Tag.create!(name: 'Ruby')
+      post.tags << tag
+
+      expect { post.destroy }.to change(V7CMS::PostTag, :count).by(-1)
+    end
+  end
+
   describe 'editing published posts' do
     it 'flips status to draft when title changes on published post' do
       post = Post.create!(title: 'Original', slug: 'test', content: 'Content', status: 'published')

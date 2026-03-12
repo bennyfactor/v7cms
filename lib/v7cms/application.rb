@@ -592,6 +592,10 @@ module V7CMS
       )
 
       if post.save
+        if data.key?('tag_ids') && data['tag_ids'].is_a?(Array)
+          valid_tags = V7CMS::Tag.where(id: data['tag_ids'])
+          post.tags = valid_tags
+        end
         status 201
         json({ post: post_json(post) })
       else
@@ -624,6 +628,10 @@ module V7CMS
       post.comments_enabled = data['comments_enabled'] if data.key?('comments_enabled')
 
       if post.save
+        if data.key?('tag_ids') && data['tag_ids'].is_a?(Array)
+          valid_tags = V7CMS::Tag.where(id: data['tag_ids'])
+          post.tags = valid_tags
+        end
         json({ post: post_json(post) })
       else
         halt 422, json({ errors: post.errors.full_messages })
@@ -914,6 +922,81 @@ module V7CMS
     end
 
     # =========================================================================
+    # Tags API Routes
+    # =========================================================================
+
+    # GET /api/tags - List all tags
+    get '/api/tags' do
+      tags = V7CMS::Tag.ordered.left_joins(:posts).group(:id).select('tags.*, COUNT(posts.id) AS cached_posts_count')
+      json({ tags: tags.map { |t| tag_json(t) } })
+    end
+
+    # POST /api/tags - Create a tag
+    post '/api/tags' do
+      require_ajax_header
+      require_login
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      tag = V7CMS::Tag.new(name: data['name'])
+
+      if tag.save
+        status 201
+        json({ tag: tag_json(tag) })
+      else
+        halt 422, json({ errors: tag.errors.full_messages })
+      end
+    end
+
+    # PUT /api/tags/:id - Rename a tag
+    put '/api/tags/:id' do
+      require_ajax_header
+      require_login
+
+      tag = V7CMS::Tag.find_by(id: params[:id])
+      halt 404, json({ error: 'Tag not found' }) unless tag
+
+      begin
+        data = JSON.parse(request.body.read)
+      rescue JSON::ParserError
+        halt 422, json({ errors: ['Invalid JSON'] })
+      end
+
+      tag.name = data['name'] if data.key?('name')
+
+      if tag.save
+        json({ tag: tag_json(tag) })
+      else
+        halt 422, json({ errors: tag.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/tags/:id - Delete a tag
+    delete '/api/tags/:id' do
+      require_ajax_header
+      require_login
+
+      tag = V7CMS::Tag.find_by(id: params[:id])
+      halt 404, json({ error: 'Tag not found' }) unless tag
+
+      count = tag.posts.count
+      if count > 0
+        halt 409, json({ error: "Cannot delete tag with #{count} posts. Remove the tag from all posts first." })
+      end
+
+      # Nullify any pages using this tag as content filter
+      V7CMS::Page.where(content_filter_tag_id: tag.id).update_all(content_filter_tag_id: nil)
+
+      tag.destroy
+      status 204
+      body ''
+    end
+
+    # =========================================================================
     # Pages API Routes
     # =========================================================================
 
@@ -996,6 +1079,10 @@ module V7CMS
         halt 422, json({ errors: ['Invalid JSON'] })
       end
 
+      if data['content_filter_tag_id'].present? && !V7CMS::Tag.exists?(data['content_filter_tag_id'])
+        halt 422, json({ errors: ['Content filter tag not found'] })
+      end
+
       page = V7CMS::Page.new(
         title: data['title'],
         slug: data['slug'],
@@ -1006,7 +1093,8 @@ module V7CMS
         page_type: data['page_type'] || 'standard',
         content_source: data['content_source'] || 'children',
         items_limit: data['items_limit'] || 10,
-        hero_image_url: data['hero_image_url']
+        hero_image_url: data['hero_image_url'],
+        content_filter_tag_id: data['content_filter_tag_id']
       )
 
       if page.save
@@ -1045,6 +1133,12 @@ module V7CMS
       page.content_source = data['content_source'] if data.key?('content_source')
       page.items_limit = data['items_limit'] if data.key?('items_limit')
       page.hero_image_url = data['hero_image_url'] if data.key?('hero_image_url')
+      if data.key?('content_filter_tag_id')
+        if data['content_filter_tag_id'].present? && !V7CMS::Tag.exists?(data['content_filter_tag_id'])
+          halt 422, json({ errors: ['Content filter tag not found'] })
+        end
+        page.content_filter_tag_id = data['content_filter_tag_id']
+      end
 
       if page.save
         json({ page: page_json(page, include_relations: true) })
@@ -1684,7 +1778,18 @@ module V7CMS
         created_at: post.created_at,
         updated_at: post.updated_at,
         comments_enabled: post.comments_enabled,
-        comments_allowed: post.comments_allowed?
+        comments_allowed: post.comments_allowed?,
+        tags: post.tags.map { |t| { id: t.id, name: t.name, slug: t.slug } }
+      }
+    end
+
+    # Tag serialization helper
+    def tag_json(tag)
+      {
+        id: tag.id,
+        name: tag.name,
+        slug: tag.slug,
+        posts_count: tag.respond_to?(:cached_posts_count) ? tag.cached_posts_count : tag.posts.count
       }
     end
 
@@ -1770,6 +1875,8 @@ module V7CMS
         content_source: page.content_source,
         items_limit: page.items_limit,
         hero_image_url: page.hero_image_url,
+        content_filter_tag_id: page.content_filter_tag_id,
+        content_filter_tag: page.content_filter_tag ? { id: page.content_filter_tag.id, name: page.content_filter_tag.name, slug: page.content_filter_tag.slug } : nil,
         created_at: page.created_at,
         updated_at: page.updated_at
       }
