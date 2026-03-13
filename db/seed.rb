@@ -17,7 +17,7 @@ Post.create!(
 Post.create!(
   title: 'About This CMS',
   slug: 'about',
-  content: '<h2>Technology Stack</h2><p>v7cms is built with:</p><ul><li><strong>Backend:</strong> Ruby 3.2 with Sinatra framework</li><li><strong>Database:</strong> SQLite with ActiveRecord ORM</li><li><strong>Authentication:</strong> OmniAuth 2.0</li><li><strong>Frontend:</strong> Alpine.js, Tailwind CSS standalone, Quill.js</li></ul><p>The entire system is containerized with Docker for easy deployment.</p>',
+  content: '<h2>Technology Stack</h2><p>v7cms is built with:</p><ul><li><strong>Backend:</strong> Ruby 3.4 with Sinatra framework</li><li><strong>Database:</strong> SQLite with ActiveRecord ORM</li><li><strong>Authentication:</strong> OmniAuth 2.0</li><li><strong>Frontend:</strong> Alpine.js, Tailwind CSS standalone, Quill.js</li></ul><p>The entire system is containerized with Docker for easy deployment.</p>',
   published: true
 )
 
