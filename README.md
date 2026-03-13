@@ -1,6 +1,6 @@
 # v7cms
 
-[![Ruby](https://img.shields.io/badge/Ruby-3.2-red?logo=ruby)](https://www.ruby-lang.org/)
+[![Ruby](https://img.shields.io/badge/Ruby-3.4-red?logo=ruby)](https://www.ruby-lang.org/)
 [![Sinatra](https://img.shields.io/badge/Sinatra-3.0-lightgrey?logo=ruby)](https://sinatrarb.com/)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://opensource.org/licenses/EUPL-1.2)
 [![Tests](https://img.shields.io/badge/Tests-848%20passing-brightgreen)](spec/)
@@ -63,7 +63,7 @@ docker-compose run --rm web bundle exec rake db:migrate
 
 ## Requirements
 
-- Ruby 3.0+
+- Ruby 3.4+
 - SQLite3 (or PostgreSQL/MySQL)
 - Docker (optional, for development)
 
