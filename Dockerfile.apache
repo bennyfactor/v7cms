@@ -1,4 +1,4 @@
-FROM ruby:3.2-slim
+FROM ruby:3.4-slim
 
 # Install Apache, FastCGI, and dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,8 +33,8 @@ COPY .htaccess /var/www/v7cms/public/.htaccess
 RUN echo 'FcgidInitialEnv BUNDLE_PATH /var/www/v7cms/vendor/bundle\n\
 FcgidInitialEnv BUNDLE_DEPLOYMENT true\n\
 FcgidInitialEnv BUNDLE_GEMFILE /var/www/v7cms/Gemfile\n\
-FcgidInitialEnv GEM_HOME /var/www/v7cms/vendor/bundle/ruby/3.2.0\n\
-FcgidInitialEnv GEM_PATH /var/www/v7cms/vendor/bundle/ruby/3.2.0\n\
+FcgidInitialEnv GEM_HOME /var/www/v7cms/vendor/bundle/ruby/3.4.0\n\
+FcgidInitialEnv GEM_PATH /var/www/v7cms/vendor/bundle/ruby/3.4.0\n\
 \n\
 <VirtualHost *:80>\n\
     ServerName localhost\n\
