@@ -28,7 +28,7 @@ RSpec.describe 'Tags API', type: :request do
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
       expect(data['tags'].length).to eq(3)
-      expect(data['tags'].map { |t| t['name'] }).to eq(['Alpine', 'Ruby', 'Sinatra'])
+      expect(data['tags'].map { |t| t['name'] }).to eq(%w[Alpine Ruby Sinatra])
     end
 
     it 'includes id, name, slug, and posts_count for each tag' do
@@ -81,9 +81,9 @@ RSpec.describe 'Tags API', type: :request do
 
     context 'when logged in' do
       it 'creates a new tag and returns 201' do
-        expect {
+        expect do
           post '/api/tags', { name: 'New Tag' }.to_json, auth_json_headers(user)
-        }.to change(Tag, :count).by(1)
+        end.to change(Tag, :count).by(1)
 
         expect(last_response.status).to eq(201)
         data = JSON.parse(last_response.body)
@@ -201,9 +201,9 @@ RSpec.describe 'Tags API', type: :request do
       it 'deletes a tag with no posts and returns 204' do
         login_as(user)
 
-        expect {
+        expect do
           delete "/api/tags/#{tag.id}", {}, { 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
-        }.to change(Tag, :count).by(-1)
+        end.to change(Tag, :count).by(-1)
 
         expect(last_response.status).to eq(204)
         expect(Tag.find_by(id: tag.id)).to be_nil
