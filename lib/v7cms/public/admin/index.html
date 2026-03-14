@@ -495,84 +495,65 @@
                     </div>
 
                     <div class="bg-white rounded-lg shadow overflow-hidden">
-                        <!-- Pages pagination bar (top) -->
-                        <div x-show="pages.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-b border-gray-200">
-                            <span class="text-sm text-gray-600">
-                                Showing <span x-text="pagesPagination.loaded"></span> of <span x-text="pagesPagination.total"></span> pages
-                            </span>
-                            <button x-show="pagesPagination.loaded < pagesPagination.total"
-                                    @click="fetchPages(true)"
-                                    :disabled="pagesPagination.loading"
-                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
-                                <span x-text="pagesPagination.loading ? 'Loading...' : 'Load More'"></span>
-                            </button>
-                        </div>
-                        <template x-if="pages.length === 0">
+                        <template x-if="nestedPages.length === 0 && pages.length === 0">
                             <div class="p-8 text-center text-gray-500">
                                 <i class="fa-regular fa-file mx-auto h-12 w-12 text-gray-400 text-5xl"></i>
                                 <p class="mt-2">No pages yet. Create your first page!</p>
                             </div>
                         </template>
-                        <table x-show="pages.length > 0" class="min-w-full divide-y divide-gray-200">
+                        <table x-show="nestedPages.length > 0 || pages.length > 0" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <template x-for="page in pages" :key="page.id">
+                                <template x-for="row in flattenedPages" :key="row.id">
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900" x-text="page.title"></div>
+                                            <div class="flex items-center" :style="'padding-left: ' + (row.depth * 24) + 'px'">
+                                                <button x-show="row.children && row.children.length > 0"
+                                                        @click.stop="togglePageExpanded(row.id)"
+                                                        class="mr-2 text-gray-400 hover:text-gray-600 w-4 h-4 flex items-center justify-center">
+                                                    <i class="fa-solid fa-chevron-right text-xs transition-transform duration-200"
+                                                       :class="expandedPages[row.id] ? 'rotate-90' : ''"></i>
+                                                </button>
+                                                <span x-show="!row.children || row.children.length === 0" class="mr-2 w-4"></span>
+                                                <span class="text-sm font-medium text-gray-900" x-text="row.title"></span>
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-500" x-text="page.slug"></div>
+                                            <div class="text-sm text-gray-500" x-text="row.slug"></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-500" x-text="page.parent_id ? getPageTitle(page.parent_id) : '-'"></div>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800" x-text="row.page_type"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800" x-text="page.page_type"></span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span x-show="page.status === 'draft'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            <span x-show="row.status === 'draft'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                                 Draft
                                             </span>
-                                            <span x-show="page.status === 'ready'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                                            <span x-show="row.status === 'ready'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
                                                 Ready
                                             </span>
-                                            <span x-show="page.status === 'published'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            <span x-show="row.status === 'published'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Published
                                             </span>
-                                            <span x-show="page.has_unpublished_changes" class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800" title="Has unpublished changes">
+                                            <span x-show="row.has_unpublished_changes" class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800" title="Has unpublished changes">
                                                 <i class="fa-solid fa-pencil"></i>
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button @click="editPage(page)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                                            <button @click="deletePage(page)" class="text-red-600 hover:text-red-900">Delete</button>
+                                            <button @click="editPage(row)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                                            <button @click="deletePage(row)" class="text-red-600 hover:text-red-900">Delete</button>
                                         </td>
                                     </tr>
                                 </template>
                             </tbody>
                         </table>
-                        <!-- Pages pagination bar (bottom) -->
-                        <div x-show="pages.length > 0" class="flex justify-between items-center px-6 py-3 bg-gray-50 border-t border-gray-200">
-                            <span class="text-sm text-gray-600">
-                                Showing <span x-text="pagesPagination.loaded"></span> of <span x-text="pagesPagination.total"></span> pages
-                            </span>
-                            <button x-show="pagesPagination.loaded < pagesPagination.total"
-                                    @click="fetchPages(true)"
-                                    :disabled="pagesPagination.loading"
-                                    class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed">
-                                <span x-text="pagesPagination.loading ? 'Loading...' : 'Load More'"></span>
-                            </button>
-                        </div>
                     </div>
                 </div>
 

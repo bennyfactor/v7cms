@@ -1010,6 +1010,14 @@ module V7CMS
         V7CMS::Page.published.ordered
       end
 
+      # Return hierarchical structure when nested=true
+      if params[:nested] == 'true'
+        top_level_pages = pages_scope.top_level
+        return json({
+          pages: top_level_pages.map { |page| page_json_nested(page, 0, pages_scope) }
+        })
+      end
+
       # Apply top_level filter if requested
       pages_scope = pages_scope.top_level if params[:top_level] == 'true'
 
@@ -1891,6 +1899,14 @@ module V7CMS
       end
 
       result
+    end
+
+    # Nested page serialization helper for hierarchical tree view
+    def page_json_nested(page, depth, scope)
+      base = page_json(page)
+      base[:depth] = depth
+      base[:children] = page.children.merge(scope).map { |c| page_json_nested(c, depth + 1, scope) }
+      base
     end
 
     # Comment serialization helper
