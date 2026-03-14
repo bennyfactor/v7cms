@@ -479,14 +479,14 @@ RSpec.describe 'Posts API Routes' do
   end
 
   describe 'tag support' do
-    let(:tag1) { Tag.create!(name: 'Ruby', slug: 'ruby') }
-    let(:tag2) { Tag.create!(name: 'Sinatra', slug: 'sinatra') }
+    let(:ruby_tag) { Tag.create!(name: 'Ruby', slug: 'ruby') }
+    let(:sinatra_tag) { Tag.create!(name: 'Sinatra', slug: 'sinatra') }
     let(:post_record) { Post.create!(title: 'Tagged Post', slug: 'tagged-post', content: 'Content', status: 'ready') }
 
     describe 'GET /api/posts/:id' do
       it 'includes tags array in response' do
-        post_record.tags << tag1
-        post_record.tags << tag2
+        post_record.tags << ruby_tag
+        post_record.tags << sinatra_tag
         post_record.publish!
 
         get "/api/posts/#{post_record.id}"
@@ -497,11 +497,11 @@ RSpec.describe 'Posts API Routes' do
         expect(tags).to be_an(Array)
         expect(tags.length).to eq(2)
         tag_names = tags.map { |t| t['name'] }
-        expect(tag_names).to match_array(['Ruby', 'Sinatra'])
+        expect(tag_names).to match_array(%w[Ruby Sinatra])
       end
 
       it 'includes id, name, and slug for each tag' do
-        post_record.tags << tag1
+        post_record.tags << ruby_tag
         post_record.publish!
 
         get "/api/posts/#{post_record.id}"
@@ -526,18 +526,18 @@ RSpec.describe 'Posts API Routes' do
     describe 'POST /api/posts' do
       it 'assigns tags via tag_ids' do
         post '/api/posts',
-          { title: 'New Post', content: 'Content', tag_ids: [tag1.id, tag2.id] }.to_json,
+          { title: 'New Post', content: 'Content', tag_ids: [ruby_tag.id, sinatra_tag.id] }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response.status).to eq(201)
         data = JSON.parse(last_response.body)
         tag_names = data['post']['tags'].map { |t| t['name'] }
-        expect(tag_names).to match_array(['Ruby', 'Sinatra'])
+        expect(tag_names).to match_array(%w[Ruby Sinatra])
       end
 
       it 'ignores invalid tag_ids' do
         post '/api/posts',
-          { title: 'New Post', content: 'Content', tag_ids: [tag1.id, 99999] }.to_json,
+          { title: 'New Post', content: 'Content', tag_ids: [ruby_tag.id, 99999] }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response.status).to eq(201)
@@ -559,12 +559,12 @@ RSpec.describe 'Posts API Routes' do
 
     describe 'PUT /api/posts/:id' do
       before do
-        post_record.tags << tag1
+        post_record.tags << ruby_tag
       end
 
       it 'replaces tags when tag_ids provided' do
         put "/api/posts/#{post_record.id}",
-          { tag_ids: [tag2.id] }.to_json,
+          { tag_ids: [sinatra_tag.id] }.to_json,
           { 'rack.session' => { user_id: user.id }, 'CONTENT_TYPE' => 'application/json' }
 
         expect(last_response).to be_ok
