@@ -24,7 +24,7 @@ GEM
       public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
-    bigdecimal (3.3.1)
+    bigdecimal (4.0.1)
     brakeman (6.2.2)
       racc
     builder (3.3.0)
@@ -59,7 +59,8 @@ GEM
     ffi (1.17.2-x86_64-linux-gnu)
     gem-release (2.2.4)
     hashdiff (1.2.1)
-    hashie (5.0.0)
+    hashie (5.1.0)
+      logger
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
@@ -77,8 +78,8 @@ GEM
     method_source (1.1.0)
     mini_magick (4.13.2)
     minitest (5.26.1)
-    multi_xml (0.7.2)
-      bigdecimal (~> 3.1)
+    multi_xml (0.8.1)
+      bigdecimal (>= 3.1, < 5)
     mustermann (3.0.4)
       ruby2_keywords (~> 0.0.1)
     net-http (0.9.1)
@@ -106,13 +107,13 @@ GEM
     omniauth-github (2.0.1)
       omniauth (~> 2.0)
       omniauth-oauth2 (~> 1.8)
-    omniauth-google-oauth2 (1.2.1)
+    omniauth-google-oauth2 (1.2.2)
       jwt (>= 2.9.2)
       oauth2 (~> 2.0)
       omniauth (~> 2.0)
       omniauth-oauth2 (~> 1.8)
-    omniauth-oauth2 (1.8.0)
-      oauth2 (>= 1.4, < 3)
+    omniauth-oauth2 (1.9.0)
+      oauth2 (>= 2.0.2, < 3)
       omniauth (~> 2.0)
     parallel (1.27.0)
     parser (3.3.10.0)
@@ -253,7 +254,7 @@ DEPENDENCIES
   webmock (~> 3.18)
 
 RUBY VERSION
-   ruby 3.2.9p265
+   ruby 3.4.7p58
 
 BUNDLED WITH
    2.3.5
