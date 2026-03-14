@@ -11,6 +11,12 @@ RSpec.describe 'Pages API', type: :request do
     env 'rack.session', { user_id: user.id }
   end
 
+  def collect_nested_slugs(pages)
+    pages.flat_map do |page|
+      [page['slug']] + collect_nested_slugs(page['children'] || [])
+    end
+  end
+
   describe 'GET /api/pages' do
     before do
       @published1 = Page.create!(title: 'About', slug: 'about', position: 1)
@@ -68,6 +74,74 @@ RSpec.describe 'Pages API', type: :request do
       data = JSON.parse(last_response.body)
       expect(data['pages'].length).to eq(3)
       expect(data['pages'].map { |p| p['slug'] }).to match_array(['about', 'contact', 'services'])
+    end
+
+    describe 'nested=true' do
+      it 'returns hierarchical structure with children nested under parents' do
+        login_as(user)
+        get '/api/pages?include_drafts=true&nested=true'
+        expect(last_response).to be_ok
+
+        data = JSON.parse(last_response.body)
+        # Should only return top-level pages at root (including draft)
+        top_slugs = data['pages'].map { |p| p['slug'] }
+        expect(top_slugs).to include('about', 'contact', 'services', 'draft')
+        expect(top_slugs).not_to include('web-dev')
+
+        # web-dev should be nested under services
+        services = data['pages'].find { |p| p['slug'] == 'services' }
+        expect(services['children'].length).to eq(1)
+        expect(services['children'].first['slug']).to eq('web-dev')
+      end
+
+      it 'includes depth values at each level' do
+        login_as(user)
+        get '/api/pages?include_drafts=true&nested=true'
+
+        data = JSON.parse(last_response.body)
+        # Top-level pages have depth 0
+        data['pages'].each do |page|
+          expect(page['depth']).to eq(0)
+        end
+
+        # Child pages have depth 1
+        services = data['pages'].find { |p| p['slug'] == 'services' }
+        services['children'].each do |child|
+          expect(child['depth']).to eq(1)
+        end
+      end
+
+      it 'handles deeply nested pages' do
+        login_as(user)
+        grandchild = Page.create!(title: 'Ruby Dev', slug: 'ruby-dev', parent: @child, position: 1)
+        grandchild.publish!
+
+        get '/api/pages?include_drafts=true&nested=true'
+
+        data = JSON.parse(last_response.body)
+        services = data['pages'].find { |p| p['slug'] == 'services' }
+        web_dev = services['children'].find { |c| c['slug'] == 'web-dev' }
+        expect(web_dev['children'].length).to eq(1)
+        expect(web_dev['children'].first['slug']).to eq('ruby-dev')
+        expect(web_dev['children'].first['depth']).to eq(2)
+      end
+
+      it 'returns only published nested pages when not logged in' do
+        get '/api/pages?nested=true'
+        expect(last_response).to be_ok
+
+        data = JSON.parse(last_response.body)
+        # Draft page should not appear
+        all_slugs = collect_nested_slugs(data['pages'])
+        expect(all_slugs).not_to include('draft')
+      end
+
+      it 'does not include pagination metadata' do
+        get '/api/pages?nested=true'
+
+        data = JSON.parse(last_response.body)
+        expect(data).not_to have_key('pagination')
+      end
     end
 
     describe 'pagination' do
@@ -749,8 +823,8 @@ RSpec.describe 'Pages API', type: :request do
       it 'rejects invalid content_filter_tag_id on create' do
         login_as(user)
         post '/api/pages',
-          { title: 'Bad Tag', slug: 'bad-tag', content_filter_tag_id: 99999 }.to_json,
-          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+             { title: 'Bad Tag', slug: 'bad-tag', content_filter_tag_id: 99999 }.to_json,
+             'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
 
         expect(last_response.status).to eq(422)
         data = JSON.parse(last_response.body)
@@ -761,8 +835,8 @@ RSpec.describe 'Pages API', type: :request do
         login_as(user)
         page = Page.create!(title: 'Test FK', slug: 'test-fk-page')
         put "/api/pages/#{page.id}",
-          { content_filter_tag_id: 99999 }.to_json,
-          'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
+            { content_filter_tag_id: 99999 }.to_json,
+            'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'
 
         expect(last_response.status).to eq(422)
         data = JSON.parse(last_response.body)
