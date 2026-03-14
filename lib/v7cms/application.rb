@@ -28,6 +28,7 @@ module V7CMS
 
     # Include helpers
     helpers V7CMS::AuthHelper
+    helpers V7CMS::CdnHelper
 
     # Enable sessions for authentication
     enable :sessions
