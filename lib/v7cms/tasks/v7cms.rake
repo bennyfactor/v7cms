@@ -534,4 +534,69 @@ namespace :v7cms do
     deleted = V7CMS::ContentVersion.cleanup_expired!
     puts "Deleted #{deleted} expired content versions"
   end
+
+  desc 'Update CDN URLs in static HTML files from config/cdn_versions.rb'
+  task :update_cdn do
+    require_relative '../config/cdn_versions'
+
+    gem_public = File.expand_path('../../v7cms/public', __dir__)
+
+    # Map of files to their CDN URL patterns
+    replacements = {
+      File.join(gem_public, 'admin', 'index.html') => {
+        # Alpine.js
+        %r{cdn\.jsdelivr\.net/npm/alpinejs@[\d.]+/dist/cdn\.min\.js} =>
+          V7CMS.cdn_url(:alpine, :js).sub('https://', ''),
+        # Quill JS
+        %r{cdn\.quilljs\.com/[\d.]+/quill\.js} =>
+          V7CMS.cdn_url(:quill, :js).sub('https://', ''),
+        # Quill CSS
+        %r{cdn\.quilljs\.com/[\d.]+/quill\.snow\.css} =>
+          V7CMS.cdn_url(:quill, :css).sub('https://', ''),
+        # Font Awesome
+        %r{cdnjs\.cloudflare\.com/ajax/libs/font-awesome/[\d.]+/css/all\.min\.css} =>
+          V7CMS.cdn_url(:font_awesome, :css).sub('https://', '')
+      },
+      File.join(gem_public, 'api-docs.html') => {
+        # Swagger UI CSS
+        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui\.css} =>
+          V7CMS.cdn_url(:swagger_ui, :css).sub('https://', ''),
+        # Swagger UI bundle JS
+        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui-bundle\.js} =>
+          V7CMS.cdn_url(:swagger_ui, :js).sub('https://', ''),
+        # Swagger UI standalone preset JS
+        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui-standalone-preset\.js} =>
+          V7CMS.cdn_url(:swagger_ui, :js2).sub('https://', '')
+      }
+    }
+
+    replacements.each do |file_path, patterns|
+      unless File.exist?(file_path)
+        puts "  Skipped: #{file_path} (not found)"
+        next
+      end
+
+      content = File.read(file_path)
+      updated = 0
+
+      patterns.each do |pattern, replacement|
+        if content.gsub!(pattern, replacement)
+          updated += 1
+        end
+      end
+
+      if updated > 0
+        File.write(file_path, content)
+        puts "  Updated: #{File.basename(file_path)} (#{updated} URLs)"
+      else
+        puts "  No changes: #{File.basename(file_path)}"
+      end
+    end
+
+    puts
+    puts 'CDN versions:'
+    V7CMS::CDN_VERSIONS.each do |name, config|
+      puts "  #{name}: #{config[:version]}"
+    end
+  end
 end
