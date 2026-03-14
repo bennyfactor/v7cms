@@ -545,27 +545,27 @@ namespace :v7cms do
     replacements = {
       File.join(gem_public, 'admin', 'index.html') => {
         # Alpine.js
-        %r{cdn\.jsdelivr\.net/npm/alpinejs@[\d.]+/dist/cdn\.min\.js} =>
+        %r{cdn\.jsdelivr\.net/npm/alpinejs@[\w.]+/dist/cdn\.min\.js} =>
           V7CMS.cdn_url(:alpine, :js).sub('https://', ''),
         # Quill JS
-        %r{cdn\.quilljs\.com/[\d.]+/quill\.js} =>
+        %r{cdn\.quilljs\.com/[\w.]+/quill\.js} =>
           V7CMS.cdn_url(:quill, :js).sub('https://', ''),
         # Quill CSS
-        %r{cdn\.quilljs\.com/[\d.]+/quill\.snow\.css} =>
+        %r{cdn\.quilljs\.com/[\w.]+/quill\.snow\.css} =>
           V7CMS.cdn_url(:quill, :css).sub('https://', ''),
         # Font Awesome
-        %r{cdnjs\.cloudflare\.com/ajax/libs/font-awesome/[\d.]+/css/all\.min\.css} =>
+        %r{cdnjs\.cloudflare\.com/ajax/libs/font-awesome/[\w.]+/css/all\.min\.css} =>
           V7CMS.cdn_url(:font_awesome, :css).sub('https://', '')
       },
       File.join(gem_public, 'api-docs.html') => {
         # Swagger UI CSS
-        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui\.css} =>
+        %r{unpkg\.com/swagger-ui-dist@[\w.]+/swagger-ui\.css} =>
           V7CMS.cdn_url(:swagger_ui, :css).sub('https://', ''),
         # Swagger UI bundle JS
-        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui-bundle\.js} =>
+        %r{unpkg\.com/swagger-ui-dist@[\w.]+/swagger-ui-bundle\.js} =>
           V7CMS.cdn_url(:swagger_ui, :js).sub('https://', ''),
         # Swagger UI standalone preset JS
-        %r{unpkg\.com/swagger-ui-dist@[\d.]+/swagger-ui-standalone-preset\.js} =>
+        %r{unpkg\.com/swagger-ui-dist@[\w.]+/swagger-ui-standalone-preset\.js} =>
           V7CMS.cdn_url(:swagger_ui, :js2).sub('https://', '')
       }
     }

@@ -518,6 +518,8 @@
                                             <div class="flex items-center" :style="'padding-left: ' + (row.depth * 24) + 'px'">
                                                 <button x-show="row.children && row.children.length > 0"
                                                         @click.stop="togglePageExpanded(row.id)"
+                                                        :aria-label="(expandedPages[row.id] ? 'Collapse ' : 'Expand ') + row.title"
+                                                        :aria-expanded="expandedPages[row.id] ? 'true' : 'false'"
                                                         class="mr-2 text-gray-400 hover:text-gray-600 w-4 h-4 flex items-center justify-center">
                                                     <i class="fa-solid fa-chevron-right text-xs transition-transform duration-200"
                                                        :class="expandedPages[row.id] ? 'rotate-90' : ''"></i>
