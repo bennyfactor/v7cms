@@ -10,7 +10,8 @@ module V7CMS
 
       url = V7CMS.cdn_url(library, asset_key)
       attrs = lib[:"#{asset_key}_attrs"]
-      "<script#{attrs ? " #{attrs}" : ''} src=\"#{url}\"></script>"
+      attr_str = attrs ? " #{attrs}" : ''
+      "<script#{attr_str} src=\"#{url}\"></script>"
     end
 
     # Generate a <link> tag for a CDN library's CSS
@@ -21,7 +22,8 @@ module V7CMS
 
       url = V7CMS.cdn_url(library, asset_key)
       attrs = lib[:"#{asset_key}_attrs"]
-      "<link rel=\"stylesheet\" href=\"#{url}\"#{attrs ? " #{attrs}" : ''}>"
+      attr_str = attrs ? " #{attrs}" : ''
+      "<link rel=\"stylesheet\" href=\"#{url}\"#{attr_str}>"
     end
   end
 end
