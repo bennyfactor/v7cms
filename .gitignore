@@ -3,6 +3,9 @@
 
 *.mg
 *.gem
+
+# Superpowers brainstorm files
+.superpowers/
 *.rbc
 /.config
 /coverage/
