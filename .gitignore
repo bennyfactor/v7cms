@@ -3,6 +3,9 @@
 
 *.mg
 *.gem
+
+***REMOVED***
+***REMOVED***
 *.rbc
 /.config
 /coverage/
