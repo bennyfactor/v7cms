@@ -10,11 +10,13 @@ module V7CMS
     belongs_to :linkable, polymorphic: true, optional: true
 
     LINK_TYPES = %w[page post custom].freeze
+    TARGETS = %w[_blank _self _parent _top].freeze
 
     validates :label, presence: true
     validates :link_type, inclusion: { in: LINK_TYPES }
     validates :url, presence: true, if: -> { link_type == 'custom' }
     validates :linkable, presence: true, if: -> { link_type.in?(%w[page post]) }
+    validates :target, inclusion: { in: TARGETS }, allow_blank: true
     validate :prevent_circular_reference
     validate :enforce_max_depth
 
