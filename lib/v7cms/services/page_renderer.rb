@@ -17,23 +17,23 @@ module V7CMS
       new(page).render_html
     end
 
-    def self.write_static_file(page)
-      new(page).write_file
+    def self.write_static_file(page, header_html: nil, footer_html: nil)
+      new(page, header_html: header_html, footer_html: footer_html).write_file
     end
 
     def self.delete_static_file(page)
       new(page).delete_file
     end
 
-    def initialize(page)
+    def initialize(page, header_html: nil, footer_html: nil)
       @page = page
       @settings = V7CMS::Setting.instance
       # Use published version for rendering if available
       @version = page.published_version
       @title = @version ? @version.title : page.title
       @content = @version ? @version.content : page.content
-      @header_menu_html = V7CMS::MenuHelper.render_menu('header')
-      @footer_menu_html = V7CMS::MenuHelper.render_menu('footer')
+      @header_menu_html = header_html || V7CMS::MenuHelper.render_menu('header')
+      @footer_menu_html = footer_html || V7CMS::MenuHelper.render_menu('footer')
     end
 
     def render_html
