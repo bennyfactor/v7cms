@@ -1733,7 +1733,7 @@ module V7CMS
         name: menu.name,
         slug: menu.slug,
         location: menu.location,
-        item_count: menu.menu_items.count,
+        item_count: menu.menu_items_count,
         created_at: menu.created_at&.iso8601
       }
       result[:items] = menu.nested_items if include_items
