@@ -3,6 +3,8 @@
 require_relative '../spec_helper'
 
 RSpec.describe V7CMS::MenuHelper do
+  before { described_class.clear_render_cache }
+
   describe '.render_menu' do
     it 'returns empty string when no menu exists for location' do
       expect(described_class.render_menu('header')).to eq('')
@@ -49,6 +51,7 @@ RSpec.describe V7CMS::MenuHelper do
 
       html = described_class.render_menu('header')
       expect(html).to include('target="_blank"')
+      expect(html).to include('rel="noopener noreferrer"')
     end
 
     it 'renders page links with correct href' do
