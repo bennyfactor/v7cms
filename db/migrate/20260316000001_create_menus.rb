@@ -30,8 +30,14 @@ class CreateMenus < ActiveRecord::Migration[7.0]
 
     reversible do |dir|
       dir.up do
-        menu = V7CMS::Menu.create!(name: 'Main', slug: 'main', location: 'header')
-        menu.menu_items.create!(label: 'Home', link_type: 'custom', url: '/', position: 0)
+        execute <<-SQL.squish
+          INSERT INTO menus (name, slug, location, created_at, updated_at)
+          VALUES ('Main', 'main', 'header', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        SQL
+        execute <<-SQL.squish
+          INSERT INTO menu_items (menu_id, label, link_type, url, position, created_at, updated_at)
+          VALUES ((SELECT id FROM menus WHERE slug = 'main'), 'Home', 'custom', '/', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        SQL
       end
     end
   end

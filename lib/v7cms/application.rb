@@ -1794,6 +1794,8 @@ module V7CMS
       else
         halt 422, json({ errors: menu.errors.full_messages })
       end
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # PUT /api/menus/:id - Update menu
@@ -1815,6 +1817,8 @@ module V7CMS
       else
         halt 422, json({ errors: menu.errors.full_messages })
       end
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # DELETE /api/menus/:id - Delete menu
@@ -1840,7 +1844,7 @@ module V7CMS
       data = JSON.parse(request.body.read)
       item = menu.menu_items.build(
         label: data['label'],
-        link_type: data['link_type'],
+        link_type: data['link_type'] || 'custom',
         url: data['url'],
         target: data['target'],
         parent_id: data['parent_id'],
@@ -1856,6 +1860,8 @@ module V7CMS
       else
         halt 422, json({ errors: item.errors.full_messages })
       end
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # PUT /api/menu-items/:id - Update menu item
@@ -1883,6 +1889,8 @@ module V7CMS
       else
         halt 422, json({ errors: item.errors.full_messages })
       end
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # DELETE /api/menu-items/:id - Delete menu item
@@ -1925,6 +1933,8 @@ module V7CMS
 
       menu.regenerate_all_static_files
       json({ success: true, menu: menu_json(menu, include_items: true) })
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # =========================================================================

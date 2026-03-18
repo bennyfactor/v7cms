@@ -67,7 +67,7 @@ module V7CMS
         url: url,
         parent_id: parent_id,
         position: position,
-        children: children.includes(:linkable).map(&:to_nested_hash)
+        children: children.map(&:to_nested_hash)
       }
     end
 
