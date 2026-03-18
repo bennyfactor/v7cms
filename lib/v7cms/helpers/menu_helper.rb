@@ -25,34 +25,43 @@ module V7CMS
     end
 
     def render_footer_menu(items)
-      links = items.map do |item|
-        target_attr = item.target.present? ? " target=\"#{h(item.target)}\"" : ''
-        "<a href=\"#{h(item.href)}\" class=\"text-gray-600 hover:text-gray-900 transition\"#{target_attr}>#{h(item.label)}</a>"
-      end
+      links = items.map { |item| render_link(item, 'text-gray-600 hover:text-gray-900 transition') }
       "<nav class=\"flex flex-wrap gap-x-4 gap-y-2 justify-center text-sm mb-3\">#{links.join("\n")}</nav>"
     end
 
     def render_nav_item(item)
-      target_attr = item.target.present? ? " target=\"#{h(item.target)}\"" : ''
       children = item.children.includes(:linkable)
 
       if children.any?
-        child_links = children.map do |child|
-          child_target = child.target.present? ? " target=\"#{h(child.target)}\"" : ''
-          "<a href=\"#{h(child.href)}\" class=\"block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition\"#{child_target}>#{h(child.label)}</a>"
-        end.join("\n")
-
-        <<~HTML
-          <div class="relative group">
-            <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition"#{target_attr}>#{h(item.label)}</a>
-            <div class="hidden group-hover:block absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
-              #{child_links}
-            </div>
-          </div>
-        HTML
+        render_dropdown(item, children)
       else
-        "<a href=\"#{h(item.href)}\" class=\"text-gray-600 hover:text-gray-900 transition\"#{target_attr}>#{h(item.label)}</a>"
+        render_link(item, 'text-gray-600 hover:text-gray-900 transition')
       end
+    end
+
+    def render_dropdown(item, children)
+      target_attr = target_attribute(item)
+      child_links = children.map do |child|
+        render_link(child, 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition')
+      end.join("\n")
+
+      <<~HTML
+        <div class="relative group">
+          <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition"#{target_attr}>#{h(item.label)}</a>
+          <div class="hidden group-hover:block absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
+            #{child_links}
+          </div>
+        </div>
+      HTML
+    end
+
+    def render_link(item, css_class)
+      target_attr = target_attribute(item)
+      "<a href=\"#{h(item.href)}\" class=\"#{css_class}\"#{target_attr}>#{h(item.label)}</a>"
+    end
+
+    def target_attribute(item)
+      item.target.present? ? " target=\"#{h(item.target)}\"" : ''
     end
 
     def h(str)

@@ -1852,7 +1852,7 @@ module V7CMS
         url: data['url'],
         target: data['target'],
         parent_id: data['parent_id'],
-        position: data['position'] || menu.menu_items.maximum(:position).to_i + 1,
+        position: data['position'] || (menu.menu_items.maximum(:position).to_i + 1),
         linkable_type: data['linkable_type'],
         linkable_id: data['linkable_id']
       )
