@@ -3,6 +3,7 @@
 require 'erb'
 require 'fileutils'
 require 'logger'
+require_relative '../helpers/menu_helper'
 
 module V7CMS
   class PageRenderer
@@ -31,6 +32,8 @@ module V7CMS
       @version = page.published_version
       @title = @version ? @version.title : page.title
       @content = @version ? @version.content : page.content
+      @header_menu_html = V7CMS::MenuHelper.render_menu('header')
+      @footer_menu_html = V7CMS::MenuHelper.render_menu('footer')
     end
 
     def render_html
@@ -130,8 +133,8 @@ module V7CMS
                             <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                             <% end %>
                         </div>
-                        <nav class="flex space-x-6" id="main-nav">
-                            <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
+                        <nav class="flex space-x-6 items-center" id="main-nav">
+                            <%= @header_menu_html %>
                             <!-- Admin link injected via JavaScript -->
                         </nav>
                     </div>
@@ -211,6 +214,7 @@ module V7CMS
             <!-- Footer -->
             <footer class="bg-white border-t mt-auto">
                 <div class="max-w-4xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
+                    <%= @footer_menu_html %>
                     <p>
                         <% if @settings.show_copyright_year %>
                         &copy; <%= Time.now.year %>
