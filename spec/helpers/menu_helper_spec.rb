@@ -71,5 +71,14 @@ RSpec.describe V7CMS::MenuHelper do
       expect(html).to include('Privacy')
       expect(html).to include('href="/privacy"')
     end
+
+    it 'applies custom css_class to rendered links' do
+      menu = V7CMS::Menu.create!(name: 'Main', location: 'header')
+      menu.menu_items.create!(label: 'Styled', link_type: 'custom', url: '/styled', css_class: 'text-red-500 font-bold')
+
+      html = described_class.render_menu('header')
+      expect(html).to include('text-red-500')
+      expect(html).to include('font-bold')
+    end
   end
 end

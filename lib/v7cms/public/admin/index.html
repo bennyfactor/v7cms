@@ -1011,6 +1011,12 @@
                                     <span class="text-sm text-gray-700">Open in new tab</span>
                                 </label>
                             </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">CSS Classes</label>
+                                <input type="text" x-model="currentMenuItem.css_class" placeholder="e.g. text-red-500 font-bold"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <p class="text-xs text-gray-500 mt-1">CSS classes without the dot prefix (e.g. <code>text-red-500 font-bold</code>)</p>
+                            </div>
                             <div class="flex gap-2 mt-4 justify-end">
                                 <button @click="showItemForm = false; currentMenuItem = {}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">Cancel</button>
                                 <button @click="saveMenuItem()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">

@@ -36,7 +36,9 @@ module V7CMS
     validate :enforce_max_depth
     validate :safe_url
     validate :validate_same_menu_parent
+    validate :valid_css_classes
 
+    before_validation :normalize_css_class
     after_commit :trigger_static_regeneration, unless: -> { self.class.suppress_regeneration? }
 
     def href
@@ -97,6 +99,20 @@ module V7CMS
       return if parent.menu_id == menu_id
 
       errors.add(:parent_id, 'must belong to the same menu')
+    end
+
+    def normalize_css_class
+      return if css_class.blank?
+      self.css_class = css_class.split(/\s+/).map { |token| token.delete_prefix('.') }.join(' ')
+    end
+
+    def valid_css_classes
+      return if css_class.blank?
+      css_class.split(/\s+/).each do |token|
+        next if token.match?(/\A[a-zA-Z_-][a-zA-Z0-9_-]*\z/)
+        errors.add(:css_class, "contains invalid class name '#{token}'")
+        return
+      end
     end
 
     def trigger_static_regeneration
