@@ -70,6 +70,16 @@ RSpec.describe V7CMS::MenuHelper do
       expect(html).to include('href="/privacy"')
     end
 
+    it 'renders only top-level items for footer menus' do
+      menu = V7CMS::Menu.create!(name: 'Footer', location: 'footer')
+      parent = menu.menu_items.create!(label: 'Legal', link_type: 'custom', url: '/legal', position: 0)
+      menu.menu_items.create!(label: 'Terms', link_type: 'custom', url: '/terms', position: 0, parent: parent)
+
+      html = described_class.render_menu('footer')
+      expect(html).to include('Legal')
+      expect(html).not_to include('Terms')
+    end
+
     it 'applies custom css_class to rendered links' do
       menu = V7CMS::Menu.create!(name: 'Main', location: 'header')
       menu.menu_items.create!(label: 'Styled', link_type: 'custom', url: '/styled', css_class: 'text-red-500 font-bold')
