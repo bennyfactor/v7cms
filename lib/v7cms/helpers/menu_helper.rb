@@ -41,7 +41,7 @@ module V7CMS
 
     def render_dropdown(item, children)
       target_attr = target_attribute(item)
-      extra = item.respond_to?(:css_class) && item.css_class.present? ? " #{h(item.css_class)}" : ''
+      extra = item.css_class.present? ? " #{h(item.css_class)}" : ''
       child_links = children.map do |child|
         render_link(child, 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition')
       end.join("\n")
@@ -57,7 +57,7 @@ module V7CMS
     end
 
     def render_link(item, css_class)
-      extra = item.respond_to?(:css_class) && item.css_class.present? ? " #{h(item.css_class)}" : ''
+      extra = item.css_class.present? ? " #{h(item.css_class)}" : ''
       target_attr = target_attribute(item)
       "<a href=\"#{h(item.href)}\" class=\"#{css_class}#{extra}\"#{target_attr}>#{h(item.label)}</a>"
     end

@@ -60,6 +60,13 @@ module V7CMS
         label: label,
         href: href,
         target: target,
+        css_class: css_class,
+        link_type: link_type,
+        linkable_type: linkable_type,
+        linkable_id: linkable_id,
+        url: url,
+        parent_id: parent_id,
+        position: position,
         children: children.includes(:linkable).map(&:to_nested_hash)
       }
     end
