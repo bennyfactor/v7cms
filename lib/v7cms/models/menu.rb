@@ -37,9 +37,11 @@ module V7CMS
       require_relative '../services/post_renderer'
       require_relative '../services/page_renderer'
 
-      V7CMS::MenuHelper.clear_render_cache
-      V7CMS::Post.published.find_each { |post| PostRenderer.write_static_file(post) }
-      V7CMS::Page.published.find_each { |page| PageRenderer.write_static_file(page) }
+      header_html = V7CMS::MenuHelper.render_menu('header')
+      footer_html = V7CMS::MenuHelper.render_menu('footer')
+
+      V7CMS::Post.published.find_each { |post| PostRenderer.write_static_file(post, header_html: header_html, footer_html: footer_html) }
+      V7CMS::Page.published.find_each { |page| PageRenderer.write_static_file(page, header_html: header_html, footer_html: footer_html) }
     end
 
     private
