@@ -124,11 +124,11 @@ RSpec.describe 'Menus API', type: :request do
       menu = V7CMS::Menu.create!(name: 'Test')
       menu.menu_items.create!(label: 'Home', link_type: 'custom', url: '/')
 
-      expect {
+      expect do
         delete "/api/menus/#{menu.id}", nil,
                { 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
-      }.to change(V7CMS::Menu, :count).by(-1)
-        .and change(V7CMS::MenuItem, :count).by(-1)
+      end.to change(V7CMS::Menu, :count).by(-1)
+                                        .and change(V7CMS::MenuItem, :count).by(-1)
 
       expect(last_response).to be_ok
     end
@@ -212,10 +212,10 @@ RSpec.describe 'Menus API', type: :request do
       menu = V7CMS::Menu.create!(name: 'Main')
       item = menu.menu_items.create!(label: 'Test', link_type: 'custom', url: '/')
 
-      expect {
+      expect do
         delete "/api/menu-items/#{item.id}", nil,
                { 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
-      }.to change(V7CMS::MenuItem, :count).by(-1)
+      end.to change(V7CMS::MenuItem, :count).by(-1)
 
       expect(last_response).to be_ok
     end
@@ -250,7 +250,7 @@ RSpec.describe 'Menus API', type: :request do
       put "/api/menus/#{menu.id}/reorder",
           { items: [
             { id: item1.id, position: 1, parent_id: nil },
-            { id: item2.id, position: 0, parent_id: nil }
+            { id: item2.id, position: 0, parent_id: nil },
           ] }.to_json,
           { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
 
@@ -268,7 +268,7 @@ RSpec.describe 'Menus API', type: :request do
       put "/api/menus/#{menu.id}/reorder",
           { items: [
             { id: item1.id, position: 0, parent_id: nil },
-            { id: item2.id, position: 0, parent_id: item1.id }
+            { id: item2.id, position: 0, parent_id: item1.id },
           ] }.to_json,
           { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
 
