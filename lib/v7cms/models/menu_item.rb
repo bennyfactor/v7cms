@@ -85,7 +85,8 @@ module V7CMS
 
     def safe_url
       return if url.blank?
-      if url.match?(/\%2f/i)
+
+      if url.match?(/%2f/i)
         errors.add(:url, 'must not contain encoded slashes')
         return
       end
@@ -107,16 +108,15 @@ module V7CMS
 
     def normalize_css_class
       return if css_class.blank?
+
       self.css_class = css_class.split(/\s+/).map { |token| token.delete_prefix('.') }.join(' ')
     end
 
     def valid_css_classes
       return if css_class.blank?
-      css_class.split(/\s+/).each do |token|
-        next if token.match?(/\A[a-zA-Z_-][a-zA-Z0-9_-]*\z/)
-        errors.add(:css_class, "contains invalid class name '#{token}'")
-        return
-      end
+
+      invalid = css_class.split(/\s+/).grep_v(/\A[a-zA-Z_-][a-zA-Z0-9_-]*\z/)
+      errors.add(:css_class, "contains invalid class name '#{invalid.first}'") if invalid.any?
     end
 
     def trigger_static_regeneration

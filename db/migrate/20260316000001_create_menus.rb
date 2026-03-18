@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CreateMenus < ActiveRecord::Migration[7.0]
-  def change
+  def change # rubocop:disable Metrics/AbcSize
     create_table :menus do |t|
       t.string :name, null: false
       t.string :slug, null: false
@@ -25,8 +25,8 @@ class CreateMenus < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
-    add_index :menu_items, %i[menu_id position]
-    add_index :menu_items, %i[linkable_type linkable_id]
+    add_index :menu_items, [:menu_id, :position]
+    add_index :menu_items, [:linkable_type, :linkable_id]
 
     reversible do |dir|
       dir.up do
