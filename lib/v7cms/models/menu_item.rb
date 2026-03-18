@@ -5,7 +5,7 @@ module V7CMS
     belongs_to :menu
     belongs_to :parent, class_name: 'V7CMS::MenuItem', optional: true
     has_many :children, -> { order(:position) }, class_name: 'V7CMS::MenuItem',
-             foreign_key: :parent_id, dependent: :destroy
+                                                 foreign_key: :parent_id, dependent: :destroy
 
     belongs_to :linkable, polymorphic: true, optional: true
 
@@ -51,26 +51,26 @@ module V7CMS
     def prevent_circular_reference
       return if parent_id.nil?
 
-      if parent_id == id
-        errors.add(:parent_id, 'cannot be self')
-      end
+      return unless parent_id == id
+
+      errors.add(:parent_id, 'cannot be self')
     end
 
     def enforce_max_depth
       return if parent_id.nil?
       return unless parent
 
-      if parent.parent_id.present?
-        errors.add(:parent_id, 'maximum nesting depth is 2 levels')
-      end
+      return unless parent.parent_id.present?
+
+      errors.add(:parent_id, 'maximum nesting depth is 2 levels')
     end
 
     def safe_url
       return if url.blank?
 
-      if url.match?(/\Ajavascript:/i)
-        errors.add(:url, 'cannot use javascript: protocol')
-      end
+      return unless url.match?(/\Ajavascript:/i)
+
+      errors.add(:url, 'cannot use javascript: protocol')
     end
 
     def trigger_static_regeneration
