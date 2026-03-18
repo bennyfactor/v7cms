@@ -221,25 +221,6 @@ RSpec.describe 'Menus API', type: :request do
     end
   end
 
-  describe 'GET /api/menus/:slug/render' do
-    it 'returns rendered menu HTML without authentication' do
-      menu = V7CMS::Menu.create!(name: 'Main', location: 'header')
-      menu.menu_items.create!(label: 'Home', link_type: 'custom', url: '/')
-
-      get '/api/menus/header/render'
-      expect(last_response).to be_ok
-
-      data = JSON.parse(last_response.body)
-      expect(data['html']).to include('Home')
-      expect(data['html']).to include('href="/"')
-    end
-
-    it 'returns 404 for missing menu' do
-      get '/api/menus/nonexistent/render'
-      expect(last_response.status).to eq(404)
-    end
-  end
-
   describe 'PUT /api/menus/:id/reorder' do
     it 'reorders menu items' do
       login_as(user)

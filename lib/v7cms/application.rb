@@ -1766,15 +1766,6 @@ module V7CMS
       json({ menus: menus.map { |m| menu_json(m) } })
     end
 
-    # GET /api/menus/:slug/render - Render menu HTML (public, no auth)
-    get '/api/menus/:slug/render' do
-      menu = V7CMS::Menu.at_location(params[:slug]) || V7CMS::Menu.by_slug(params[:slug])
-      halt 404, json({ error: 'Menu not found' }) unless menu
-
-      html = V7CMS::MenuHelper.render_menu(params[:slug])
-      json({ html: html })
-    end
-
     # GET /api/menus/:id - Get menu by id or slug with nested items
     get '/api/menus/:id' do
       require_login
