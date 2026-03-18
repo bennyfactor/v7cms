@@ -64,6 +64,40 @@ RSpec.describe V7CMS::MenuItem do
         expect(item.errors[:target]).to be_empty
       end
     end
+
+    it 'rejects javascript: URLs' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: 'javascript:alert(1)')
+      expect(item).not_to be_valid
+      expect(item.errors[:url]).to be_present
+    end
+
+    it 'rejects data: URLs' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: 'data:text/html,<h1>hi</h1>')
+      expect(item).not_to be_valid
+      expect(item.errors[:url]).to be_present
+    end
+
+    it 'allows valid URL formats' do
+      %w[/ /about https://example.com http://example.com mailto:test@example.com #section].each do |u|
+        item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: u)
+        item.valid?
+        expect(item.errors[:url]).to be_empty, "Expected #{u} to be valid but got: #{item.errors[:url]}"
+      end
+    end
+
+    it 'rejects invalid linkable_type' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', linkable_type: 'V7CMS::User')
+      expect(item).not_to be_valid
+      expect(item.errors[:linkable_type]).to be_present
+    end
+
+    it 'allows valid linkable_types' do
+      %w[V7CMS::Page V7CMS::Post].each do |lt|
+        item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', linkable_type: lt)
+        item.valid?
+        expect(item.errors[:linkable_type]).to be_empty
+      end
+    end
   end
 
   describe 'max depth enforcement' do

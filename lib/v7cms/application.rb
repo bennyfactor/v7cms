@@ -1914,15 +1914,18 @@ module V7CMS
       data = JSON.parse(request.body.read)
       items = data['items'] || []
 
-      ActiveRecord::Base.transaction do
-        items.each do |item_data|
-          item = menu.menu_items.find_by(id: item_data['id'])
-          next unless item
+      V7CMS::MenuItem.suppress_regeneration do
+        ActiveRecord::Base.transaction do
+          items.each do |item_data|
+            item = menu.menu_items.find_by(id: item_data['id'])
+            next unless item
 
-          item.update!(position: item_data['position'], parent_id: item_data['parent_id'])
+            item.update!(position: item_data['position'], parent_id: item_data['parent_id'])
+          end
         end
       end
 
+      menu.regenerate_all_static_files
       json({ success: true, menu: menu_json(menu, include_items: true) })
     end
 

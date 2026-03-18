@@ -9,19 +9,34 @@ module V7CMS
 
     belongs_to :linkable, polymorphic: true, optional: true
 
+    thread_mattr_accessor :skip_regeneration
+
+    def self.suppress_regeneration?
+      skip_regeneration == true
+    end
+
+    def self.suppress_regeneration
+      self.skip_regeneration = true
+      yield
+    ensure
+      self.skip_regeneration = false
+    end
+
     LINK_TYPES = %w[page post custom].freeze
     TARGETS = %w[_blank _self _parent _top].freeze
+    LINKABLE_TYPES = %w[V7CMS::Page V7CMS::Post].freeze
 
     validates :label, presence: true
     validates :link_type, inclusion: { in: LINK_TYPES }
     validates :url, presence: true, if: -> { link_type == 'custom' }
     validates :linkable, presence: true, if: -> { link_type.in?(%w[page post]) }
+    validates :linkable_type, inclusion: { in: LINKABLE_TYPES }, allow_blank: true
     validates :target, inclusion: { in: TARGETS }, allow_blank: true
     validate :prevent_circular_reference
     validate :enforce_max_depth
     validate :safe_url
 
-    after_commit :trigger_static_regeneration
+    after_commit :trigger_static_regeneration, unless: -> { self.class.suppress_regeneration? }
 
     def href
       case link_type
@@ -67,10 +82,9 @@ module V7CMS
 
     def safe_url
       return if url.blank?
+      return if url.start_with?('/', 'http://', 'https://', 'mailto:', '#')
 
-      return unless url.match?(/\Ajavascript:/i)
-
-      errors.add(:url, 'cannot use javascript: protocol')
+      errors.add(:url, 'must be a relative path or use http(s)/mailto protocol')
     end
 
     def trigger_static_regeneration

@@ -61,7 +61,10 @@ module V7CMS
     end
 
     def target_attribute(item)
-      item.target.present? ? " target=\"#{h(item.target)}\"" : ''
+      return '' unless item.target.present?
+
+      rel = item.target == '_blank' ? ' rel="noopener noreferrer"' : ''
+      " target=\"#{h(item.target)}\"#{rel}"
     end
 
     def h(str)
