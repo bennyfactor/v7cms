@@ -1753,7 +1753,8 @@ module V7CMS
         href: item.href,
         target: item.target,
         parent_id: item.parent_id,
-        position: item.position
+        position: item.position,
+        css_class: item.css_class
       }
     end
 
@@ -1854,7 +1855,8 @@ module V7CMS
         parent_id: data['parent_id'],
         position: data['position'] || (menu.menu_items.maximum(:position).to_i + 1),
         linkable_type: data['linkable_type'],
-        linkable_id: data['linkable_id']
+        linkable_id: data['linkable_id'],
+        css_class: data['css_class']
       )
 
       if item.save
@@ -1883,6 +1885,7 @@ module V7CMS
       updates[:link_type] = data['link_type'] if data.key?('link_type')
       updates[:linkable_type] = data['linkable_type'] if data.key?('linkable_type')
       updates[:linkable_id] = data['linkable_id'] if data.key?('linkable_id')
+      updates[:css_class] = data['css_class'] if data.key?('css_class')
 
       if item.update(updates)
         json({ item: menu_item_json(item) })

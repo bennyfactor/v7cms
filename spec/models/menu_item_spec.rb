@@ -112,6 +112,33 @@ RSpec.describe V7CMS::MenuItem do
         expect(item.errors[:linkable_type]).to be_empty
       end
     end
+
+    it 'strips leading dots from css_class' do
+      item = described_class.create!(menu: menu, label: 'Test', link_type: 'custom', url: '/', css_class: '.my-class .bold')
+      expect(item.css_class).to eq('my-class bold')
+    end
+
+    it 'allows valid css_class values' do
+      ['my-class', 'foo bar', 'text-red-500 font-bold', '_private', '-custom'].each do |c|
+        item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', css_class: c)
+        item.valid?
+        expect(item.errors[:css_class]).to be_empty, "Expected '#{c}' to be valid but got: #{item.errors[:css_class]}"
+      end
+    end
+
+    it 'rejects invalid css_class values' do
+      ['foo!bar', 'class<script>', '123starts-with-number', 'has space;injection'].each do |c|
+        item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', css_class: c)
+        expect(item).not_to be_valid, "Expected '#{c}' to be invalid"
+        expect(item.errors[:css_class]).to be_present
+      end
+    end
+
+    it 'allows blank css_class' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', css_class: '')
+      item.valid?
+      expect(item.errors[:css_class]).to be_empty
+    end
   end
 
   describe 'max depth enforcement' do

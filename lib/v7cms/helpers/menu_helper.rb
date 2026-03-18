@@ -49,13 +49,14 @@ module V7CMS
 
     def render_dropdown(item, children)
       target_attr = target_attribute(item)
+      extra = item.respond_to?(:css_class) && item.css_class.present? ? " #{h(item.css_class)}" : ''
       child_links = children.map do |child|
         render_link(child, 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition')
       end.join("\n")
 
       <<~HTML
         <div class="relative group">
-          <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition"#{target_attr}>#{h(item.label)}</a>
+          <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition#{extra}"#{target_attr}>#{h(item.label)}</a>
           <div class="hidden group-hover:block absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
             #{child_links}
           </div>
@@ -64,8 +65,9 @@ module V7CMS
     end
 
     def render_link(item, css_class)
+      extra = item.respond_to?(:css_class) && item.css_class.present? ? " #{h(item.css_class)}" : ''
       target_attr = target_attribute(item)
-      "<a href=\"#{h(item.href)}\" class=\"#{css_class}\"#{target_attr}>#{h(item.label)}</a>"
+      "<a href=\"#{h(item.href)}\" class=\"#{css_class}#{extra}\"#{target_attr}>#{h(item.label)}</a>"
     end
 
     def target_attribute(item)
