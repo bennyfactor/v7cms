@@ -91,6 +91,12 @@ RSpec.describe V7CMS::MenuItem do
       expect(item.errors[:url]).to be_present
     end
 
+    it 'rejects URL-encoded slash bypass' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/%2F%2Fevil.com')
+      expect(item).not_to be_valid
+      expect(item.errors[:url]).to be_present
+    end
+
     it 'requires parent to belong to the same menu' do
       other_menu = V7CMS::Menu.create!(name: 'Other Menu')
       parent = described_class.create!(menu: other_menu, label: 'Parent', link_type: 'custom', url: '/')

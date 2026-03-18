@@ -85,6 +85,10 @@ module V7CMS
 
     def safe_url
       return if url.blank?
+      if url.match?(/\%2f/i)
+        errors.add(:url, 'must not contain encoded slashes')
+        return
+      end
       return if url.start_with?('#')
       return if url.match?(%r{\A/[^/]}) || url == '/'
       return if url.match?(%r{\Ahttps?://})
