@@ -19,6 +19,7 @@ module V7CMS
     validates :target, inclusion: { in: TARGETS }, allow_blank: true
     validate :prevent_circular_reference
     validate :enforce_max_depth
+    validate :safe_url
 
     after_commit :trigger_static_regeneration
 
@@ -61,6 +62,14 @@ module V7CMS
 
       if parent.parent_id.present?
         errors.add(:parent_id, 'maximum nesting depth is 2 levels')
+      end
+    end
+
+    def safe_url
+      return if url.blank?
+
+      if url.match?(/\Ajavascript:/i)
+        errors.add(:url, 'cannot use javascript: protocol')
       end
     end
 
