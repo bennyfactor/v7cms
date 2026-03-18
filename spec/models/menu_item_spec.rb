@@ -85,6 +85,20 @@ RSpec.describe V7CMS::MenuItem do
       end
     end
 
+    it 'rejects protocol-relative URLs' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '//evil.com')
+      expect(item).not_to be_valid
+      expect(item.errors[:url]).to be_present
+    end
+
+    it 'requires parent to belong to the same menu' do
+      other_menu = V7CMS::Menu.create!(name: 'Other Menu')
+      parent = described_class.create!(menu: other_menu, label: 'Parent', link_type: 'custom', url: '/')
+      item = described_class.new(menu: menu, label: 'Child', link_type: 'custom', url: '/child', parent: parent)
+      expect(item).not_to be_valid
+      expect(item.errors[:parent_id]).to include('must belong to the same menu')
+    end
+
     it 'rejects invalid linkable_type' do
       item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', linkable_type: 'V7CMS::User')
       expect(item).not_to be_valid

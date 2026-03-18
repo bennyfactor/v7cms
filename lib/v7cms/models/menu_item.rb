@@ -35,6 +35,7 @@ module V7CMS
     validate :prevent_circular_reference
     validate :enforce_max_depth
     validate :safe_url
+    validate :validate_same_menu_parent
 
     after_commit :trigger_static_regeneration, unless: -> { self.class.suppress_regeneration? }
 
@@ -82,12 +83,25 @@ module V7CMS
 
     def safe_url
       return if url.blank?
-      return if url.start_with?('/', 'http://', 'https://', 'mailto:', '#')
+      return if url.start_with?('#')
+      return if url.match?(%r{\A/[^/]}) || url == '/'
+      return if url.match?(%r{\Ahttps?://})
+      return if url.start_with?('mailto:')
 
       errors.add(:url, 'must be a relative path or use http(s)/mailto protocol')
     end
 
+    def validate_same_menu_parent
+      return if parent_id.blank? || parent.blank?
+
+      return if parent.menu_id == menu_id
+
+      errors.add(:parent_id, 'must belong to the same menu')
+    end
+
     def trigger_static_regeneration
+      return if destroyed_by_association
+
       menu&.regenerate_all_static_files
     end
   end
