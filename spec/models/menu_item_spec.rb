@@ -50,6 +50,20 @@ RSpec.describe V7CMS::MenuItem do
       expect(item).not_to be_valid
       expect(item.errors[:linkable]).to be_present
     end
+
+    it 'validates target attribute' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', target: 'invalid')
+      expect(item).not_to be_valid
+      expect(item.errors[:target]).to be_present
+    end
+
+    it 'allows valid target values' do
+      %w[_blank _self _parent _top].each do |t|
+        item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', target: t)
+        item.valid?
+        expect(item.errors[:target]).to be_empty
+      end
+    end
   end
 
   describe 'max depth enforcement' do

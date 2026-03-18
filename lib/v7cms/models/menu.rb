@@ -28,7 +28,7 @@ module V7CMS
     end
 
     def nested_items
-      root_items.includes(:children, :linkable).map(&:to_nested_hash)
+      root_items.includes(children: :linkable, linkable: []).map(&:to_nested_hash)
     end
 
     def regenerate_all_static_files
