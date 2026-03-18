@@ -2,7 +2,7 @@
 
 module V7CMS
   class MenuItem < ActiveRecord::Base
-    belongs_to :menu
+    belongs_to :menu, counter_cache: true
     belongs_to :parent, class_name: 'V7CMS::MenuItem', optional: true
     has_many :children, -> { order(:position) }, class_name: 'V7CMS::MenuItem',
                                                  foreign_key: :parent_id, dependent: :destroy
