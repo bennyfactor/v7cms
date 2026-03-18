@@ -23,7 +23,7 @@ module V7CMS
     end
 
     LINK_TYPES = %w[page post custom].freeze
-    TARGETS = %w[_blank _self _parent _top].freeze
+    TARGETS = %w[_blank].freeze
     LINKABLE_TYPES = %w[V7CMS::Page V7CMS::Post].freeze
 
     validates :label, presence: true
