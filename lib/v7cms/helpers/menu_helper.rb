@@ -30,10 +30,8 @@ module V7CMS
     end
 
     def render_nav_item(item)
-      children = item.children.includes(:linkable)
-
-      if children.any?
-        render_dropdown(item, children)
+      if item.children.any?
+        render_dropdown(item, item.children)
       else
         render_link(item, 'text-gray-600 hover:text-gray-900 transition')
       end
@@ -48,8 +46,8 @@ module V7CMS
 
       <<~HTML
         <div class="relative group">
-          <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition#{extra}"#{target_attr}>#{h(item.label)}</a>
-          <div class="hidden group-hover:block absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50">
+          <a href="#{h(item.href)}" class="text-gray-600 hover:text-gray-900 transition#{extra}"#{target_attr} aria-haspopup="true">#{h(item.label)}</a>
+          <div class="hidden group-hover:block group-focus-within:block absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] z-50" role="menu">
             #{child_links}
           </div>
         </div>

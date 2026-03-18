@@ -81,7 +81,7 @@ public/atom.xml
 # Static HTML files (auto-generated)
 public/posts/*.html
 !public/posts/.gitkeep
-public/pages/*.html
+public/pages/**/*.html
 !public/pages/.gitkeep
 
 # .htaccess (auto-generated from template with redirects)
