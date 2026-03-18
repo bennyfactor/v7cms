@@ -1781,7 +1781,7 @@ module V7CMS
       require_ajax_header
       require_login
 
-      data = JSON.parse(request.body.read)
+      data = parse_json_body
       menu = V7CMS::Menu.new(
         name: data['name'],
         slug: data['slug'],
@@ -1794,8 +1794,6 @@ module V7CMS
       else
         halt 422, json({ errors: menu.errors.full_messages })
       end
-    rescue JSON::ParserError
-      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # PUT /api/menus/:id - Update menu
@@ -1806,7 +1804,7 @@ module V7CMS
       menu = V7CMS::Menu.find_by(id: params[:id])
       halt 404, json({ error: 'Menu not found' }) unless menu
 
-      data = JSON.parse(request.body.read)
+      data = parse_json_body
       updates = {}
       updates[:name] = data['name'] if data.key?('name')
       updates[:slug] = data['slug'] if data.key?('slug')
@@ -1817,8 +1815,6 @@ module V7CMS
       else
         halt 422, json({ errors: menu.errors.full_messages })
       end
-    rescue JSON::ParserError
-      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # DELETE /api/menus/:id - Delete menu
@@ -1841,7 +1837,7 @@ module V7CMS
       menu = V7CMS::Menu.find_by(id: params[:id])
       halt 404, json({ error: 'Menu not found' }) unless menu
 
-      data = JSON.parse(request.body.read)
+      data = parse_json_body
       item = menu.menu_items.build(
         label: data['label'],
         link_type: data['link_type'] || 'custom',
@@ -1860,8 +1856,6 @@ module V7CMS
       else
         halt 422, json({ errors: item.errors.full_messages })
       end
-    rescue JSON::ParserError
-      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # PUT /api/menu-items/:id - Update menu item
@@ -1872,7 +1866,7 @@ module V7CMS
       item = V7CMS::MenuItem.find_by(id: params[:id])
       halt 404, json({ error: 'Menu item not found' }) unless item
 
-      data = JSON.parse(request.body.read)
+      data = parse_json_body
       updates = {}
       updates[:label] = data['label'] if data.key?('label')
       updates[:url] = data['url'] if data.key?('url')
@@ -1889,8 +1883,6 @@ module V7CMS
       else
         halt 422, json({ errors: item.errors.full_messages })
       end
-    rescue JSON::ParserError
-      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # DELETE /api/menu-items/:id - Delete menu item
@@ -1913,7 +1905,7 @@ module V7CMS
       menu = V7CMS::Menu.find_by(id: params[:id])
       halt 404, json({ error: 'Menu not found' }) unless menu
 
-      data = JSON.parse(request.body.read)
+      data = parse_json_body
       items = data['items'] || []
 
       begin
@@ -1933,8 +1925,6 @@ module V7CMS
 
       menu.regenerate_all_static_files
       json({ success: true, menu: menu_json(menu, include_items: true) })
-    rescue JSON::ParserError
-      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # =========================================================================
@@ -1987,6 +1977,13 @@ module V7CMS
     def json(data)
       content_type :json
       data.to_json
+    end
+
+    # Parse JSON request body, halt 422 on malformed input
+    def parse_json_body
+      JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # Post serialization helper
