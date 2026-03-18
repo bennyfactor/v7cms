@@ -57,11 +57,17 @@ RSpec.describe V7CMS::MenuItem do
       expect(item.errors[:target]).to be_present
     end
 
-    it 'allows valid target values' do
-      %w[_blank _self _parent _top].each do |t|
+    it 'allows _blank target' do
+      item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', target: '_blank')
+      item.valid?
+      expect(item.errors[:target]).to be_empty
+    end
+
+    it 'rejects non-blank target values' do
+      %w[_self _parent _top].each do |t|
         item = described_class.new(menu: menu, label: 'Test', link_type: 'custom', url: '/', target: t)
-        item.valid?
-        expect(item.errors[:target]).to be_empty
+        expect(item).not_to be_valid
+        expect(item.errors[:target]).to be_present
       end
     end
 
