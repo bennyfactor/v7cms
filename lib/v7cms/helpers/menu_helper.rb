@@ -6,18 +6,26 @@ module V7CMS
   module MenuHelper
     module_function
 
+    def clear_render_cache
+      @render_cache = nil
+    end
+
     def render_menu(location_or_slug)
+      @render_cache ||= {}
+      return @render_cache[location_or_slug] if @render_cache.key?(location_or_slug)
+
       menu = V7CMS::Menu.at_location(location_or_slug) || V7CMS::Menu.by_slug(location_or_slug)
-      return '' unless menu
+      return @render_cache[location_or_slug] = '' unless menu
 
       items = menu.root_items.includes(children: :linkable, linkable: [])
-      return '' if items.empty?
+      return @render_cache[location_or_slug] = '' if items.empty?
 
-      if menu.location == 'footer'
-        render_footer_menu(items)
-      else
-        render_nav_menu(items)
-      end
+      result = if menu.location == 'footer'
+                 render_footer_menu(items)
+               else
+                 render_nav_menu(items)
+               end
+      @render_cache[location_or_slug] = result
     end
 
     def render_nav_menu(items)

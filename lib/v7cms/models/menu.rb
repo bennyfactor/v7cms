@@ -16,6 +16,7 @@ module V7CMS
     validate :unique_location
 
     before_validation :generate_slug, if: -> { slug.blank? && name.present? }
+    before_validation :normalize_location
 
     after_commit :regenerate_all_static_files
 
@@ -32,14 +33,20 @@ module V7CMS
     end
 
     def regenerate_all_static_files
+      require_relative '../helpers/menu_helper'
       require_relative '../services/post_renderer'
       require_relative '../services/page_renderer'
 
+      V7CMS::MenuHelper.clear_render_cache
       V7CMS::Post.published.find_each { |post| PostRenderer.write_static_file(post) }
       V7CMS::Page.published.find_each { |page| PageRenderer.write_static_file(page) }
     end
 
     private
+
+    def normalize_location
+      self.location = nil if location.blank?
+    end
 
     def generate_slug
       self.slug = name.parameterize

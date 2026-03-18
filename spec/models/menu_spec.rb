@@ -59,6 +59,11 @@ RSpec.describe V7CMS::Menu do
       menu_b = described_class.new(name: 'Menu B', location: nil)
       expect(menu_b).to be_valid
     end
+
+    it 'normalizes blank location to nil' do
+      menu = described_class.create!(name: 'Blank Loc', location: '')
+      expect(menu.location).to be_nil
+    end
   end
 
   describe '.at_location' do
