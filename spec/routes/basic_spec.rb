@@ -15,6 +15,21 @@ RSpec.describe 'Basic Routes' do
     end
   end
 
+  describe 'GET / with menu' do
+    it 'renders header menu items in the homepage HTML' do
+      menu = V7CMS::Menu.create!(name: 'Main', location: 'header')
+      menu.menu_items.create!(label: 'About Us', link_type: 'custom', url: '/about', position: 0)
+      menu.menu_items.create!(label: 'Contact', link_type: 'custom', url: '/contact', position: 1)
+
+      get '/'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('About Us')
+      expect(last_response.body).to include('Contact')
+      expect(last_response.body).to include('href="/about"')
+      expect(last_response.body).to include('href="/contact"')
+    end
+  end
+
   describe 'GET /api' do
     it 'returns API welcome message' do
       get '/api'
