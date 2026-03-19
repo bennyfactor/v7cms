@@ -29,6 +29,7 @@ module V7CMS
     # Include helpers
     helpers V7CMS::AuthHelper
     helpers V7CMS::CdnHelper
+    helpers V7CMS::MenuHelper
 
     # Enable sessions for authentication
     enable :sessions
@@ -1722,6 +1723,211 @@ module V7CMS
     end
 
     # =========================================================================
+    # Menus API Routes
+    # =========================================================================
+
+    # Menu serialization helper
+    def menu_json(menu, include_items: false)
+      result = {
+        id: menu.id,
+        name: menu.name,
+        slug: menu.slug,
+        location: menu.location,
+        item_count: menu.menu_items_count,
+        created_at: menu.created_at&.iso8601
+      }
+      result[:items] = menu.nested_items if include_items
+      result
+    end
+
+    # Menu item serialization helper
+    def menu_item_json(item)
+      {
+        id: item.id,
+        menu_id: item.menu_id,
+        label: item.label,
+        link_type: item.link_type,
+        linkable_type: item.linkable_type,
+        linkable_id: item.linkable_id,
+        url: item.url,
+        href: item.href,
+        target: item.target,
+        parent_id: item.parent_id,
+        position: item.position,
+        css_class: item.css_class
+      }
+    end
+
+    # GET /api/menus - List all menus
+    get '/api/menus' do
+      require_login
+
+      menus = V7CMS::Menu.all.order(:name)
+      json({ menus: menus.map { |m| menu_json(m) } })
+    end
+
+    # GET /api/menus/:id - Get menu by id or slug with nested items
+    get '/api/menus/:id' do
+      require_login
+
+      menu = V7CMS::Menu.find_by(id: params[:id]) || V7CMS::Menu.by_slug(params[:id])
+      halt 404, json({ error: 'Menu not found' }) unless menu
+
+      json({ menu: menu_json(menu, include_items: true) })
+    end
+
+    # POST /api/menus - Create menu
+    post '/api/menus' do
+      require_ajax_header
+      require_login
+
+      data = parse_json_body
+      menu = V7CMS::Menu.new(
+        name: data['name'],
+        slug: data['slug'],
+        location: data['location']
+      )
+
+      if menu.save
+        status 201
+        json({ menu: menu_json(menu) })
+      else
+        halt 422, json({ errors: menu.errors.full_messages })
+      end
+    end
+
+    # PUT /api/menus/:id - Update menu
+    put '/api/menus/:id' do
+      require_ajax_header
+      require_login
+
+      menu = V7CMS::Menu.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu not found' }) unless menu
+
+      data = parse_json_body
+      updates = {}
+      updates[:name] = data['name'] if data.key?('name')
+      updates[:slug] = data['slug'] if data.key?('slug')
+      updates[:location] = data['location'] if data.key?('location')
+
+      if menu.update(updates)
+        json({ menu: menu_json(menu) })
+      else
+        halt 422, json({ errors: menu.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/menus/:id - Delete menu
+    delete '/api/menus/:id' do
+      require_ajax_header
+      require_login
+
+      menu = V7CMS::Menu.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu not found' }) unless menu
+
+      menu.destroy!
+      json({ success: true })
+    end
+
+    # POST /api/menus/:id/items - Add item to menu
+    post '/api/menus/:id/items' do
+      require_ajax_header
+      require_login
+
+      menu = V7CMS::Menu.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu not found' }) unless menu
+
+      data = parse_json_body
+      item = menu.menu_items.build(
+        label: data['label'],
+        link_type: data['link_type'] || 'custom',
+        url: data['url'],
+        target: data['target'],
+        parent_id: data['parent_id'],
+        position: data['position'] || (menu.menu_items.maximum(:position).to_i + 1),
+        linkable_type: data['linkable_type'],
+        linkable_id: data['linkable_id'],
+        css_class: data['css_class']
+      )
+
+      if item.save
+        status 201
+        json({ item: menu_item_json(item) })
+      else
+        halt 422, json({ errors: item.errors.full_messages })
+      end
+    end
+
+    # PUT /api/menu-items/:id - Update menu item
+    put '/api/menu-items/:id' do
+      require_ajax_header
+      require_login
+
+      item = V7CMS::MenuItem.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu item not found' }) unless item
+
+      data = parse_json_body
+      updates = {}
+      updates[:label] = data['label'] if data.key?('label')
+      updates[:url] = data['url'] if data.key?('url')
+      updates[:target] = data['target'] if data.key?('target')
+      updates[:parent_id] = data['parent_id'] if data.key?('parent_id')
+      updates[:position] = data['position'] if data.key?('position')
+      updates[:link_type] = data['link_type'] if data.key?('link_type')
+      updates[:linkable_type] = data['linkable_type'] if data.key?('linkable_type')
+      updates[:linkable_id] = data['linkable_id'] if data.key?('linkable_id')
+      updates[:css_class] = data['css_class'] if data.key?('css_class')
+
+      if item.update(updates)
+        json({ item: menu_item_json(item) })
+      else
+        halt 422, json({ errors: item.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/menu-items/:id - Delete menu item
+    delete '/api/menu-items/:id' do
+      require_ajax_header
+      require_login
+
+      item = V7CMS::MenuItem.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu item not found' }) unless item
+
+      item.destroy!
+      json({ success: true })
+    end
+
+    # PUT /api/menus/:id/reorder - Reorder menu items
+    put '/api/menus/:id/reorder' do
+      require_ajax_header
+      require_login
+
+      menu = V7CMS::Menu.find_by(id: params[:id])
+      halt 404, json({ error: 'Menu not found' }) unless menu
+
+      data = parse_json_body
+      items = data['items'] || []
+
+      begin
+        V7CMS::MenuItem.suppress_regeneration do
+          ActiveRecord::Base.transaction do
+            items.each do |item_data|
+              item = menu.menu_items.find_by(id: item_data['id'])
+              next unless item
+
+              item.update!(position: item_data['position'], parent_id: item_data['parent_id'])
+            end
+          end
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        halt 422, json({ errors: [e.message] })
+      end
+
+      menu.regenerate_all_static_files
+      json({ success: true, menu: menu_json(menu, include_items: true) })
+    end
+
+    # =========================================================================
     # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
     # =========================================================================
     # This catch-all route checks for custom redirects stored in the database.
@@ -1771,6 +1977,13 @@ module V7CMS
     def json(data)
       content_type :json
       data.to_json
+    end
+
+    # Parse JSON request body, halt 422 on malformed input
+    def parse_json_body
+      JSON.parse(request.body.read)
+    rescue JSON::ParserError
+      halt 422, json({ errors: ['Invalid JSON'] })
     end
 
     # Post serialization helper

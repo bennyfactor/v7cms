@@ -24,6 +24,8 @@ Tag = V7CMS::Tag
 PostTag = V7CMS::PostTag
 Asset = V7CMS::Asset
 ContentVersion = V7CMS::ContentVersion
+Menu = V7CMS::Menu
+MenuItem = V7CMS::MenuItem
 
 # Expose services for backward compatibility
 FeedGenerator = V7CMS::FeedGenerator

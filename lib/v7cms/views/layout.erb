@@ -100,8 +100,8 @@
                     <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                     <% end %>
                 </div>
-                <nav class="flex space-x-6" id="main-nav">
-                    <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
+                <nav class="flex space-x-6 items-center" id="main-nav">
+                    <%= render_menu('header') %>
                     <!-- Admin link injected via JavaScript -->
                 </nav>
             </div>
@@ -132,6 +132,7 @@
     %>
     <footer class="<%= footer_classes %> mt-auto">
         <div class="max-w-4xl mx-auto px-4 <%= footer_padding %> text-center text-gray-600 <%= footer_text_size %>">
+            <%= render_menu('footer') %>
             <p>
                 <% if @settings.show_copyright_year %>
                 &copy; <%= Time.now.year %>
