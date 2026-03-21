@@ -1949,7 +1949,7 @@ module V7CMS
         spam_behavior: form.spam_behavior,
         published: form.published,
         fields_count: form.form_fields.size,
-        submissions_count: form.form_submissions.count,
+        submissions_count: form.form_submissions.size,
         created_at: form.created_at&.iso8601,
         updated_at: form.updated_at&.iso8601
       }
@@ -2191,11 +2191,12 @@ module V7CMS
       halt 404, json({ error: 'Form not found' }) unless form
 
       require 'csv'
+      require 'date'
       fields = form.form_fields.to_a
       submissions = form.form_submissions.order(created_at: :desc)
 
       csv_string = CSV.generate do |csv|
-        headers = ['Submission ID'] + fields.map(&:label) + ['IP Address', 'reCAPTCHA Score', 'Spam', 'Submitted At']
+        headers = ['Submission ID'] + fields.map { |f| f.label || f.name } + ['IP Address', 'reCAPTCHA Score', 'Spam', 'Submitted At']
         csv << headers
         submissions.each do |sub|
           data = sub.parsed_data
@@ -2273,7 +2274,7 @@ module V7CMS
       recaptcha_score = nil
 
       if form.require_recaptcha
-        recaptcha_score = verify_recaptcha_v3(recaptcha_token, request.ip)
+        recaptcha_score = verify_recaptcha_v3(recaptcha_token, request.ip, action: 'form_submit')
         if recaptcha_score < form.recaptcha_threshold
           is_spam = true
           if form.spam_behavior == 'reject'
@@ -2547,12 +2548,12 @@ module V7CMS
     end
 
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
-    def verify_recaptcha_v3(token, remote_ip)
+    def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
       # Choose Enterprise or Standard based on env vars
       if ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']
-        verify_recaptcha_enterprise(token, remote_ip)
+        verify_recaptcha_enterprise(token, remote_ip, action: action)
       elsif ENV['RECAPTCHA_SECRET_KEY']
         verify_recaptcha_standard(token, remote_ip)
       else
@@ -2562,7 +2563,7 @@ module V7CMS
     end
 
     # reCAPTCHA Enterprise verification
-    def verify_recaptcha_enterprise(token, remote_ip)
+    def verify_recaptcha_enterprise(token, remote_ip, action: 'submit_comment')
       require 'net/http'
       require 'json'
 
@@ -2576,7 +2577,7 @@ module V7CMS
         event: {
           token: token,
           siteKey: site_key,
-          expectedAction: 'submit_comment',
+          expectedAction: action,
           userIpAddress: remote_ip
         }
       }
@@ -2599,8 +2600,8 @@ module V7CMS
         return 0.0
       end
 
-      if token_props['action'] != 'submit_comment'
-        puts "reCAPTCHA Enterprise: action mismatch - expected submit_comment, got #{token_props['action']}"
+      if token_props['action'] != action
+        puts "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}"
         return 0.0
       end
 

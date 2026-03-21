@@ -122,7 +122,7 @@ RSpec.describe V7CMS::Form, type: :model do
       form.form_fields.create!(field_type: 'text', name: 'full_name', label: 'Full Name', required: true, position: 0)
       form.form_fields.create!(field_type: 'email', name: 'email', label: 'Email', required: true, position: 1)
       form.form_fields.create!(field_type: 'number', name: 'age', label: 'Age', required: false, position: 2,
-                                validation_rules: '{"min": 0, "max": 150}')
+                               validation_rules: '{"min": 0, "max": 150}')
       form.form_fields.create!(field_type: 'textarea', name: 'message', label: 'Message', required: false, position: 3)
     end
 

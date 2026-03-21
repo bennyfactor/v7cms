@@ -36,7 +36,7 @@ module V7CMS
 
       lines = []
       lines << '    <div class="form-field">'
-      lines << render_label(field) if field.label.present?
+      lines << render_label(field) if field.label.present? && !%w[radio checkbox].include?(field.field_type)
       lines << render_input(field)
       lines << %(      <small class="text-gray-500 text-sm">#{escape(field.help_text)}</small>) if field.help_text.present?
       lines << '    </div>'
@@ -92,6 +92,10 @@ module V7CMS
     def render_radio(field)
       lines = []
       lines << '      <fieldset class="space-y-2">'
+      if field.label.present?
+        required_mark = field.required? ? ' <span class="text-red-500">*</span>' : ''
+        lines << %(        <legend class="block text-sm font-medium text-gray-700 mb-1">#{escape(field.label)}#{required_mark}</legend>)
+      end
       field.parsed_options.each_with_index do |opt, i|
         id = "field_#{field.name}_#{i}"
         req = field.required? ? ' required' : ''

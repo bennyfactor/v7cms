@@ -90,7 +90,7 @@ RSpec.describe 'Form Submissions API', type: :request do
       get "/api/forms/#{form.id}/submissions?filter=spam"
       data = JSON.parse(last_response.body)
       expect(data['submissions'].length).to eq(1)
-      expect(data['submissions'].first['spam']).to eq(true)
+      expect(data['submissions'].first['spam']).to be(true)
     end
 
     it 'returns 404 for missing form' do
@@ -144,7 +144,7 @@ RSpec.describe 'Form Submissions API', type: :request do
       expect(last_response).to be_ok
 
       data = JSON.parse(last_response.body)
-      expect(data['success']).to eq(true)
+      expect(data['success']).to be(true)
       expect(V7CMS::FormSubmission.find_by(id: sub.id)).to be_nil
     end
 
@@ -226,7 +226,7 @@ RSpec.describe 'Form Submissions API', type: :request do
 
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
-      expect(data['success']).to eq(true)
+      expect(data['success']).to be(true)
       expect(data['message']).to eq('Thank you!')
 
       expect(form.form_submissions.count).to eq(1)

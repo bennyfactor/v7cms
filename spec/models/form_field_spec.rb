@@ -67,7 +67,7 @@ RSpec.describe V7CMS::FormField, type: :model do
 
     it 'does not require label for hidden fields' do
       field = described_class.new(form: form, field_type: 'hidden', name: 'source',
-                                   validation_rules: '{"value": "homepage"}')
+                                  validation_rules: '{"value": "homepage"}')
       field.valid?
       expect(field.errors[:label]).to be_empty
     end
@@ -86,7 +86,7 @@ RSpec.describe V7CMS::FormField, type: :model do
 
     it 'validates options is valid JSON' do
       field = described_class.new(form: form, field_type: 'select', name: 'choice', label: 'Choice',
-                                   options: 'not json')
+                                  options: 'not json')
       expect(field).not_to be_valid
       expect(field.errors[:options]).to include('must be valid JSON')
     end
