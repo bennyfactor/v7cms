@@ -26,6 +26,9 @@ Asset = V7CMS::Asset
 ContentVersion = V7CMS::ContentVersion
 Menu = V7CMS::Menu
 MenuItem = V7CMS::MenuItem
+Form = V7CMS::Form
+FormField = V7CMS::FormField
+FormSubmission = V7CMS::FormSubmission
 
 # Expose services for backward compatibility
 FeedGenerator = V7CMS::FeedGenerator
