@@ -40,7 +40,7 @@ module V7CMS
       self.name = label.downcase
                        .gsub(/[^a-z0-9\s]/, '')
                        .gsub(/\s+/, '_')
-                       .gsub(/_+/, '_')
+                       .squeeze('_')
                        .strip
                        .gsub(/^_|_$/, '')
     end

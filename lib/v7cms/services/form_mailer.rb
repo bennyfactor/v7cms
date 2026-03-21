@@ -33,14 +33,14 @@ module V7CMS
     def configure_mail_delivery
       return if ENV['RACK_ENV'] == 'test'
 
-      if ENV['SMTP_ADDRESS']
+      if ENV.fetch('SMTP_ADDRESS', nil)
         Mail.defaults do
           delivery_method :smtp,
-                          address: ENV['SMTP_ADDRESS'],
+                          address: ENV.fetch('SMTP_ADDRESS', nil),
                           port: ENV.fetch('SMTP_PORT', 587).to_i,
-                          user_name: ENV['SMTP_USERNAME'],
-                          password: ENV['SMTP_PASSWORD'],
-                          domain: ENV['SMTP_DOMAIN'],
+                          user_name: ENV.fetch('SMTP_USERNAME', nil),
+                          password: ENV.fetch('SMTP_PASSWORD', nil),
+                          domain: ENV.fetch('SMTP_DOMAIN', nil),
                           authentication: ENV.fetch('SMTP_AUTH', 'plain'),
                           enable_starttls_auto: ENV.fetch('SMTP_TLS', 'true') == 'true'
         end
@@ -73,26 +73,35 @@ module V7CMS
     end
 
     def build_body
-      lines = []
-      lines << "New submission for: #{@form.name}"
-      lines << '=' * 40
-      lines << ''
+      lines = build_body_header
+      lines.concat(build_body_fields)
+      lines.concat(build_body_footer)
+      lines.join("\n")
+    end
 
-      @form.form_fields.each do |field|
+    def build_body_header
+      ["New submission for: #{@form.name}", '=' * 40, '']
+    end
+
+    def build_body_fields
+      @form.form_fields.each_with_object([]) do |field, lines|
         next if field.field_type == 'hidden'
 
         value = @data[field.name] || '(empty)'
-        value = value == 'true' ? 'Yes' : 'No' if field.field_type == 'checkbox'
+        value = (value == 'true' ? 'Yes' : 'No') if field.field_type == 'checkbox'
         lines << "#{field.label}: #{value}"
       end
+    end
 
-      lines << ''
-      lines << '-' * 40
-      lines << "Submission ID: #{@submission&.id || 'N/A'}"
-      lines << "Submitted at: #{@submission&.created_at&.iso8601 || Time.now.iso8601}"
-      lines << "IP Address: #{@submission&.ip_address || 'Unknown'}"
-      lines << "reCAPTCHA Score: #{@submission&.recaptcha_score || 'N/A'}"
-      lines.join("\n")
+    def build_body_footer
+      [
+        '',
+        '-' * 40,
+        "Submission ID: #{@submission&.id || 'N/A'}",
+        "Submitted at: #{@submission&.created_at&.iso8601 || Time.now.iso8601}",
+        "IP Address: #{@submission&.ip_address || 'Unknown'}",
+        "reCAPTCHA Score: #{@submission&.recaptcha_score || 'N/A'}",
+      ]
     end
   end
 end
