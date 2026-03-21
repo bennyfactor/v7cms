@@ -32,6 +32,7 @@ module V7CMS
       @version = page.published_version
       @title = @version ? @version.title : page.title
       @content = @version ? @version.content : page.content
+      @content = V7CMS::FormHelper.process_form_shortcodes(@content) if defined?(V7CMS::FormHelper)
       @header_menu_html = header_html || V7CMS::MenuHelper.render_menu('header')
       @footer_menu_html = footer_html || V7CMS::MenuHelper.render_menu('footer')
     end
