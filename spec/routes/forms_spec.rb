@@ -64,7 +64,7 @@ RSpec.describe 'Forms API', type: :request do
       expect(last_response.status).to eq(401)
     end
 
-    it 'creates a form with defaults' do
+    it 'creates a form with defaults', :aggregate_failures do
       login_as(user)
       post '/api/forms', { name: 'Feedback' }.to_json,
            { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
@@ -79,20 +79,16 @@ RSpec.describe 'Forms API', type: :request do
       expect(data['form']['require_recaptcha']).to be(true)
     end
 
-    it 'creates a form with custom attributes' do
+    it 'creates a form with custom attributes', :aggregate_failures do
       login_as(user)
-      post '/api/forms', {
-        name: 'Survey',
-        slug: 'my-survey',
-        description: 'A quick survey',
-        submit_button_text: 'Send',
-        success_message: 'Thanks!',
-        notification_email: 'admin@example.com',
-        store_submissions: false,
-        send_notifications: true,
-        require_recaptcha: false,
-        published: true
-      }.to_json, { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
+      payload = {
+        name: 'Survey', slug: 'my-survey', description: 'A quick survey',
+        submit_button_text: 'Send', success_message: 'Thanks!',
+        notification_email: 'admin@example.com', store_submissions: false,
+        send_notifications: true, require_recaptcha: false, published: true
+      }
+      post '/api/forms', payload.to_json,
+           { 'CONTENT_TYPE' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest' }
 
       expect(last_response.status).to eq(201)
       data = JSON.parse(last_response.body)
