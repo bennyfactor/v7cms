@@ -75,8 +75,8 @@ RSpec.describe 'Forms API', type: :request do
       expect(data['form']['slug']).to eq('feedback')
       expect(data['form']['submit_button_text']).to eq('Submit')
       expect(data['form']['success_message']).to eq('Thank you for your submission.')
-      expect(data['form']['store_submissions']).to eq(true)
-      expect(data['form']['require_recaptcha']).to eq(true)
+      expect(data['form']['store_submissions']).to be(true)
+      expect(data['form']['require_recaptcha']).to be(true)
     end
 
     it 'creates a form with custom attributes' do
@@ -99,9 +99,9 @@ RSpec.describe 'Forms API', type: :request do
       expect(data['form']['slug']).to eq('my-survey')
       expect(data['form']['description']).to eq('A quick survey')
       expect(data['form']['notification_email']).to eq('admin@example.com')
-      expect(data['form']['store_submissions']).to eq(false)
-      expect(data['form']['send_notifications']).to eq(true)
-      expect(data['form']['published']).to eq(true)
+      expect(data['form']['store_submissions']).to be(false)
+      expect(data['form']['send_notifications']).to be(true)
+      expect(data['form']['published']).to be(true)
     end
 
     it 'returns 422 for invalid form' do
@@ -162,7 +162,7 @@ RSpec.describe 'Forms API', type: :request do
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
       expect(data['form']['name']).to eq('Updated Form')
-      expect(data['form']['published']).to eq(true)
+      expect(data['form']['published']).to be(true)
     end
 
     it 'returns 404 for missing form' do
@@ -195,7 +195,7 @@ RSpec.describe 'Forms API', type: :request do
 
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
-      expect(data['success']).to eq(true)
+      expect(data['success']).to be(true)
       expect(V7CMS::Form.find_by(id: form.id)).to be_nil
     end
 
@@ -233,7 +233,7 @@ RSpec.describe 'Forms API', type: :request do
       expect(data['field']['field_type']).to eq('text')
       expect(data['field']['name']).to eq('full_name')
       expect(data['field']['label']).to eq('Full Name')
-      expect(data['field']['required']).to eq(true)
+      expect(data['field']['required']).to be(true)
     end
 
     it 'creates a select field with options' do
@@ -280,7 +280,7 @@ RSpec.describe 'Forms API', type: :request do
       expect(last_response).to be_ok
       data = JSON.parse(last_response.body)
       expect(data['field']['label']).to eq('Email Address')
-      expect(data['field']['required']).to eq(true)
+      expect(data['field']['required']).to be(true)
     end
 
     it 'returns 404 for missing field' do

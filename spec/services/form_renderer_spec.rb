@@ -15,11 +15,11 @@ RSpec.describe V7CMS::FormRenderer do
 
   before do
     form.form_fields.create!(field_type: 'text', name: 'full_name', label: 'Full Name',
-                              placeholder: 'John Doe', required: true, position: 0)
+                             placeholder: 'John Doe', required: true, position: 0)
     form.form_fields.create!(field_type: 'email', name: 'email', label: 'Email',
-                              required: true, help_text: 'We will not share your email', position: 1)
+                             required: true, help_text: 'We will not share your email', position: 1)
     form.form_fields.create!(field_type: 'textarea', name: 'message', label: 'Message',
-                              placeholder: 'Your message...', required: false, position: 2)
+                             placeholder: 'Your message...', required: false, position: 2)
   end
 
   describe '.render' do
@@ -80,7 +80,7 @@ RSpec.describe V7CMS::FormRenderer do
   describe 'field types' do
     it 'renders select with options' do
       form.form_fields.create!(field_type: 'select', name: 'topic', label: 'Topic', position: 3,
-                                options: '[{"label":"Sales","value":"sales"},{"label":"Support","value":"support"}]')
+                               options: '[{"label":"Sales","value":"sales"},{"label":"Support","value":"support"}]')
       html = described_class.render(form)
       expect(html).to include('<select')
       expect(html).to include('<option value="sales">Sales</option>')
@@ -89,7 +89,7 @@ RSpec.describe V7CMS::FormRenderer do
 
     it 'renders radio buttons' do
       form.form_fields.create!(field_type: 'radio', name: 'priority', label: 'Priority', position: 3,
-                                options: '[{"label":"Low","value":"low"},{"label":"High","value":"high"}]')
+                               options: '[{"label":"Low","value":"low"},{"label":"High","value":"high"}]')
       html = described_class.render(form)
       expect(html).to include('type="radio"')
       expect(html).to include('value="low"')
@@ -105,7 +105,7 @@ RSpec.describe V7CMS::FormRenderer do
 
     it 'renders number input with min/max' do
       form.form_fields.create!(field_type: 'number', name: 'quantity', label: 'Quantity', position: 3,
-                                validation_rules: '{"min": 1, "max": 10}')
+                               validation_rules: '{"min": 1, "max": 10}')
       html = described_class.render(form)
       expect(html).to include('type="number"')
       expect(html).to include('min="1"')
@@ -126,7 +126,7 @@ RSpec.describe V7CMS::FormRenderer do
 
     it 'renders hidden input with value' do
       form.form_fields.create!(field_type: 'hidden', name: 'source', position: 3,
-                                validation_rules: '{"value": "homepage"}')
+                               validation_rules: '{"value": "homepage"}')
       html = described_class.render(form)
       expect(html).to include('type="hidden"')
       expect(html).to include('name="source"')
@@ -137,7 +137,7 @@ RSpec.describe V7CMS::FormRenderer do
   describe 'validation attributes' do
     it 'adds minlength and maxlength' do
       form.form_fields.create!(field_type: 'text', name: 'code', label: 'Code', position: 3,
-                                validation_rules: '{"min_length": 3, "max_length": 10}')
+                               validation_rules: '{"min_length": 3, "max_length": 10}')
       html = described_class.render(form)
       expect(html).to include('minlength="3"')
       expect(html).to include('maxlength="10"')
@@ -145,7 +145,7 @@ RSpec.describe V7CMS::FormRenderer do
 
     it 'adds pattern attribute' do
       form.form_fields.create!(field_type: 'text', name: 'zip', label: 'ZIP Code', position: 3,
-                                validation_rules: '{"pattern": "\\\\d{5}"}')
+                               validation_rules: '{"pattern": "\\\\d{5}"}')
       html = described_class.render(form)
       expect(html).to include('pattern=')
     end
