@@ -36,6 +36,9 @@ gem 'swagger-blocks', '~> 3.0'
 gem 'builder', '~> 3.2'
 gem 'nokogiri', '~> 1.15'
 
+# CSV export
+gem 'csv', '~> 3.0'
+
 # Email
 gem 'mail', '~> 2.8'
 
