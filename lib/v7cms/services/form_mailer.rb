@@ -23,7 +23,6 @@ module V7CMS
       return unless @form.send_notifications
       return if @form.notification_email.to_s.strip.empty?
 
-      configure_mail_delivery
       deliver_email
     rescue StandardError => e
       self.class.logger.error("FormMailer: Failed to send notification for form #{@form.id}: #{e.message}")
@@ -31,22 +30,21 @@ module V7CMS
 
     private
 
-    def configure_mail_delivery
-      return if ENV['RACK_ENV'] == 'test'
+    def delivery_settings
+      return [:test] if ENV['RACK_ENV'] == 'test'
 
       if ENV.fetch('SMTP_ADDRESS', nil)
-        Mail.defaults do
-          delivery_method :smtp,
-                          address: ENV.fetch('SMTP_ADDRESS', nil),
-                          port: ENV.fetch('SMTP_PORT', 587).to_i,
-                          user_name: ENV.fetch('SMTP_USERNAME', nil),
-                          password: ENV.fetch('SMTP_PASSWORD', nil),
-                          domain: ENV.fetch('SMTP_DOMAIN', nil),
-                          authentication: ENV.fetch('SMTP_AUTH', 'plain'),
-                          enable_starttls_auto: ENV.fetch('SMTP_TLS', 'true') == 'true'
-        end
+        [:smtp, {
+          address: ENV.fetch('SMTP_ADDRESS', nil),
+          port: ENV.fetch('SMTP_PORT', 587).to_i,
+          user_name: ENV.fetch('SMTP_USERNAME', nil),
+          password: ENV.fetch('SMTP_PASSWORD', nil),
+          domain: ENV.fetch('SMTP_DOMAIN', nil),
+          authentication: ENV.fetch('SMTP_AUTH', 'plain'),
+          enable_starttls_auto: ENV.fetch('SMTP_TLS', 'true') == 'true'
+        }]
       else
-        Mail.defaults { delivery_method :sendmail }
+        [:sendmail]
       end
     end
 
@@ -55,13 +53,16 @@ module V7CMS
       to_address = @form.notification_email
       subject_line = "New submission: #{@form.name}"
       body_text = build_body
+      method_settings = delivery_settings
 
-      Mail.new do
+      mail = Mail.new do
         from    from_address
         to      to_address
         subject subject_line
         body    body_text
-      end.deliver
+      end
+      mail.delivery_method(*method_settings)
+      mail.deliver
     end
 
     def from_email
