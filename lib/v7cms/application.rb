@@ -1991,14 +1991,15 @@ module V7CMS
 
     def sanitize_csv_value(value)
       str = value.to_s
-      str.match?(/\A[=+\-@\t\r]/) ? "'#{str}" : str
+      str.lstrip.match?(/\A[=+\-@\t\r]/) ? "'#{str}" : str
     end
 
     # GET /api/forms - List all forms
     get '/api/forms' do
       require_login
 
-      forms = V7CMS::Form.includes(:form_fields)
+      forms = V7CMS::Form
+               .includes(:form_fields)
                .left_joins(:form_submissions)
                .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
                .group('forms.id')
@@ -2273,6 +2274,7 @@ module V7CMS
       halt 404, json({ error: 'Form not found' }) unless form
 
       data = JSON.parse(request.body.read) rescue halt(422, json({ errors: ['Invalid JSON'] }))
+      halt 422, json({ errors: ['Invalid submission data'] }) unless data.is_a?(Hash)
 
       recaptcha_token = data.delete('recaptcha_token')
 

@@ -69,9 +69,10 @@ module V7CMS
     def validate_field_rules(field, label, value)
       errors = []
       rules = field.parsed_validation_rules
-      errors << "#{label} must be at least #{rules['min_length']} characters" if rules['min_length'] && value.length < rules['min_length'].to_i
-      errors << "#{label} must be at most #{rules['max_length']} characters" if rules['max_length'] && value.length > rules['max_length'].to_i
-      errors.concat(validate_pattern(rules, label, value))
+      str_value = value.to_s
+      errors << "#{label} must be at least #{rules['min_length']} characters" if rules['min_length'] && str_value.length < rules['min_length'].to_i
+      errors << "#{label} must be at most #{rules['max_length']} characters" if rules['max_length'] && str_value.length > rules['max_length'].to_i
+      errors.concat(validate_pattern(rules, label, str_value))
       errors
     end
 
