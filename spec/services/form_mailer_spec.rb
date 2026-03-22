@@ -70,7 +70,7 @@ RSpec.describe V7CMS::FormMailer do
     end
 
     it 'handles mail delivery errors gracefully' do
-      allow(Mail).to receive(:deliver).and_raise(StandardError.new('SMTP error'))
+      allow_any_instance_of(Mail::Message).to receive(:deliver).and_raise(StandardError.new('SMTP error'))
       expect { described_class.send_notification(form, data, submission) }.not_to raise_error
     end
   end

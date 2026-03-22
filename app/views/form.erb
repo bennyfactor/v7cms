@@ -17,7 +17,7 @@
     <script src="https://www.google.com/recaptcha/api.js?render=<%= ENV['RECAPTCHA_SITE_KEY'] %>"></script>
   <% end %>
   <script>
-    window.RECAPTCHA_SITE_KEY = '<%= ENV['RECAPTCHA_SITE_KEY'] %>';
+    window.RECAPTCHA_SITE_KEY = <%= ENV['RECAPTCHA_SITE_KEY'].to_json %>;
     window.RECAPTCHA_ENTERPRISE = <%= (recaptcha_enterprise ? true : false) %>;
   </script>
 <% end %>
