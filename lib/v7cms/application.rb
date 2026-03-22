@@ -1949,7 +1949,7 @@ module V7CMS
         spam_behavior: form.spam_behavior,
         published: form.published,
         fields_count: form.form_fields.size,
-        submissions_count: form.form_submissions.size,
+        submissions_count: form.respond_to?(:submissions_count_cache) ? form.submissions_count_cache : form.form_submissions.count,
         created_at: form.created_at&.iso8601,
         updated_at: form.updated_at&.iso8601
       }
@@ -1989,11 +1989,20 @@ module V7CMS
       }
     end
 
+    def sanitize_csv_value(value)
+      str = value.to_s
+      str.match?(/\A[=+\-@\t\r]/) ? "'#{str}" : str
+    end
+
     # GET /api/forms - List all forms
     get '/api/forms' do
       require_login
 
-      forms = V7CMS::Form.includes(:form_fields, :form_submissions).order(created_at: :desc)
+      forms = V7CMS::Form.includes(:form_fields)
+                          .left_joins(:form_submissions)
+                          .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
+                          .group('forms.id')
+                          .order(created_at: :desc)
       json({ forms: forms.map { |f| form_json(f) } })
     end
 
@@ -2176,7 +2185,7 @@ module V7CMS
       scope = scope.spam if params[:filter] == 'spam'
 
       page = (params[:page] || 1).to_i
-      per_page = (params[:per_page] || 25).to_i
+      per_page = [[((params[:per_page] || 25).to_i), 1].max, 100].min
       total = scope.count
       submissions = scope.offset((page - 1) * per_page).limit(per_page)
 
@@ -2193,18 +2202,18 @@ module V7CMS
       require 'csv'
       require 'date'
       fields = form.form_fields.to_a
-      submissions = form.form_submissions.order(created_at: :desc)
+      submissions = form.form_submissions
 
       csv_string = CSV.generate do |csv|
         headers = ['Submission ID'] + fields.map { |f| f.label || f.name } + ['IP Address', 'reCAPTCHA Score', 'Spam', 'Submitted At']
         csv << headers
-        submissions.each do |sub|
+        submissions.find_each do |sub|
           data = sub.parsed_data
           row = [sub.id]
           fields.each do |field|
             value = data[field.name]
-            value = value == 'true' ? 'Yes' : 'No' if field.field_type == 'checkbox'
-            row << (value || '')
+            value = (value == 'true' ? 'Yes' : 'No') if field.field_type == 'checkbox'
+            row << sanitize_csv_value(value || '')
           end
           row += [sub.ip_address, sub.recaptcha_score, sub.spam ? 'Yes' : 'No', sub.created_at&.iso8601]
           csv << row
