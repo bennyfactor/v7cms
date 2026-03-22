@@ -1999,10 +1999,10 @@ module V7CMS
       require_login
 
       forms = V7CMS::Form.includes(:form_fields)
-                          .left_joins(:form_submissions)
-                          .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
-                          .group('forms.id')
-                          .order(created_at: :desc)
+               .left_joins(:form_submissions)
+               .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
+               .group('forms.id')
+               .order(created_at: :desc)
       json({ forms: forms.map { |f| form_json(f) } })
     end
 
@@ -2185,7 +2185,7 @@ module V7CMS
       scope = scope.spam if params[:filter] == 'spam'
 
       page = (params[:page] || 1).to_i
-      per_page = [[((params[:per_page] || 25).to_i), 1].max, 100].min
+      per_page = [[(params[:per_page] || 25).to_i, 1].max, 100].min
       total = scope.count
       submissions = scope.offset((page - 1) * per_page).limit(per_page)
 
