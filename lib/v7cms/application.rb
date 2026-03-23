@@ -1999,11 +1999,11 @@ module V7CMS
       require_login
 
       forms = V7CMS::Form
-               .includes(:form_fields)
-               .left_joins(:form_submissions)
-               .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
-               .group('forms.id')
-               .order(created_at: :desc)
+              .includes(:form_fields)
+              .left_joins(:form_submissions)
+              .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
+              .group('forms.id')
+              .order(created_at: :desc)
       json({ forms: forms.map { |f| form_json(f) } })
     end
 
