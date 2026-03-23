@@ -36,6 +36,12 @@ gem 'swagger-blocks', '~> 3.0'
 gem 'builder', '~> 3.2'
 gem 'nokogiri', '~> 1.15'
 
+# CSV export
+gem 'csv', '~> 3.0'
+
+# Email
+gem 'mail', '~> 2.8'
+
 # Image/Asset handling
 gem 'fastimage', '~> 2.3'           # Fast image dimension detection (pure Ruby)
 gem 'image_processing', '~> 1.12'   # Unified image processing API

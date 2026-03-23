@@ -37,10 +37,12 @@ GEM
     crack (1.0.1)
       bigdecimal
       rexml
+    csv (3.3.5)
     database_cleaner-active_record (2.2.2)
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0)
     database_cleaner-core (2.0.1)
+    date (3.5.1)
     diff-lcs (1.6.2)
     dotenv (2.8.1)
     drb (2.2.3)
@@ -75,8 +77,15 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
+    mail (2.9.0)
+      logger
+      mini_mime (>= 0.1.1)
+      net-imap
+      net-pop
+      net-smtp
     method_source (1.1.0)
     mini_magick (4.13.2)
+    mini_mime (1.1.5)
     minitest (5.26.1)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
@@ -84,6 +93,15 @@ GEM
       ruby2_keywords (~> 0.0.1)
     net-http (0.9.1)
       uri (>= 0.11.1)
+    net-imap (0.6.3)
+      date
+      net-protocol
+    net-pop (0.1.2)
+      net-protocol
+    net-protocol (0.2.2)
+      timeout
+    net-smtp (0.5.1)
+      net-protocol
     nio4r (2.7.5)
     nokogiri (1.19.1-aarch64-linux-gnu)
       racc (~> 1.4)
@@ -223,6 +241,7 @@ DEPENDENCIES
   brakeman (~> 6.2)
   builder (~> 3.2)
   bundler-audit (~> 0.9)
+  csv (~> 3.0)
   database_cleaner-active_record (~> 2.1)
   dotenv (~> 2.8)
   factory_bot (~> 6.2)
@@ -231,6 +250,7 @@ DEPENDENCIES
   gem-release (~> 2.2)
   image_processing (~> 1.12)
   json (~> 2.6)
+  mail (~> 2.8)
   mini_magick (~> 4.12)
   nokogiri (~> 1.15)
   omniauth (~> 2.1)
