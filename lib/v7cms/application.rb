@@ -30,6 +30,7 @@ module V7CMS
     helpers V7CMS::AuthHelper
     helpers V7CMS::CdnHelper
     helpers V7CMS::MenuHelper
+    helpers V7CMS::FormHelper
 
     # Enable sessions for authentication
     enable :sessions
@@ -194,7 +195,7 @@ module V7CMS
     # Apache handles these via .htaccess, but we need Sinatra fallback for Rack/Puma
     before do
       # Skip reserved paths - let them be handled by their respective routes
-      return if request.path_info.start_with?('/api', '/auth', '/admin', '/feed', '/health', '/posts', '/pages')
+      return if request.path_info.start_with?('/api', '/auth', '/admin', '/feed', '/health', '/posts', '/pages', '/forms')
       return if request.path_info == '/'
       return if request.path_info.include?('.')  # Skip static files
 
@@ -1928,6 +1929,389 @@ module V7CMS
     end
 
     # =========================================================================
+    # Form Builder API Routes
+    # =========================================================================
+
+    # Form serialization helper
+    def form_json(form, include_fields: false)
+      result = {
+        id: form.id,
+        name: form.name,
+        slug: form.slug,
+        description: form.description,
+        submit_button_text: form.submit_button_text,
+        success_message: form.success_message,
+        notification_email: form.notification_email,
+        store_submissions: form.store_submissions,
+        send_notifications: form.send_notifications,
+        require_recaptcha: form.require_recaptcha,
+        recaptcha_threshold: form.recaptcha_threshold,
+        spam_behavior: form.spam_behavior,
+        published: form.published,
+        fields_count: form.form_fields.size,
+        submissions_count: form.respond_to?(:submissions_count_cache) ? form.submissions_count_cache : form.form_submissions.count,
+        created_at: form.created_at&.iso8601,
+        updated_at: form.updated_at&.iso8601
+      }
+      if include_fields
+        result[:fields] = form.form_fields.map { |f| form_field_json(f) }
+      end
+      result
+    end
+
+    # Form field serialization helper
+    def form_field_json(field)
+      {
+        id: field.id,
+        form_id: field.form_id,
+        field_type: field.field_type,
+        name: field.name,
+        label: field.label,
+        placeholder: field.placeholder,
+        help_text: field.help_text,
+        required: field.required,
+        options: field.options,
+        validation_rules: field.validation_rules,
+        position: field.position
+      }
+    end
+
+    # Submission serialization helper
+    def submission_json(submission)
+      {
+        id: submission.id,
+        form_id: submission.form_id,
+        data: submission.parsed_data,
+        ip_address: submission.ip_address,
+        recaptcha_score: submission.recaptcha_score,
+        spam: submission.spam,
+        created_at: submission.created_at&.iso8601
+      }
+    end
+
+    def sanitize_csv_value(value)
+      str = value.to_s
+      str.lstrip.match?(/\A[=+\-@\t\r]/) ? "'#{str}" : str
+    end
+
+    # GET /api/forms - List all forms
+    get '/api/forms' do
+      require_login
+
+      forms = V7CMS::Form
+              .includes(:form_fields)
+              .left_joins(:form_submissions)
+              .select('forms.*, COUNT(form_submissions.id) AS submissions_count_cache')
+              .group('forms.id')
+              .order(created_at: :desc)
+      json({ forms: forms.map { |f| form_json(f) } })
+    end
+
+    # POST /api/forms - Create form
+    post '/api/forms' do
+      require_ajax_header
+      require_login
+
+      data = parse_json_body
+      form = V7CMS::Form.new(
+        name: data['name'],
+        slug: data['slug'].to_s.strip.empty? ? nil : data['slug'],
+        description: data['description'],
+        submit_button_text: data['submit_button_text'] || 'Submit',
+        success_message: data['success_message'] || 'Thank you for your submission.',
+        notification_email: data['notification_email'],
+        store_submissions: data.fetch('store_submissions', true),
+        send_notifications: data.fetch('send_notifications', false),
+        require_recaptcha: data.fetch('require_recaptcha', true),
+        recaptcha_threshold: data.fetch('recaptcha_threshold', 0.5),
+        spam_behavior: data.fetch('spam_behavior', 'store'),
+        published: data.fetch('published', false)
+      )
+
+      if form.save
+        status 201
+        json({ form: form_json(form, include_fields: true) })
+      else
+        halt 422, json({ errors: form.errors.full_messages })
+      end
+    end
+
+    # GET /api/forms/:id - Get form with fields
+    get '/api/forms/:id' do
+      require_login
+
+      form = V7CMS::Form.includes(:form_fields).find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      json({ form: form_json(form, include_fields: true) })
+    end
+
+    # PUT /api/forms/:id - Update form
+    put '/api/forms/:id' do
+      require_ajax_header
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      data = parse_json_body
+      attrs = {}
+      %w[name slug description submit_button_text success_message notification_email spam_behavior].each do |key|
+        attrs[key.to_sym] = data[key] if data.key?(key)
+      end
+      %w[store_submissions send_notifications require_recaptcha published].each do |key|
+        attrs[key.to_sym] = data[key] if data.key?(key)
+      end
+      attrs[:recaptcha_threshold] = data['recaptcha_threshold'] if data.key?('recaptcha_threshold')
+
+      if form.update(attrs)
+        json({ form: form_json(form, include_fields: true) })
+      else
+        halt 422, json({ errors: form.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/forms/:id - Delete form
+    delete '/api/forms/:id' do
+      require_ajax_header
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      form.destroy
+      json({ success: true })
+    end
+
+    # POST /api/forms/:id/fields - Add field to form
+    post '/api/forms/:id/fields' do
+      require_ajax_header
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      data = parse_json_body
+      field = form.form_fields.build(
+        field_type: data['field_type'],
+        name: data['name'].to_s.strip.empty? ? nil : data['name'],
+        label: data['label'],
+        placeholder: data['placeholder'],
+        help_text: data['help_text'],
+        required: data.fetch('required', false),
+        options: data['options'].is_a?(String) ? data['options'] : data['options']&.to_json,
+        validation_rules: data['validation_rules'].is_a?(String) ? data['validation_rules'] : data['validation_rules']&.to_json,
+        position: data['position'] || form.form_fields.count
+      )
+
+      if field.save
+        status 201
+        json({ field: form_field_json(field) })
+      else
+        halt 422, json({ errors: field.errors.full_messages })
+      end
+    end
+
+    # PUT /api/form-fields/:id - Update form field
+    put '/api/form-fields/:id' do
+      require_ajax_header
+      require_login
+
+      field = V7CMS::FormField.find_by(id: params[:id])
+      halt 404, json({ error: 'Field not found' }) unless field
+
+      data = parse_json_body
+      attrs = {}
+      %w[field_type name label placeholder help_text].each do |key|
+        attrs[key.to_sym] = data[key] if data.key?(key)
+      end
+      attrs[:required] = data['required'] if data.key?('required')
+      attrs[:position] = data['position'] if data.key?('position')
+      if data.key?('options')
+        attrs[:options] = data['options'].is_a?(String) ? data['options'] : data['options']&.to_json
+      end
+      if data.key?('validation_rules')
+        attrs[:validation_rules] = data['validation_rules'].is_a?(String) ? data['validation_rules'] : data['validation_rules']&.to_json
+      end
+
+      if field.update(attrs)
+        json({ field: form_field_json(field) })
+      else
+        halt 422, json({ errors: field.errors.full_messages })
+      end
+    end
+
+    # DELETE /api/form-fields/:id - Delete form field
+    delete '/api/form-fields/:id' do
+      require_ajax_header
+      require_login
+
+      field = V7CMS::FormField.find_by(id: params[:id])
+      halt 404, json({ error: 'Field not found' }) unless field
+
+      field.destroy
+      json({ success: true })
+    end
+
+    # PUT /api/forms/:id/reorder-fields - Reorder form fields
+    put '/api/forms/:id/reorder-fields' do
+      require_ajax_header
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      data = parse_json_body
+      field_ids = data['field_ids'] || []
+      field_ids.each_with_index do |field_id, index|
+        V7CMS::FormField.where(id: field_id, form_id: form.id).update_all(position: index)
+      end
+
+      json({ success: true })
+    end
+
+    # =========================================================================
+    # Form Submission Routes
+    # =========================================================================
+
+    # GET /api/forms/:id/submissions - List submissions for a form
+    get '/api/forms/:id/submissions' do
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      scope = form.form_submissions.order(created_at: :desc)
+      scope = scope.not_spam if params[:filter] == 'not_spam'
+      scope = scope.spam if params[:filter] == 'spam'
+
+      page = (params[:page] || 1).to_i
+      per_page = [[(params[:per_page] || 25).to_i, 1].max, 100].min
+      total = scope.count
+      submissions = scope.offset((page - 1) * per_page).limit(per_page)
+
+      json({ submissions: submissions.map { |s| submission_json(s) }, total: total, page: page, per_page: per_page })
+    end
+
+    # GET /api/forms/:id/submissions/export - CSV export (MUST be before :submission_id route)
+    get '/api/forms/:id/submissions/export' do
+      require_login
+
+      form = V7CMS::Form.includes(:form_fields).find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      require 'csv'
+      require 'date'
+      fields = form.form_fields.to_a
+      submissions = form.form_submissions
+
+      csv_string = CSV.generate do |csv|
+        headers = ['Submission ID'] + fields.map { |f| f.label || f.name } + ['IP Address', 'reCAPTCHA Score', 'Spam', 'Submitted At']
+        csv << headers
+        submissions.find_each do |sub|
+          data = sub.parsed_data
+          row = [sub.id]
+          fields.each do |field|
+            value = data[field.name]
+            value = (value == 'true' ? 'Yes' : 'No') if field.field_type == 'checkbox'
+            row << sanitize_csv_value(value || '')
+          end
+          row += [sub.ip_address, sub.recaptcha_score, sub.spam ? 'Yes' : 'No', sub.created_at&.iso8601]
+          csv << row
+        end
+      end
+
+      content_type 'text/csv'
+      attachment "#{form.slug}-submissions-#{Date.today.iso8601}.csv"
+      csv_string
+    end
+
+    # GET /api/forms/:id/submissions/:submission_id - Get single submission
+    get '/api/forms/:id/submissions/:submission_id' do
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      submission = form.form_submissions.find_by(id: params[:submission_id])
+      halt 404, json({ error: 'Submission not found' }) unless submission
+
+      json({ submission: submission_json(submission) })
+    end
+
+    # DELETE /api/forms/:id/submissions/:submission_id - Delete submission
+    delete '/api/forms/:id/submissions/:submission_id' do
+      require_ajax_header
+      require_login
+
+      form = V7CMS::Form.find_by(id: params[:id])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      submission = form.form_submissions.find_by(id: params[:submission_id])
+      halt 404, json({ error: 'Submission not found' }) unless submission
+
+      submission.destroy
+      json({ success: true })
+    end
+
+    # =========================================================================
+    # Public Form Routes
+    # =========================================================================
+
+    # GET /forms/:slug - Display public form
+    get '/forms/:slug' do
+      @form = V7CMS::Form.published.includes(:form_fields).find_by(slug: params[:slug])
+      halt 404 unless @form
+
+      @form_html = V7CMS::FormRenderer.render(@form)
+      @settings = V7CMS::Setting.instance
+      erb :form, layout: :layout
+    end
+
+    # POST /forms/:slug/submit - Submit form data
+    post '/forms/:slug/submit' do
+      form = V7CMS::Form.published.includes(:form_fields).find_by(slug: params[:slug])
+      halt 404, json({ error: 'Form not found' }) unless form
+
+      data = JSON.parse(request.body.read) rescue halt(422, json({ errors: ['Invalid JSON'] }))
+      halt 422, json({ errors: ['Invalid submission data'] }) unless data.is_a?(Hash)
+
+      recaptcha_token = data.delete('recaptcha_token')
+
+      errors = form.validate_submission(data)
+      halt 422, json({ errors: errors }) unless errors.empty?
+
+      is_spam = false
+      recaptcha_score = nil
+
+      if form.require_recaptcha
+        recaptcha_score = verify_recaptcha_v3(recaptcha_token, request.ip, action: 'form_submit')
+        if recaptcha_score < form.recaptcha_threshold
+          is_spam = true
+          if form.spam_behavior == 'reject'
+            halt 422, json({ success: false, errors: ['Your submission could not be processed. Please try again.'] })
+          end
+        end
+      end
+
+      submission = nil
+      if form.store_submissions
+        submission = form.form_submissions.create!(
+          data: data.to_json,
+          ip_address: request.ip,
+          recaptcha_score: recaptcha_score,
+          spam: is_spam
+        )
+      end
+
+      unless is_spam
+        V7CMS::FormMailer.send_notification(form, data, submission)
+      end
+
+      json({ success: true, message: form.success_message })
+    end
+
+    # =========================================================================
     # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
     # =========================================================================
     # This catch-all route checks for custom redirects stored in the database.
@@ -2175,12 +2559,12 @@ module V7CMS
     end
 
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
-    def verify_recaptcha_v3(token, remote_ip)
+    def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
       # Choose Enterprise or Standard based on env vars
       if ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']
-        verify_recaptcha_enterprise(token, remote_ip)
+        verify_recaptcha_enterprise(token, remote_ip, action: action)
       elsif ENV['RECAPTCHA_SECRET_KEY']
         verify_recaptcha_standard(token, remote_ip)
       else
@@ -2190,7 +2574,7 @@ module V7CMS
     end
 
     # reCAPTCHA Enterprise verification
-    def verify_recaptcha_enterprise(token, remote_ip)
+    def verify_recaptcha_enterprise(token, remote_ip, action: 'submit_comment')
       require 'net/http'
       require 'json'
 
@@ -2204,7 +2588,7 @@ module V7CMS
         event: {
           token: token,
           siteKey: site_key,
-          expectedAction: 'submit_comment',
+          expectedAction: action,
           userIpAddress: remote_ip
         }
       }
@@ -2227,8 +2611,8 @@ module V7CMS
         return 0.0
       end
 
-      if token_props['action'] != 'submit_comment'
-        puts "reCAPTCHA Enterprise: action mismatch - expected submit_comment, got #{token_props['action']}"
+      if token_props['action'] != action
+        puts "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}"
         return 0.0
       end
 

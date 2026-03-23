@@ -66,6 +66,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'image_processing', '~> 1.12'
   spec.add_dependency 'mini_magick', '~> 4.12'
 
+  # CSV export
+  spec.add_dependency 'csv', '~> 3.0'
+
+  # Email
+  spec.add_dependency 'mail', '~> 2.8'
+
   # Development dependencies
   spec.add_development_dependency 'database_cleaner-active_record', '~> 2.1'
   spec.add_development_dependency 'factory_bot', '~> 6.2'

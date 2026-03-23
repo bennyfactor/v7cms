@@ -96,6 +96,10 @@
                         <i class="fa-solid fa-bars w-5 mr-2"></i>
                         Menus
                     </a>
+                    <a @click.prevent="currentView = 'forms'; fetchForms()" href="#" :class="currentView === 'forms' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition">
+                        <i class="fa-solid fa-check-to-slot w-5 mr-2"></i>
+                        Forms
+                    </a>
                     <a @click.prevent="currentView = 'assets'; loadAssets()" href="#" :class="currentView === 'assets' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'" class="block px-4 py-2 rounded-lg mb-2 transition">
                         <i class="fa-regular fa-images w-5 mr-2"></i>
                         Assets
@@ -1080,6 +1084,339 @@
                         <!-- Empty items state -->
                         <div x-show="menuItems.length === 0" class="text-center py-8 text-gray-500">
                             No items yet. Click "+ Add Item" to build your menu.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forms List -->
+                <div x-show="currentView === 'forms' && !editingForm" class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">Forms</h2>
+                        <button @click="newForm()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            + New Form
+                        </button>
+                    </div>
+
+                    <div x-show="forms.length === 0" class="text-center py-12 text-gray-500">
+                        <i class="fa-solid fa-check-to-slot text-4xl mb-4"></i>
+                        <p>No forms yet. Create your first form to start collecting submissions.</p>
+                    </div>
+
+                    <div class="grid gap-4">
+                        <template x-for="form in forms" :key="form.id">
+                            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between hover:shadow-md transition cursor-pointer"
+                                 @click="editForm(form)">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-semibold text-gray-800" x-text="form.name"></span>
+                                        <span x-show="form.published" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Published</span>
+                                        <span x-show="!form.published" class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Draft</span>
+                                    </div>
+                                    <div class="text-sm text-gray-500 mt-1">
+                                        <span x-text="'/forms/' + form.slug" class="font-mono"></span>
+                                        <span class="mx-2">&middot;</span>
+                                        <span x-text="(form.fields_count || 0) + ' fields'"></span>
+                                        <span class="mx-2">&middot;</span>
+                                        <span x-text="(form.submissions_count || 0) + ' submissions'"></span>
+                                    </div>
+                                </div>
+                                <button @click.stop="deleteForm(form)" class="text-red-500 hover:text-red-700 p-2" title="Delete form">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Form Editor -->
+                <div x-show="currentView === 'forms' && editingForm && !viewingSubmissions" class="p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <button @click="cancelFormEdit()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <h2 class="text-3xl font-bold text-gray-800" x-text="currentForm.id ? 'Edit Form' : 'New Form'"></h2>
+                        </div>
+                        <div class="flex gap-2" x-show="currentForm.id">
+                            <button @click="viewFormSubmissions()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fa-solid fa-inbox mr-1"></i> Submissions
+                            </button>
+                            <a :href="'/forms/' + currentForm.slug" target="_blank" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fa-solid fa-external-link mr-1"></i> Preview
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Form Details -->
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Form Details</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <input x-model="currentForm.name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="e.g., Contact Form">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                                <input x-model="currentForm.slug" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="auto-generated">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea x-model="currentForm.description" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Optional description shown above the form"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Settings -->
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Submit Button Text</label>
+                                <input x-model="currentForm.submit_button_text" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Notification Email</label>
+                                <input x-model="currentForm.notification_email" type="email" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="admin@example.com">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Success Message</label>
+                                <textarea x-model="currentForm.success_message" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2"></textarea>
+                            </div>
+                            <div class="flex items-center gap-6">
+                                <label class="flex items-center gap-2">
+                                    <input x-model="currentForm.store_submissions" type="checkbox" class="rounded">
+                                    <span class="text-sm text-gray-700">Store submissions</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input x-model="currentForm.send_notifications" type="checkbox" class="rounded"
+                                           :disabled="!currentForm.notification_email">
+                                    <span class="text-sm text-gray-700">Send email notifications</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input x-model="currentForm.published" type="checkbox" class="rounded">
+                                    <span class="text-sm text-gray-700">Published</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-2">
+                                    <input x-model="currentForm.require_recaptcha" type="checkbox" class="rounded">
+                                    <span class="text-sm text-gray-700">Require reCAPTCHA</span>
+                                </label>
+                                <div x-show="currentForm.require_recaptcha" class="flex items-center gap-2">
+                                    <label class="text-sm text-gray-700">Threshold:</label>
+                                    <input x-model="currentForm.recaptcha_threshold" type="number" min="0" max="1" step="0.1"
+                                           class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Spam Behavior</label>
+                                <select x-model="currentForm.spam_behavior" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="store">Store as spam (silent)</option>
+                                    <option value="reject">Reject submission (show error)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex gap-2">
+                            <button @click="saveForm()" :disabled="savingForm"
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                                <span x-show="!savingForm">Save Form</span>
+                                <span x-show="savingForm">Saving...</span>
+                            </button>
+                            <button @click="cancelFormEdit()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields (only after form is saved) -->
+                    <div x-show="currentForm.id" class="bg-white rounded-lg shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Fields</h3>
+                            <button @click="newFormField()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm">
+                                + Add Field
+                            </button>
+                        </div>
+
+                        <!-- Field Form -->
+                        <div x-show="showFieldForm" class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-gray-800 mb-3" x-text="currentFormField.id ? 'Edit Field' : 'Add Field'"></h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                    <select x-model="currentFormField.field_type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        <option value="text">Text</option>
+                                        <option value="email">Email</option>
+                                        <option value="textarea">Text Area</option>
+                                        <option value="select">Dropdown</option>
+                                        <option value="radio">Radio Buttons</option>
+                                        <option value="checkbox">Checkbox</option>
+                                        <option value="number">Number</option>
+                                        <option value="tel">Phone</option>
+                                        <option value="url">URL</option>
+                                        <option value="hidden">Hidden</option>
+                                    </select>
+                                </div>
+                                <div x-show="currentFormField.field_type !== 'hidden'">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+                                    <input x-model="currentFormField.label" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="e.g., Full Name">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-gray-400">(auto from label)</span></label>
+                                    <input x-model="currentFormField.name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="auto-generated">
+                                </div>
+                                <div x-show="!['checkbox', 'select', 'radio', 'hidden'].includes(currentFormField.field_type)">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Placeholder</label>
+                                    <input x-model="currentFormField.placeholder" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                                <div x-show="currentFormField.field_type !== 'hidden'">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Help Text</label>
+                                    <input x-model="currentFormField.help_text" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                                <div x-show="['select', 'radio'].includes(currentFormField.field_type)" class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Options <span class="text-gray-400">(JSON array)</span></label>
+                                    <textarea x-model="currentFormField.options" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
+                                              placeholder='[{"label": "Option 1", "value": "opt1"}, {"label": "Option 2", "value": "opt2"}]'></textarea>
+                                </div>
+                                <div x-show="['number', 'text', 'hidden'].includes(currentFormField.field_type)" class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Validation Rules <span class="text-gray-400">(JSON)</span></label>
+                                    <input x-model="currentFormField.validation_rules" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm"
+                                           placeholder='{"min": 0, "max": 100} or {"value": "hidden-value"}'>
+                                </div>
+                                <div class="flex items-center" x-show="currentFormField.field_type !== 'hidden'">
+                                    <label class="flex items-center gap-2">
+                                        <input x-model="currentFormField.required" type="checkbox" class="rounded">
+                                        <span class="text-sm text-gray-700">Required</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button @click="saveFormField()" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm">Save Field</button>
+                                <button @click="cancelFieldForm()" class="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-lg hover:bg-gray-200 transition text-sm">Cancel</button>
+                            </div>
+                        </div>
+
+                        <!-- Fields List -->
+                        <div x-show="formFields.length === 0 && !showFieldForm" class="text-center py-8 text-gray-500">
+                            No fields yet. Add your first field.
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="field in formFields" :key="field.id">
+                                <div class="flex items-center justify-between border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono" x-text="fieldTypeLabel(field.field_type)"></span>
+                                        <span class="font-medium text-gray-800" x-text="field.label || field.name"></span>
+                                        <span class="text-xs text-gray-400 font-mono" x-text="field.name"></span>
+                                        <span x-show="field.required" class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Required</span>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <button @click="editFormField(field)" class="text-blue-500 hover:text-blue-700 p-1" title="Edit">
+                                            <i class="fa-solid fa-pen text-sm"></i>
+                                        </button>
+                                        <button @click="deleteFormField(field)" class="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                            <i class="fa-solid fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Submissions -->
+                <div x-show="currentView === 'forms' && editingForm && viewingSubmissions" class="p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <button @click="backToFormEditor()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <h2 class="text-3xl font-bold text-gray-800">Submissions</h2>
+                            <span class="text-gray-500" x-text="'for ' + currentForm.name"></span>
+                        </div>
+                        <div class="flex gap-2">
+                            <select x-model="submissionsFilter" @change="submissionsPagination.page = 1; fetchFormSubmissions()"
+                                    class="border border-gray-300 rounded-lg px-3 py-2">
+                                <option value="all">All</option>
+                                <option value="not_spam">Non-spam</option>
+                                <option value="spam">Spam</option>
+                            </select>
+                            <button @click="exportSubmissions()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                <i class="fa-solid fa-download mr-1"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="formSubmissions.length === 0" class="text-center py-12 text-gray-500">
+                        No submissions yet.
+                    </div>
+
+                    <!-- Submission Detail -->
+                    <div x-show="viewingSubmission" class="bg-white rounded-lg shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Submission Details</h3>
+                            <button @click="viewingSubmission = null" class="text-gray-500 hover:text-gray-700">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                        <template x-if="viewingSubmission">
+                            <div>
+                                <div class="space-y-2 mb-4">
+                                    <template x-for="field in formFields" :key="field.name">
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <span class="text-sm font-medium text-gray-600" x-text="field.label || field.name"></span>
+                                            <span class="col-span-2 text-sm text-gray-800" x-text="viewingSubmission.data[field.name] || '—'"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="border-t pt-3 text-xs text-gray-400 space-y-1">
+                                    <div>IP: <span x-text="viewingSubmission.ip_address || 'N/A'"></span></div>
+                                    <div>reCAPTCHA: <span x-text="viewingSubmission.recaptcha_score ?? 'N/A'"></span></div>
+                                    <div>Submitted: <span x-text="new Date(viewingSubmission.created_at).toLocaleString()"></span></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Submissions Table -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data Preview</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="sub in formSubmissions" :key="sub.id">
+                                    <tr class="hover:bg-gray-50 cursor-pointer" @click="viewingSubmission = sub">
+                                        <td class="px-4 py-3 text-sm text-gray-600" x-text="new Date(sub.created_at).toLocaleDateString()"></td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">
+                                            <span x-text="Object.values(sub.data || {}).slice(0, 2).join(' · ').substring(0, 60)"></span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span x-show="sub.spam" class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">Spam</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button @click.stop="deleteSubmission(sub)" class="text-red-500 hover:text-red-700" title="Delete">
+                                                <i class="fa-solid fa-trash text-sm"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div x-show="submissionsPagination.total > submissionsPagination.per_page" class="flex justify-between items-center mt-4">
+                        <span class="text-sm text-gray-500" x-text="`${submissionsPagination.total} total submissions`"></span>
+                        <div class="flex gap-2">
+                            <button @click="submissionsPagination.page--; fetchFormSubmissions()"
+                                    :disabled="submissionsPagination.page <= 1"
+                                    class="px-3 py-1 rounded border disabled:opacity-50">Prev</button>
+                            <span class="px-3 py-1 text-sm" x-text="`Page ${submissionsPagination.page}`"></span>
+                            <button @click="submissionsPagination.page++; fetchFormSubmissions()"
+                                    :disabled="submissionsPagination.page * submissionsPagination.per_page >= submissionsPagination.total"
+                                    class="px-3 py-1 rounded border disabled:opacity-50">Next</button>
                         </div>
                     </div>
                 </div>
