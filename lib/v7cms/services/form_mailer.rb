@@ -41,8 +41,8 @@ module V7CMS
           password: ENV.fetch('SMTP_PASSWORD', nil),
           domain: ENV.fetch('SMTP_DOMAIN', nil),
           authentication: ENV.fetch('SMTP_AUTH', 'plain'),
-          enable_starttls_auto: ENV.fetch('SMTP_TLS', 'true') == 'true'
-        }]
+          enable_starttls_auto: ENV.fetch('SMTP_TLS', 'true') == 'true',
+        },]
       else
         [:sendmail]
       end
