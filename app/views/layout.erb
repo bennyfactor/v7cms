@@ -67,6 +67,8 @@
     <!-- RSS/Atom Feed Links -->
     <link rel="alternate" type="application/rss+xml" title="<%= @settings.site_title %> RSS Feed" href="/feed/rss">
     <link rel="alternate" type="application/atom+xml" title="<%= @settings.site_title %> Atom Feed" href="/feed/atom">
+
+    <%= erb :'partials/head_custom' %>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <%
@@ -175,5 +177,7 @@
             }
         })();
     </script>
+
+    <%= erb :'partials/body_scripts_custom' %>
 </body>
 </html>
