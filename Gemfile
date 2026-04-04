@@ -27,7 +27,7 @@ gem 'rack-attack', '~> 6.7'
 gem 'dotenv', '~> 2.8'
 
 # JSON handling
-gem 'json', '~> 2.6'
+gem 'json', '~> 2.19', '>= 2.19.2'
 
 # API Documentation
 gem 'swagger-blocks', '~> 3.0'
