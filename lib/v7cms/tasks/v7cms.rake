@@ -375,43 +375,106 @@ namespace :v7cms do
 
     FileUtils.mkdir_p(project_public)
 
-    # Assets to link/copy
-    assets = %w[js css admin api-docs.html]
+    # Directories where client apps may have their own files — use file-level symlinks
+    merge_dirs = %w[js css]
+    # Directories that are gem-only — symlink the whole directory
+    dir_symlinks = %w[admin]
+    # Individual files to symlink
+    file_symlinks = %w[api-docs.html]
+
     linked = 0
-    copied = 0
     skipped = 0
 
-    assets.each do |asset|
-      source = File.join(gem_public, asset)
-      target = File.join(project_public, asset)
+    # File-level symlinks: create real directory, symlink each gem file
+    merge_dirs.each do |dir|
+      source_dir = File.join(gem_public, dir)
+      target_dir = File.join(project_public, dir)
+      next unless File.directory?(source_dir)
 
-      next unless File.exist?(source)
+      # Migrate old directory symlink to real directory
+      FileUtils.rm(target_dir) if File.symlink?(target_dir)
 
-      if File.exist?(target) || File.symlink?(target)
-        if File.symlink?(target) && File.readlink(target) == source
+      FileUtils.mkdir_p(target_dir)
+
+      Dir.glob(File.join(source_dir, '*')).each do |source_file|
+        filename = File.basename(source_file)
+        target_file = File.join(target_dir, filename)
+
+        if File.symlink?(target_file) && File.readlink(target_file) == source_file
           skipped += 1
           next
-        else
-          # Remove existing to replace
-          FileUtils.rm_rf(target)
+        end
+
+        # Only replace if it's a symlink (gem-managed). Never touch non-symlink client files.
+        if File.symlink?(target_file)
+          FileUtils.rm(target_file)
+        elsif File.exist?(target_file)
+          skipped += 1
+          next
+        end
+
+        begin
+          File.symlink(source_file, target_file)
+          linked += 1
+          puts "  Linked: #{dir}/#{filename} -> #{source_file}"
+        rescue NotImplementedError, Errno::EACCES
+          FileUtils.cp(source_file, target_file)
+          linked += 1
+          puts "  Copied: #{dir}/#{filename}"
         end
       end
+    end
 
-      # Try symlink first, fall back to copy
+    # Directory symlinks: symlink the whole directory (gem-only content)
+    dir_symlinks.each do |dir|
+      source = File.join(gem_public, dir)
+      target = File.join(project_public, dir)
+      next unless File.exist?(source)
+
+      if File.symlink?(target) && File.readlink(target) == source
+        skipped += 1
+        next
+      end
+
+      FileUtils.rm_rf(target) if File.exist?(target) || File.symlink?(target)
+
       begin
         File.symlink(source, target)
         linked += 1
-        puts "  Linked: #{asset} -> #{source}"
+        puts "  Linked: #{dir} -> #{source}"
       rescue NotImplementedError, Errno::EACCES
-        # Symlinks not supported (Windows) or permission denied, copy instead
         FileUtils.cp_r(source, target)
-        copied += 1
-        puts "  Copied: #{asset}"
+        linked += 1
+        puts "  Copied: #{dir}"
+      end
+    end
+
+    # File symlinks: individual files
+    file_symlinks.each do |file|
+      source = File.join(gem_public, file)
+      target = File.join(project_public, file)
+      next unless File.exist?(source)
+
+      if File.symlink?(target) && File.readlink(target) == source
+        skipped += 1
+        next
+      end
+
+      FileUtils.rm_f(target) if File.exist?(target) || File.symlink?(target)
+
+      begin
+        File.symlink(source, target)
+        linked += 1
+        puts "  Linked: #{file} -> #{source}"
+      rescue NotImplementedError, Errno::EACCES
+        FileUtils.cp(source, target)
+        linked += 1
+        puts "  Copied: #{file}"
       end
     end
 
     puts
-    puts "Assets: #{linked} linked, #{copied} copied, #{skipped} unchanged"
+    puts "Assets: #{linked} linked, #{skipped} unchanged"
     puts
     puts "Public assets are now available at #{project_public}"
   end
