@@ -5,6 +5,91 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-04
+
+### Added
+- **Template Hook Partials**: Convention-based `_head_custom.erb` and `_body_scripts_custom.erb` for client customization without modifying gem layout
+- Tests for hook rendering and multi-path view override behavior
+
+### Fixed
+- Sinatra template resolution for hook partials (underscore prefix, `layout: false`)
+- Hook partials added to gem-level views for proper template lookup
+
+### Security
+- Updated `json` gem to 2.19.3 (CVE-2026-33210: format string injection)
+- Aligned gemspec json constraint with Gemfile to protect gem consumers
+
+---
+
+## [0.2.0] - 2026-03-23
+
+### Added
+- **Form Builder**: Custom forms with 9 field types, public rendering, reCAPTCHA v3 spam prevention, email notifications, submission management with CSV export
+- `[form:slug]` shortcodes for embedding forms in page/post content
+- 3 new models (Form, FormField, FormSubmission), 2 services (FormRenderer, FormMailer)
+
+---
+
+## [0.1.51] - 2026-03-21
+
+### Fixed
+- `css_class` lost when editing menu items — `flattenMenuItems` was not including it in flattened objects
+
+---
+
+## [0.1.50] - 2026-03-18
+
+### Added
+- **Menu Builder**: Admin UI for managing navigation menus with polymorphic page/post/custom links
+- Two-level nesting with CSS-only dropdowns (no JS on public side)
+- Menus baked into static HTML output via PostRenderer/PageRenderer
+- 10 REST API endpoints for menu and item CRUD, reordering, public render
+- Security: HTML escaping, URL allowlist, linkable_type validation
+
+---
+
+## [0.1.48] - 2026-03-14
+
+### Added
+- **Hierarchical Pages**: `nested=true` parameter on `GET /api/pages` returns tree structure with depth and nested children
+- Admin UI tree view with expand/collapse, replacing flat table
+
+### Fixed
+- RuboCop lint issues and widened CDN rake task regex to match unpinned versions
+
+---
+
+## [0.1.47] - 2026-03-14
+
+### Fixed
+- Quill.js toolbar duplication on navigation — added proper cleanup on view change
+- Comment pagination offset increment moved after successful fetch
+- **CDN Version Management**: Centralized versions in `cdn_versions.rb`, pinned Alpine.js 3.14.9, Swagger UI 5.18.2, Tailwind 4.1.0
+- Updated omniauth-google-oauth2 and omniauth-oauth2
+
+---
+
+## [0.1.46] - 2026-03-13
+
+### Changed
+- Upgraded minimum Ruby from 3.0 to 3.4 across gemspec, CI, and Dockerfiles
+- Updated rack, nokogiri, and faraday for security fixes
+
+---
+
+## [0.1.45] - 2026-03-12
+
+### Added
+- **Editorial Workflow**: Three-state system (draft → ready → published) replacing boolean `published` flag. Published versions are frozen ContentVersion snapshots; editing auto-flips to draft while published version stays live.
+- **Post Tags**: Managed tagging system with Tag model, PostTag join table, CRUD API, admin tag management, and page-level tag filtering
+- **Gem Packaging**: Namespaced all models/services/helpers under `V7CMS::`, moved code to `lib/v7cms/`, added FileResolver for user-first path resolution, rake setup tasks
+
+### Fixed
+- Restored admin UI files accidentally deleted during workflow merge
+- Post/page status not showing in admin UI (`workflow_state` → `status` field mismatch)
+
+---
+
 ## [0.1.43] - 2026-01-05
 
 ### Changed
@@ -57,29 +142,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blog Post Layouts**: Selectable post layout templates (standard, minimal)
 - **Admin Load More**: Pagination for posts and pages lists
 - **Page Hero Images**: Optional hero_image_url field for pages
-
----
-
-## [Unreleased]
-
-### Added
-- Gem packaging infrastructure for library distribution
-- `V7CMS::Application` - Namespaced Sinatra application class
-- `V7CMS::FileResolver` - User-first file path resolution (project files override gem defaults)
-- Rake tasks: `v7cms:setup`, `v7cms:install_migrations`, `v7cms:htaccess`, `v7cms:regenerate`
-- Integration tests for gem structure (27 tests)
-
-### Changed
-- All models namespaced under `V7CMS::` (User, Post, Page, Comment, Setting, Theme, Redirect)
-- All services namespaced under `V7CMS::` (FeedGenerator, PostRenderer, PageRenderer, etc.)
-- All helpers namespaced under `V7CMS::` (AuthHelper)
-- Application code moved to `lib/v7cms/` for gem packaging
-- Views moved to `lib/v7cms/views/`
-- Public assets moved to `lib/v7cms/public/`
-
-### Backward Compatibility
-- `app/cms.rb` provides aliases for non-namespaced access (CMS, User, Post, etc.)
-- Existing projects continue to work without changes
 
 ---
 
