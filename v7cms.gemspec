@@ -52,7 +52,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'dotenv', '~> 2.8'
 
   # JSON handling
-  spec.add_dependency 'json', '~> 2.6'
+  spec.add_dependency 'json', '~> 2.19', '>= 2.19.2'
 
   # API Documentation
   spec.add_dependency 'swagger-blocks', '~> 3.0'
