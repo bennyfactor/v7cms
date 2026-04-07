@@ -53,6 +53,49 @@ RSpec.describe HtaccessGenerator do
     end
   end
 
+  describe 'template content' do
+    let(:template) { File.read(template_path) }
+
+    it 'includes rewrite rules for static asset directories' do
+      %w[js css patterns].each do |dir|
+        expect(template).to include("RewriteRule ^#{dir}/(.*)$ /public/#{dir}/$1 [L]")
+      end
+    end
+
+    it 'includes rewrite rules for pre-generated HTML directories' do
+      %w[posts pages].each do |dir|
+        expect(template).to include("RewriteRule ^#{dir}/(.+\\.html)$ /public/#{dir}/$1 [L]")
+      end
+    end
+
+    it 'sets long cache for static asset file types' do
+      expect(template).to match(/FilesMatch.*js\|css\|wasm/)
+      expect(template).to include('max-age=2592000')
+    end
+
+    it 'sets short cache for HTML files' do
+      expect(template).to match(/FilesMatch.*\\\.html/)
+      expect(template).to include('max-age=3600')
+    end
+
+    it 'disables caching for FCGI responses via rewrite rule env var' do
+      expect(template).to include('no-cache, no-store, must-revalidate')
+      expect(template).to include('env=is_fcgi_request')
+      expect(template).to include('E=is_fcgi_request:1')
+    end
+
+    it 'does not blanket no-cache JS or CSS files' do
+      # The old template had a FilesMatch for .html|js|css with no-cache
+      # This should no longer exist
+      expect(template).not_to match(/FilesMatch.*html\|js\|css.*\n.*no-cache/)
+    end
+
+    it 'includes gzip compression rules' do
+      expect(template).to include('mod_deflate')
+      expect(template).to include('AddOutputFilterByType DEFLATE')
+    end
+  end
+
   describe '#escape_path' do
     it 'removes leading slash' do
       expect(generator.send(:escape_path, '/test')).to eq('test')

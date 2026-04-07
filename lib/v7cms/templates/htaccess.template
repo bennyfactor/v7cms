@@ -129,38 +129,36 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # CACHE CONTROL
 # ============================================================================
 
-# Cache static post HTML files (served from public/posts/)
-# These are pre-generated and updated when posts change
-<FilesMatch "^posts/.*\.html$">
+# Long cache for static assets (30 days)
+# These are fingerprinted or rarely change; browsers should cache aggressively
+<FilesMatch "\.(js|css|wasm|woff|woff2|ttf|eot|otf|png|jpg|jpeg|gif|svg|ico|webp|avif|mp4|webm)$">
+    Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>
+
+# Short cache for pre-generated HTML files (posts, pages)
+# Updated when content changes; 1 hour lets changes propagate reasonably fast
+<FilesMatch "\.html$">
     Header set Cache-Control "public, max-age=3600"
 </FilesMatch>
 
-# Disable caching for dynamic HTML, JavaScript, and CSS files
-# Exclude static posts directory from no-cache rule
-<FilesMatch "\.(html|js|css)$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
-    Header set Pragma "no-cache"
-    Header set Expires "0"
-</FilesMatch>
-
-# Disable caching for all dynamic content (API routes and application routes)
-# Mark API requests with an environment variable
-SetEnvIf Request_URI "^/api/" is_dynamic_route
-SetEnvIf Request_URI "^/auth/" is_dynamic_route
-SetEnvIf Request_URI "^/posts/" is_dynamic_route
-SetEnvIf Request_URI "^/admin/" is_dynamic_route
-SetEnvIf Request_URI "^/$" is_dynamic_route
-
-# Apply no-cache headers to all dynamic routes
-Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_dynamic_route
-Header always set Pragma "no-cache" env=is_dynamic_route
-Header always set Expires "0" env=is_dynamic_route
-
-# Apply no-cache headers to all responses processed through FastCGI
-SetEnvIf Request_URI "\.fcgi" is_fcgi_request
+# No-cache headers for dynamic content are applied via the FCGI rewrite rule
+# below (using the [E=is_fcgi_request:1] flag), since SetEnvIf Request_URI
+# won't match internally rewritten URIs.
 Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_fcgi_request
 Header always set Pragma "no-cache" env=is_fcgi_request
 Header always set Expires "0" env=is_fcgi_request
+
+# ============================================================================
+# GZIP COMPRESSION
+# ============================================================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE application/wasm
+    AddOutputFilterByType DEFLATE application/xml text/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE application/font-woff application/font-woff2 application/x-font-woff font/woff font/woff2
+</IfModule>
 
 # ============================================================================
 # CUSTOM REDIRECTS (auto-generated - do not edit manually)
@@ -171,10 +169,17 @@ Header always set Expires "0" env=is_fcgi_request
 # APPLICATION ROUTING: FastCGI handler
 # ============================================================================
 
-# Serve admin SPA from public/admin/ (Sinatra convention for static assets)
-# This is needed because DocumentRoot is the repo root, not public/
+# Serve static assets from public/ subdirectories
+# DocumentRoot is the repo root, not public/, so Apache can't find these
+# without explicit rewrites. Without these rules, requests fall through to
+# FCGI/Rack causing 1s+ TTFB instead of direct Apache serving at <50ms.
 RewriteRule ^admin/?$ /public/admin/index.html [L]
 RewriteRule ^admin/(.*)$ /public/admin/$1 [L]
+RewriteRule ^js/(.*)$ /public/js/$1 [L]
+RewriteRule ^css/(.*)$ /public/css/$1 [L]
+RewriteRule ^patterns/(.*)$ /public/patterns/$1 [L]
+RewriteRule ^posts/(.+\.html)$ /public/posts/$1 [L]
+RewriteRule ^pages/(.+\.html)$ /public/pages/$1 [L]
 
 # Set directory index files - try index.html first, then index.fcgi
 DirectoryIndex index.html index.fcgi
@@ -184,4 +189,4 @@ RewriteCond %{REQUEST_FILENAME} !-f
 # Don't rewrite requests for existing directories
 RewriteCond %{REQUEST_FILENAME} !-d
 # Route everything else through index.fcgi (including /feed/rss and /feed/atom)
-RewriteRule ^(.*)$ /index.fcgi/$1 [QSA,L]
+RewriteRule ^(.*)$ /index.fcgi/$1 [QSA,E=is_fcgi_request:1,L]
