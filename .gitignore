@@ -1,11 +1,15 @@
-# dreamhost diagnostics
-.dh-diag
+# Hidden directories and files (tooling config, agent state, etc.)
+.*
+!.gitignore
+!.gitattributes
+!.github/
+!.github/**
+!.rubocop.yml
+!.rubocop_todo.yml
 
 *.mg
 *.gem
 
-***REMOVED***
-***REMOVED***
 *.rbc
 /.config
 /coverage/
@@ -92,6 +96,9 @@ public/pages/**/*.html
 
 # Git worktrees (isolated development workspaces)
 .worktrees/
+
+# Design docs and plans (local brainstorming, not committed)
+docs/plans/
 
 # Don't commit markdown notes (but allow specific project docs)
 *.md
