@@ -84,9 +84,8 @@ RSpec.describe HtaccessGenerator do
       expect(template).to include('E=is_fcgi_request:1')
     end
 
-    it 'unsets existing cache headers before setting no-cache on FCGI responses' do
-      expect(template).to include('Header always unset Cache-Control env=REDIRECT_is_fcgi_request')
-      expect(template).to include('Header always unset Expires env=REDIRECT_is_fcgi_request')
+    it 'disables mod_expires to prevent conflicting cache headers' do
+      expect(template).to include('ExpiresActive Off')
     end
 
     it 'does not blanket no-cache JS or CSS files' do
