@@ -135,8 +135,13 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
     Header set Cache-Control "public, max-age=2592000"
 </FilesMatch>
 
-# Short cache for pre-generated HTML files (posts, pages)
-# Updated when content changes; 1 hour lets changes propagate reasonably fast
+# theme.css is regenerated when theme settings change; keep it on a short cache
+<Files "theme.css">
+    Header set Cache-Control "public, max-age=3600"
+</Files>
+
+# Short cache for HTML files (admin SPA, pre-generated posts/pages)
+# 1 hour lets content changes propagate reasonably fast
 <FilesMatch "\.html$">
     Header set Cache-Control "public, max-age=3600"
 </FilesMatch>
