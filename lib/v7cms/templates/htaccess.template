@@ -146,12 +146,12 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
     Header set Cache-Control "public, max-age=3600"
 </FilesMatch>
 
-# No-cache headers for dynamic content are applied via the FCGI rewrite rule
-# below (using the [E=is_fcgi_request:1] flag), since SetEnvIf Request_URI
-# won't match internally rewritten URIs.
-Header always set Cache-Control "no-cache, no-store, must-revalidate" env=is_fcgi_request
-Header always set Pragma "no-cache" env=is_fcgi_request
-Header always set Expires "0" env=is_fcgi_request
+# No-cache headers for dynamic content served through FastCGI.
+# RewriteRule [E=VAR] creates REDIRECT_VAR after internal redirect,
+# so we match the redirected variable name.
+Header always set Cache-Control "no-cache, no-store, must-revalidate" env=REDIRECT_is_fcgi_request
+Header always set Pragma "no-cache" env=REDIRECT_is_fcgi_request
+Header always set Expires "0" env=REDIRECT_is_fcgi_request
 
 # ============================================================================
 # GZIP COMPRESSION
