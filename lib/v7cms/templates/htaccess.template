@@ -162,7 +162,6 @@ Header always set Expires "0" env=is_fcgi_request
     AddOutputFilterByType DEFLATE application/wasm
     AddOutputFilterByType DEFLATE application/xml text/xml
     AddOutputFilterByType DEFLATE image/svg+xml
-    AddOutputFilterByType DEFLATE application/font-woff application/font-woff2 application/x-font-woff font/woff font/woff2
 </IfModule>
 
 # ============================================================================
