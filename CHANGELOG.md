@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-04-08
+
+### Fixed
+- **Duplicate Cache-Control headers**: Unset `mod_expires` headers before setting no-cache on FCGI responses — DreamHost was adding `max-age=600` alongside our `no-cache`, creating conflicting headers
+
+---
+
 ## [0.2.4] - 2026-04-08
 
 ### Fixed
