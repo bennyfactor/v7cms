@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install FastCGI development headers
         run: sudo apt-get update && sudo apt-get install -y libfcgi-dev
@@ -72,14 +72,14 @@ jobs:
         continue-on-error: true  # Don't fail if package already exists
 
       - name: Upload gem as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: v7cms-${{ steps.version.outputs.prerelease }}.gem
           path: v7cms-${{ steps.version.outputs.prerelease }}.gem
           retention-days: 30
 
       - name: Comment on PR with install instructions
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const version = '${{ steps.version.outputs.prerelease }}';

@@ -66,8 +66,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'image_processing', '~> 1.12'
   spec.add_dependency 'mini_magick', '~> 4.12'
 
-  # CSV export
+  # Ruby 3.5 stdlib extractions
   spec.add_dependency 'csv', '~> 3.0'
+  spec.add_dependency 'ostruct', '~> 0.6'
 
   # Email
   spec.add_dependency 'mail', '~> 2.8'
