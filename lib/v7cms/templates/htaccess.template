@@ -129,6 +129,13 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # CACHE CONTROL
 # ============================================================================
 
+# Disable mod_expires — we handle all caching via mod_headers.
+# DreamHost's default mod_expires adds max-age to responses which
+# conflicts with our no-cache directives on dynamic routes.
+<IfModule mod_expires.c>
+    ExpiresActive Off
+</IfModule>
+
 # Long cache for static assets (30 days)
 # These are fingerprinted or rarely change; browsers should cache aggressively
 <FilesMatch "\.(js|css|wasm|woff|woff2|ttf|eot|otf|png|jpg|jpeg|gif|svg|ico|webp|avif|mp4|webm)$">
@@ -149,10 +156,6 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # No-cache headers for dynamic content served through FastCGI.
 # RewriteRule [E=VAR] creates REDIRECT_VAR after internal redirect,
 # so we match the redirected variable name.
-# Unset any headers added by mod_expires or other modules first
-Header always unset Cache-Control env=REDIRECT_is_fcgi_request
-Header always unset Expires env=REDIRECT_is_fcgi_request
-Header always unset Pragma env=REDIRECT_is_fcgi_request
 Header always set Cache-Control "no-cache, no-store, must-revalidate" env=REDIRECT_is_fcgi_request
 Header always set Pragma "no-cache" env=REDIRECT_is_fcgi_request
 Header always set Expires "0" env=REDIRECT_is_fcgi_request
