@@ -185,8 +185,9 @@ RewriteRule ^patterns/(.*)$ /public/patterns/$1 [L]
 RewriteRule ^posts/(.+\.html)$ /public/posts/$1 [L]
 RewriteRule ^pages/(.+\.html)$ /public/pages/$1 [L]
 
-# Set directory index files - try index.html first, then index.fcgi
-DirectoryIndex index.html index.fcgi
+# Root path must be explicitly rewritten so it gets the is_fcgi_request env var
+# (DirectoryIndex would serve index.fcgi without setting it)
+RewriteRule ^$ /index.fcgi/ [QSA,E=is_fcgi_request:1,L]
 
 # Don't rewrite requests for existing files (CSS, JS, HTML, images, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f
