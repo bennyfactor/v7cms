@@ -148,7 +148,7 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 
 # No-cache headers for dynamic content served through FastCGI.
 # RewriteRule [E=VAR] creates REDIRECT_VAR after internal redirect,
-# so we must match both the original and redirected variable names.
+# so we match the redirected variable name.
 Header always set Cache-Control "no-cache, no-store, must-revalidate" env=REDIRECT_is_fcgi_request
 Header always set Pragma "no-cache" env=REDIRECT_is_fcgi_request
 Header always set Expires "0" env=REDIRECT_is_fcgi_request
