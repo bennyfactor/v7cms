@@ -80,7 +80,7 @@ RSpec.describe HtaccessGenerator do
 
     it 'disables caching for FCGI responses via rewrite rule env var' do
       expect(template).to include('no-cache, no-store, must-revalidate')
-      expect(template).to include('env=is_fcgi_request')
+      expect(template).to include('env=REDIRECT_is_fcgi_request')
       expect(template).to include('E=is_fcgi_request:1')
     end
 
