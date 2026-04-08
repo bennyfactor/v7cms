@@ -5,6 +5,21 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-04-08
+
+### Fixed
+- **Static file performance**: Apache rewrite rules for `/js/`, `/css/`, `/patterns/`, `/posts/`, `/pages/` to serve from `public/` directly, bypassing FCGI/Rack (1,000ms+ TTFB → <50ms)
+- **Cache headers**: Replaced blanket no-cache on all JS/CSS/HTML with tiered caching — 30-day for static assets, 1-hour for theme.css and HTML, no-cache only for FCGI responses
+- **Root path caching**: Explicit rewrite for `/` so homepage gets proper no-cache headers via FCGI env var
+- **Conflicting headers**: Set Sinatra `static_cache_control` to 1-hour to avoid Apache/Sinatra header conflicts
+- **Phantom script**: Removed `/js/recaptcha.js` reference from post and comment templates (file never existed, caused 404)
+
+### Added
+- Gzip compression via `mod_deflate` for JS, CSS, WASM, JSON, SVG, and fonts
+- Template content specs verifying rewrite rules, cache headers, and compression config
+
+---
+
 ## [0.2.2] - 2026-04-05
 
 ### Fixed
