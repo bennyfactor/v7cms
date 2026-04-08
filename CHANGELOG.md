@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-04-08
+
+### Fixed
+- **FCGI no-cache headers**: Use `REDIRECT_` prefix for env var set by `RewriteRule` — Apache renames `E=VAR` to `REDIRECT_VAR` after internal redirect, so dynamic routes were missing no-cache headers
+
+---
+
 ## [0.2.3] - 2026-04-08
 
 ### Fixed
