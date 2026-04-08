@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-04-08
+
+### Fixed
+- **Duplicate Cache-Control headers**: Disable `mod_expires` entirely — it runs after `mod_headers` so `Header unset` can't prevent it from adding conflicting `max-age` values on dynamic routes
+
+---
+
 ## [0.2.5] - 2026-04-08
 
 ### Fixed
