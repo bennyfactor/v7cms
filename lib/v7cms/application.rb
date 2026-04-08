@@ -50,6 +50,7 @@ module V7CMS
         set :public_folder, fallback_public
       end
       set :static, true
+      set :static_cache_control, [:public, { max_age: 3600 }]
     end
 
     # Set views directories (supports multiple paths for user overrides)
