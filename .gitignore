@@ -71,8 +71,9 @@ db/*.db
 db/*.db-*
 db/schema.rb
 
-# Tailwind CSS output
+# Tailwind CSS output (built by CI or rake v7cms:tailwind)
 public/css/output.css
+lib/v7cms/public/css/output.css
 bin/tailwindcss
 
 # Theme CSS (auto-generated from theme settings)

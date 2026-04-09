@@ -8,8 +8,17 @@
     <title><%= @title ? "#{@title} - #{@settings.site_title}" : @settings.site_title %></title>
     <!-- Compiled Tailwind CSS utilities -->
     <link rel="stylesheet" href="/css/output.css">
+    <% if params[:theme_preview] %>
+    <!-- Inline theme CSS for live preview (overrides theme.css) -->
+    <style>
+      :root {
+<%= generate_theme_css(@theme, params) %>
+      }
+    </style>
+    <% else %>
     <!-- Theme CSS custom properties (regenerated when theme changes) -->
     <link rel="stylesheet" href="/css/theme.css">
+    <% end %>
     <style>
       /* Apply theme variables to elements */
       body {

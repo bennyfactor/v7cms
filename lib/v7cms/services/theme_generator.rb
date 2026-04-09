@@ -84,12 +84,10 @@ module V7CMS
       CSS
     end
 
-    # Generate input.css for Tailwind CLI (future compiled mode)
+    # Generate input.css for Tailwind CLI compilation
     def generate_input_css
       <<~CSS
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
+        @import "tailwindcss";
 
         @theme {
   #{generate_theme_variables}

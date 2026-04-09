@@ -46,12 +46,16 @@ namespace :v7cms do
     FileUtils.mkdir_p(tmpdir)
     env = { 'TMPDIR' => tmpdir }
 
-    success = system(env, *cmd)
-    if success
-      size = File.size(output)
-      puts "  Done! #{size} bytes (#{(size / 1024.0).round(1)} KB)"
-    else
-      abort "Tailwind CSS build failed!"
+    begin
+      success = system(env, *cmd)
+      if success
+        size = File.size(output)
+        puts "  Done! #{size} bytes (#{(size / 1024.0).round(1)} KB)"
+      else
+        abort "Tailwind CSS build failed!"
+      end
+    ensure
+      FileUtils.rm_rf(tmpdir)
     end
   end
 end
