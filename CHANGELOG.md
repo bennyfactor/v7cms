@@ -5,6 +5,24 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-09
+
+### Changed
+- **Replace Tailwind browser JIT with pre-compiled CSS** — eliminates 249KB render-blocking `@tailwindcss/browser` script. CSS is now pre-built at gem publish time using `tailwindcss-ruby` and shipped as `output.css` in the gem.
+- Theme customization still works via `theme.css` (CSS custom properties regenerated at runtime when admin saves theme settings)
+- `tailwindcss-ruby` is a development dependency — consumers who need to rebuild CSS with custom views add it to their own Gemfile
+
+### Added
+- `rake v7cms:tailwind` task for building Tailwind CSS (uses `.tmp/` subdirectory to avoid `noexec` `/tmp` on shared hosting)
+- CSS injection sanitization on unauthenticated theme preview endpoint
+- Editor min-height styles moved to admin/index.html where they belong
+
+### Removed
+- `@tailwindcss/browser` CDN dependency (was 249KB JS loaded on every page)
+- `tailwind_browser` entry from CDN versions config
+
+---
+
 ## [0.2.6] - 2026-04-08
 
 ### Fixed
