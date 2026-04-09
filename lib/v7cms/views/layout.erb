@@ -6,15 +6,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= @title ? "#{@title} - #{@settings.site_title}" : @settings.site_title %></title>
-    <%= cdn_script(:tailwind_browser) %>
-
-    <!-- Tailwind v4 Theme Configuration -->
-    <style type="text/tailwindcss">
-      @theme {
+    <!-- Compiled Tailwind CSS utilities -->
+    <link rel="stylesheet" href="/css/output.css">
+    <% if params[:theme_preview] %>
+    <!-- Inline theme CSS for live preview (overrides theme.css) -->
+    <style>
+      :root {
 <%= generate_theme_css(@theme, params) %>
       }
-
-      /* Apply theme to elements - overrides Tailwind defaults */
+    </style>
+    <% else %>
+    <!-- Theme CSS custom properties (regenerated when theme changes) -->
+    <link rel="stylesheet" href="/css/theme.css">
+    <% end %>
+    <style>
+      /* Apply theme variables to elements */
       body {
         font-family: var(--font-body) !important;
         font-size: var(--font-size-base) !important;
@@ -44,7 +50,6 @@
         border-color: var(--color-border) !important;
       }
 
-      /* Override Tailwind utility classes */
       header.bg-white, footer.bg-white, article.bg-white {
         background-color: var(--color-background) !important;
       }

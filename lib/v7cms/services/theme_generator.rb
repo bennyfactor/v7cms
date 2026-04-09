@@ -10,11 +10,17 @@ module V7CMS
       @logger ||= Logger.new(STDOUT)
     end
 
-    # Generate and write theme CSS (for non-CDN/compiled mode)
+    # Generate and write theme CSS with custom properties
     def self.generate_and_write(theme)
       begin
         css = new(theme).generate_css
-        path = File.join(File.dirname(__FILE__), '..', '..', '..', 'public', 'css', 'theme.css')
+        # Write to project's public folder (not the gem's, which may be read-only)
+        public_dir = if defined?(V7CMS) && V7CMS.respond_to?(:project_root)
+                       File.join(V7CMS.project_root, 'public')
+                     else
+                       File.join(File.dirname(__FILE__), '..', 'public')
+                     end
+        path = File.join(public_dir, 'css', 'theme.css')
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, css)
         logger.info("Generated theme CSS")
@@ -78,12 +84,10 @@ module V7CMS
       CSS
     end
 
-    # Generate input.css for Tailwind CLI (future compiled mode)
+    # Generate input.css for Tailwind CLI compilation
     def generate_input_css
       <<~CSS
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
+        @import "tailwindcss";
 
         @theme {
   #{generate_theme_variables}

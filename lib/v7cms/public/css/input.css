@@ -1,14 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /*
  * Theme Configuration
- * When using compiled CSS mode, theme values will be injected here by ThemeGenerator
- * For CDN mode, theme values are in layout.erb <style type="text/tailwindcss">
+ * Default values for CSS compilation. At runtime, theme.css overrides
+ * these with user-configured values from the admin panel.
  */
 @theme {
-  /* Default theme values - will be replaced when theme is saved */
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-secondary: #8b5cf6;
@@ -47,13 +44,4 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-/* Custom admin styles */
-.editor-container {
-  min-height: 400px;
-}
-
-.ql-editor {
-  min-height: 350px;
 }

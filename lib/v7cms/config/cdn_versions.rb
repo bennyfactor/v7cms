@@ -26,10 +26,6 @@ module V7CMS
       css: 'https://unpkg.com/swagger-ui-dist@%{version}/swagger-ui.css',
       js: 'https://unpkg.com/swagger-ui-dist@%{version}/swagger-ui-bundle.js',
       js2: 'https://unpkg.com/swagger-ui-dist@%{version}/swagger-ui-standalone-preset.js'
-    },
-    tailwind_browser: {
-      version: '4.1.0',
-      js: 'https://unpkg.com/@tailwindcss/browser@%{version}'
     }
   }.freeze
 

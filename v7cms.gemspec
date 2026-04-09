@@ -81,6 +81,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rack-test', '~> 2.1'
   spec.add_development_dependency 'rerun', '~> 0.14'
   spec.add_development_dependency 'rspec', '~> 3.12'
+  spec.add_development_dependency 'tailwindcss-ruby', '~> 4.2'
   spec.add_development_dependency 'webmock', '~> 3.18'
 
   # Metadata

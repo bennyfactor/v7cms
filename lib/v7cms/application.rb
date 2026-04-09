@@ -2692,6 +2692,8 @@ module V7CMS
         next if config[:css_var].nil? # Skip fields without CSS variables (e.g., header_style, footer_style, custom_css)
 
         formatted_value = ThemeConfig.format_value(field, value)
+        # Sanitize to prevent CSS injection via preview query params
+        formatted_value = formatted_value.to_s.gsub(/[{};<>]/, '')
         "  #{config[:css_var]}: #{formatted_value};"
       end.compact
 
