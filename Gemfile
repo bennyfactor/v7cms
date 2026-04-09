@@ -40,6 +40,9 @@ gem 'nokogiri', '~> 1.15'
 gem 'csv', '~> 3.0'
 gem 'ostruct', '~> 0.6'
 
+# CSS compilation
+gem 'tailwindcss-ruby', '~> 4.2'
+
 # Email
 gem 'mail', '~> 2.8'
 

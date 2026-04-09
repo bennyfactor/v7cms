@@ -70,6 +70,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'csv', '~> 3.0'
   spec.add_dependency 'ostruct', '~> 0.6'
 
+  # CSS compilation
+  spec.add_dependency 'tailwindcss-ruby', '~> 4.2'
+
   # Email
   spec.add_dependency 'mail', '~> 2.8'
 
