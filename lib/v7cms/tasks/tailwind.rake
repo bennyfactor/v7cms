@@ -5,7 +5,15 @@ require 'fileutils'
 namespace :v7cms do
   desc 'Build Tailwind CSS from input.css to output.css'
   task :tailwind do
-    require 'tailwindcss/ruby'
+    begin
+      require 'tailwindcss/ruby'
+    rescue LoadError
+      abort <<~MSG
+        tailwindcss-ruby gem is required to build CSS.
+        Add it to your Gemfile:  gem 'tailwindcss-ruby', '~> 4.2'
+        Then run:  bundle install && bundle exec rake v7cms:tailwind
+      MSG
+    end
 
     gem_root = File.expand_path('../../..', __dir__)
     input = File.join(gem_root, 'lib', 'v7cms', 'public', 'css', 'input.css')
