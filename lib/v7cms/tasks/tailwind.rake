@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 namespace :v7cms do
   desc 'Build Tailwind CSS from input.css to output.css'
   task :tailwind do
@@ -41,8 +43,8 @@ namespace :v7cms do
     puts "  Output:  #{output}"
     puts "  Content: #{content_paths.length} paths"
 
-    # Use .tmp in project root to avoid noexec /tmp on shared hosting
-    tmpdir = File.join(gem_root, '.tmp')
+    # Use .tmp in working directory to avoid noexec /tmp on shared hosting
+    tmpdir = File.join(Dir.pwd, '.tmp')
     FileUtils.mkdir_p(tmpdir)
     env = { 'TMPDIR' => tmpdir }
 
