@@ -14,9 +14,9 @@ module V7CMS
     def self.generate_and_write(theme)
       begin
         css = new(theme).generate_css
-        # Write to project's public folder, or gem's public as fallback
-        public_dir = if defined?(V7CMS) && V7CMS.respond_to?(:file_resolver)
-                       V7CMS.file_resolver.resolve('public') || File.join(V7CMS.gem_root, 'public')
+        # Write to project's public folder (not the gem's, which may be read-only)
+        public_dir = if defined?(V7CMS) && V7CMS.respond_to?(:project_root)
+                       File.join(V7CMS.project_root, 'public')
                      else
                        File.join(File.dirname(__FILE__), '..', 'public')
                      end
