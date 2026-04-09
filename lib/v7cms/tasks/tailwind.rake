@@ -51,8 +51,8 @@ namespace :v7cms do
     puts "  Output:  #{output}"
     puts "  Content: #{content_paths.length} paths"
 
-    # Use .tmp in working directory to avoid noexec /tmp on shared hosting
-    tmpdir = File.join(Dir.pwd, '.tmp')
+    # Use unique subdir under .tmp to avoid noexec /tmp on shared hosting
+    tmpdir = File.join(Dir.pwd, '.tmp', "tailwind-#{Process.pid}")
     FileUtils.mkdir_p(tmpdir)
     env = { 'TMPDIR' => tmpdir }
 
