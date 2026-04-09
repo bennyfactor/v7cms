@@ -40,6 +40,11 @@ jobs:
           fi
           echo "Version verified: $GEM_VERSION"
 
+      - name: Build Tailwind CSS
+        run: |
+          bundle exec rake v7cms:tailwind
+          test -f lib/v7cms/public/css/output.css || (echo "output.css not created!" && exit 1)
+
       - name: Build gem
         run: gem build v7cms.gemspec
 
