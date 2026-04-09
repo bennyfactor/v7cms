@@ -10,11 +10,17 @@ module V7CMS
       @logger ||= Logger.new(STDOUT)
     end
 
-    # Generate and write theme CSS (for non-CDN/compiled mode)
+    # Generate and write theme CSS with custom properties
     def self.generate_and_write(theme)
       begin
         css = new(theme).generate_css
-        path = File.join(File.dirname(__FILE__), '..', '..', '..', 'public', 'css', 'theme.css')
+        # Write to project's public folder, or gem's public as fallback
+        public_dir = if defined?(V7CMS) && V7CMS.respond_to?(:file_resolver)
+                       V7CMS.file_resolver.resolve('public') || File.join(V7CMS.gem_root, 'public')
+                     else
+                       File.join(File.dirname(__FILE__), '..', 'public')
+                     end
+        path = File.join(public_dir, 'css', 'theme.css')
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, css)
         logger.info("Generated theme CSS")
