@@ -5,6 +5,14 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-10
+
+### Fixed
+- `rake v7cms:tailwind` now writes `output.css` to the project's `public/css/` directory instead of the gem's internal directory when run from a consuming project
+- Converted iaatb landing page from `@apply` directives to plain CSS (no longer requires Tailwind browser JIT)
+
+---
+
 ## [0.3.0] - 2026-04-09
 
 ### Changed
