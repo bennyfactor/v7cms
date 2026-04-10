@@ -17,7 +17,15 @@ namespace :v7cms do
 
     gem_root = File.expand_path('../../..', __dir__)
     input = File.join(gem_root, 'lib', 'v7cms', 'public', 'css', 'input.css')
-    output = File.join(gem_root, 'lib', 'v7cms', 'public', 'css', 'output.css')
+
+    # Output to project's public/css/ (or gem's public/css/ when building the gem itself)
+    output_dir = if defined?(V7CMS) && V7CMS.respond_to?(:project_root) && V7CMS.project_root != gem_root
+                   File.join(V7CMS.project_root, 'public', 'css')
+                 else
+                   File.join(gem_root, 'lib', 'v7cms', 'public', 'css')
+                 end
+    FileUtils.mkdir_p(output_dir)
+    output = File.join(output_dir, 'output.css')
 
     # Content paths: gem views and public assets
     content_paths = [
