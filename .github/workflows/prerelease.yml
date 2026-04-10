@@ -77,7 +77,7 @@ jobs:
         continue-on-error: true  # Don't fail if package already exists
 
       - name: Upload gem as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: v7cms-${{ steps.version.outputs.prerelease }}.gem
           path: v7cms-${{ steps.version.outputs.prerelease }}.gem
