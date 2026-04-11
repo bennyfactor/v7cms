@@ -56,10 +56,11 @@ module V7CMS
     end
 
     def delete_file
-      return true unless File.exist?(static_file_path)
+      slug_dir = File.join(STATIC_DIR, @page.full_slug_path)
+      return true unless Dir.exist?(slug_dir)
 
       begin
-        File.delete(static_file_path)
+        FileUtils.rm_rf(slug_dir)
         cleanup_empty_directories
         self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
         true
@@ -73,18 +74,18 @@ module V7CMS
     private
 
     def static_file_path
-      File.join(STATIC_DIR, "#{@page.full_slug_path}.html")
+      File.join(STATIC_DIR, @page.full_slug_path, 'index.html')
     end
 
     def ensure_directory_exists
-      # Get the directory path for the specific file
       dir_path = File.dirname(static_file_path)
       FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
     end
 
     def cleanup_empty_directories
-      # Start with the parent directory of the deleted file
-      dir_path = File.dirname(static_file_path)
+      # Start with the parent of the slug directory (which was already removed)
+      slug_dir = File.join(STATIC_DIR, @page.full_slug_path)
+      dir_path = File.dirname(slug_dir)
 
       # Walk up the directory tree, removing empty directories
       while dir_path != STATIC_DIR && Dir.exist?(dir_path)

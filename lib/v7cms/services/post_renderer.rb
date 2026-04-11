@@ -56,10 +56,11 @@ module V7CMS
     end
 
     def delete_file
-      return true unless File.exist?(static_file_path)
+      slug_dir = File.join(STATIC_DIR, @post.slug)
+      return true unless Dir.exist?(slug_dir)
 
       begin
-        File.delete(static_file_path)
+        FileUtils.rm_rf(slug_dir)
         self.class.logger.info("Deleted static HTML for post: #{@post.slug}")
         true
       rescue => e
@@ -72,11 +73,12 @@ module V7CMS
     private
 
     def static_file_path
-      File.join(STATIC_DIR, "#{@post.slug}.html")
+      File.join(STATIC_DIR, @post.slug, 'index.html')
     end
 
     def ensure_directory_exists
-      FileUtils.mkdir_p(STATIC_DIR) unless Dir.exist?(STATIC_DIR)
+      dir_path = File.join(STATIC_DIR, @post.slug)
+      FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
     end
 
     def static_template

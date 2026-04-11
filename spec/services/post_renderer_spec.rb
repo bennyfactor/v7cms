@@ -11,7 +11,7 @@ RSpec.describe PostRenderer do
   end
 
   let(:renderer) { PostRenderer.new(post) }
-  let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post.html') }
+  let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post', 'index.html') }
 
   before do
     # Ensure settings exist
@@ -155,19 +155,21 @@ RSpec.describe PostRenderer do
   end
 
   describe '#delete_file' do
-    it 'removes static file if it exists' do
+    it 'removes the slug directory' do
       renderer.write_file
-      expect(File.exist?(static_file_path)).to be true
+      slug_dir = File.join(PostRenderer::STATIC_DIR, 'test-post')
+      expect(Dir.exist?(slug_dir)).to be true
 
       renderer.delete_file
 
+      expect(Dir.exist?(slug_dir)).to be false
       expect(File.exist?(static_file_path)).to be false
     end
 
-    it 'does not raise error if file does not exist' do
-      # Ensure file doesn't exist (it may have been created by callback in before block)
-      FileUtils.rm_f(static_file_path) if File.exist?(static_file_path)
-      expect(File.exist?(static_file_path)).to be false
+    it 'does not raise error if directory does not exist' do
+      slug_dir = File.join(PostRenderer::STATIC_DIR, 'test-post')
+      FileUtils.rm_rf(slug_dir) if Dir.exist?(slug_dir)
+      expect(Dir.exist?(slug_dir)).to be false
 
       expect { renderer.delete_file }.not_to raise_error
     end
@@ -215,7 +217,7 @@ RSpec.describe PostRenderer do
 
       PostRenderer.write_static_file(post)
 
-      content = File.read(File.join(PostRenderer::STATIC_DIR, 'test.html'))
+      content = File.read(File.join(PostRenderer::STATIC_DIR, 'test', 'index.html'))
       expect(content).to include('Published')
       expect(content).not_to include('Draft')
     end
@@ -267,24 +269,28 @@ RSpec.describe PostRenderer do
         expect(result).to be true
       end
 
-      it 'returns false when file deletion fails' do
+      it 'returns false when directory deletion fails' do
         renderer = PostRenderer.new(post)
         renderer.write_file
-        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+        slug_dir = File.join(PostRenderer::STATIC_DIR, post.slug)
+        allow(FileUtils).to receive(:rm_rf).and_call_original
+        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
 
         result = renderer.delete_file
         expect(result).to be false
       end
 
-      it 'logs error when file deletion fails' do
+      it 'logs error when directory deletion fails' do
         renderer = PostRenderer.new(post)
         renderer.write_file
+        slug_dir = File.join(PostRenderer::STATIC_DIR, post.slug)
         logger = instance_double(Logger)
         allow(PostRenderer).to receive(:logger).and_return(logger)
         allow(logger).to receive(:info)
         expect(logger).to receive(:error).with(/Permission denied/)
         expect(logger).to receive(:error).with(kind_of(String))  # backtrace
-        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+        allow(FileUtils).to receive(:rm_rf).and_call_original
+        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
 
         renderer.delete_file
       end

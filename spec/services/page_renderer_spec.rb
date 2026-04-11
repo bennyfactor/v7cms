@@ -11,7 +11,7 @@ RSpec.describe PageRenderer do
   end
 
   let(:renderer) { PageRenderer.new(page) }
-  let(:static_file_path) { File.join(PageRenderer::STATIC_DIR, 'test-page.html') }
+  let(:static_file_path) { File.join(PageRenderer::STATIC_DIR, 'test-page', 'index.html') }
 
   before do
     # Clean up any leftover files from previous tests
@@ -38,7 +38,7 @@ RSpec.describe PageRenderer do
 
       PageRenderer.write_static_file(page)
 
-      content = File.read(File.join(PageRenderer::STATIC_DIR, 'test.html'))
+      content = File.read(File.join(PageRenderer::STATIC_DIR, 'test', 'index.html'))
       expect(content).to include('Published')
       expect(content).not_to include('Draft')
     end
@@ -83,27 +83,31 @@ RSpec.describe PageRenderer do
         expect(result).to be true
       end
 
-      it 'returns false when file deletion fails' do
+      it 'returns false when directory deletion fails' do
         renderer.write_file
+        slug_dir = File.join(PageRenderer::STATIC_DIR, page.full_slug_path)
         logger = instance_double(Logger)
         allow(PageRenderer).to receive(:logger).and_return(logger)
         allow(logger).to receive(:info)
         expect(logger).to receive(:error).with(/Permission denied/)
         expect(logger).to receive(:error).with(kind_of(String))  # backtrace
-        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+        allow(FileUtils).to receive(:rm_rf).and_call_original
+        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
 
         result = renderer.delete_file
         expect(result).to be false
       end
 
-      it 'logs error when file deletion fails' do
+      it 'logs error when directory deletion fails' do
         renderer.write_file
+        slug_dir = File.join(PageRenderer::STATIC_DIR, page.full_slug_path)
         logger = instance_double(Logger)
         allow(PageRenderer).to receive(:logger).and_return(logger)
         allow(logger).to receive(:info)
         expect(logger).to receive(:error).with(/Permission denied/)
         expect(logger).to receive(:error).with(kind_of(String))  # backtrace
-        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
+        allow(FileUtils).to receive(:rm_rf).and_call_original
+        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
 
         renderer.delete_file
       end
@@ -182,8 +186,8 @@ RSpec.describe PageRenderer do
       path = renderer.send(:static_file_path)
 
       # Should include parent directory
-      expect(path).to include('services/web-dev.html')
-      expect(path).not_to eq(File.join(PageRenderer::STATIC_DIR, 'web-dev.html'))
+      expect(path).to include('services/web-dev/index.html')
+      expect(path).not_to eq(File.join(PageRenderer::STATIC_DIR, 'web-dev', 'index.html'))
     end
 
     it 'generates correct nested directory structure' do
@@ -194,8 +198,8 @@ RSpec.describe PageRenderer do
       renderer = PageRenderer.new(child)
       path = renderer.send(:static_file_path)
 
-      # Should be: public/pages/gp/p/c.html
-      expect(path).to end_with('gp/p/c.html')
+      # Should be: public/pages/gp/p/c/index.html
+      expect(path).to end_with('gp/p/c/index.html')
       expect(path).to include('public/pages/')
     end
 
@@ -205,8 +209,8 @@ RSpec.describe PageRenderer do
       renderer = PageRenderer.new(page)
       path = renderer.send(:static_file_path)
 
-      # Should be: public/pages/about.html (no double pages/)
-      expect(path).to end_with('pages/about.html')
+      # Should be: public/pages/about/index.html (no double pages/)
+      expect(path).to end_with('pages/about/index.html')
       expect(path).not_to include('pages/pages')
     end
 
@@ -222,7 +226,7 @@ RSpec.describe PageRenderer do
       # Verify file exists in nested location
       path = renderer.send(:static_file_path)
       expect(File.exist?(path)).to be true
-      expect(path).to include('parent/child.html')
+      expect(path).to include('parent/child/index.html')
     end
   end
 end
