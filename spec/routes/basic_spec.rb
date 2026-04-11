@@ -129,6 +129,41 @@ RSpec.describe 'Basic Routes' do
       end
     end
 
+    describe 'comment section conditional rendering' do
+      it 'does not render comment section when post has comments_enabled: false' do
+        post.update!(comments_enabled: false)
+
+        get '/posts/test-post'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).not_to include('comment-form')
+        expect(last_response.body).not_to include('recaptcha')
+        expect(last_response.body).not_to include('comments.js')
+      end
+
+      it 'does not render comment section when settings allow_comments is false' do
+        Setting.instance.update!(allow_comments: false)
+
+        get '/posts/test-post'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).not_to include('comment-form')
+        expect(last_response.body).not_to include('recaptcha')
+        expect(last_response.body).not_to include('comments.js')
+      end
+
+      it 'renders comment section when both post and settings allow comments' do
+        post.update!(comments_enabled: true)
+        Setting.instance.update!(allow_comments: true)
+
+        get '/posts/test-post'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('comment-form')
+        expect(last_response.body).to include('comments.js')
+      end
+    end
+
     describe 'serves published version' do
       it 'displays published version content, not working draft' do
         versioned_post = Post.create!(title: 'Draft Title', slug: 'versioned-post', content: '<p>Draft Content</p>', status: 'draft')
