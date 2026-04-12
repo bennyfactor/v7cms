@@ -24,7 +24,7 @@ If you receive "redirect_uri_mismatch" errors during OAuth login:
 
 ## Static HTML Not Generating
 
-Published posts and pages are rendered to static HTML at `slug/index.html` within the public directory. If files aren't being created:
+Published posts are rendered to static HTML at `public/posts/<slug>/index.html`, and pages are rendered at `public/pages/<full_slug_path>/index.html`. If files aren't being created:
 
 - Verify the `public/` directory is writable by the web server process
 - Run `bundle exec rake v7cms:regenerate` to manually regenerate all static files
@@ -45,14 +45,8 @@ If comment submission or form submission returns 401 errors related to reCAPTCHA
 If styles appear stale or new classes aren't taking effect:
 
 ```bash
-# Rebuild CSS manually
-./bin/tailwindcss -i public/css/input.css -o public/css/output.css --minify
-
-# If the binary is missing, install it
+# Rebuild CSS
 bundle exec rake v7cms:tailwind
-
-# For development, use watch mode
-./bin/tailwindcss -i public/css/input.css -o public/css/output.css --watch
 ```
 
 The generated `output.css` is gitignored and must be built locally or during deployment.

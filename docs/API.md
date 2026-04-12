@@ -2,7 +2,7 @@
 
 Interactive API documentation is also available at `/api/docs` (Swagger UI).
 
-All authenticated endpoints require an active session (via OAuth login). Write endpoints also require the `X-Requested-With: XMLHttpRequest` header.
+All authenticated endpoints require an active session (via OAuth login).
 
 ## System
 

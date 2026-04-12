@@ -79,7 +79,7 @@ bundle install
 cp .env.example .env
 # Edit .env with your credentials
 bundle exec rake db:migrate
-./bin/tailwindcss -i public/css/input.css -o public/css/output.css --minify
+bundle exec rake v7cms:tailwind
 bundle exec rackup -p 9292
 ```
 
@@ -164,7 +164,7 @@ If your Google account has been migrated to reCAPTCHA Enterprise:
 | `v7cms:assets` | Copy static assets from gem to project |
 | `v7cms:regenerate` | Regenerate all static HTML files (posts and pages) |
 | `v7cms:htaccess` | Generate .htaccess for Apache/FastCGI |
-| `v7cms:tailwind` | Download and install Tailwind CSS standalone CLI |
+| `v7cms:tailwind` | Build CSS using `tailwindcss-ruby` |
 | `v7cms:version` | Show v7cms version |
 | `db:migrate` | Run database migrations |
 | `db:rollback` | Rollback last migration |
