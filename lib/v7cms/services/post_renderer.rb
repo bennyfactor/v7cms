@@ -43,23 +43,29 @@ module V7CMS
     end
 
     def write_file
-      begin
-        ensure_directory_exists
-        File.write(static_file_path, render_html)
-        self.class.logger.info("Generated static HTML for post: #{@post.slug}")
-        true
-      rescue => e
-        self.class.logger.error("Failed to generate static HTML for post #{@post.slug}: #{e.message}")
-        self.class.logger.error(e.backtrace.join("\n"))
-        false
-      end
+      validate_write_path!
+      ensure_directory_exists
+      validate_write_path!('after directory creation')
+      File.write(static_file_path, render_html)
+      self.class.logger.info("Generated static HTML for post: #{@post.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate static HTML for post #{@post.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
     end
 
     def delete_file
-      return true unless File.exist?(static_file_path)
+      slug_dir = File.join(STATIC_DIR, @post.slug)
+      return true unless Dir.exist?(slug_dir)
+      return false unless safe_path?(slug_dir)
 
       begin
-        File.delete(static_file_path)
+        FileUtils.rm_rf(slug_dir)
+        if Dir.exist?(slug_dir)
+          self.class.logger.error("Failed to delete static HTML for post #{@post.slug}: directory still exists at #{slug_dir}")
+          return false
+        end
         self.class.logger.info("Deleted static HTML for post: #{@post.slug}")
         true
       rescue => e
@@ -71,12 +77,42 @@ module V7CMS
 
     private
 
+    def validate_write_path!(context = nil)
+      return if safe_path?(static_file_path)
+
+      detail = context ? " #{context}" : ''
+      raise "Refusing to write static HTML for post #{@post.slug}: path traversal detected#{detail}"
+    end
+
+    def safe_path?(path)
+      expanded = File.expand_path(path)
+      return false unless expanded.start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
+
+      # Resolve symlinks to catch symlink escapes
+      real_static_dir = File.realpath(STATIC_DIR) if Dir.exist?(STATIC_DIR)
+      if File.exist?(expanded)
+        real_path = File.realpath(expanded)
+        return false unless real_static_dir && real_path.start_with?(real_static_dir + File::SEPARATOR)
+      end
+
+      # Reject symlink components in the path
+      check = expanded
+      while check != File.expand_path(STATIC_DIR)
+        return false if File.symlink?(check)
+
+        check = File.dirname(check)
+      end
+
+      true
+    end
+
     def static_file_path
-      File.join(STATIC_DIR, "#{@post.slug}.html")
+      File.join(STATIC_DIR, @post.slug, 'index.html')
     end
 
     def ensure_directory_exists
-      FileUtils.mkdir_p(STATIC_DIR) unless Dir.exist?(STATIC_DIR)
+      dir_path = File.join(STATIC_DIR, @post.slug)
+      FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
     end
 
     def static_template

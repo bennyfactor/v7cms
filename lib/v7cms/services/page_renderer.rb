@@ -43,48 +43,89 @@ module V7CMS
     end
 
     def write_file
-      begin
-        ensure_directory_exists
-        File.write(static_file_path, render_html)
-        self.class.logger.info("Generated static HTML for page: #{@page.slug}")
-        true
-      rescue => e
-        self.class.logger.error("Failed to generate static HTML for page #{@page.slug}: #{e.message}")
-        self.class.logger.error(e.backtrace.join("\n"))
-        false
-      end
+      validate_write_path!
+      ensure_directory_exists
+      validate_write_path!('after directory creation')
+      File.write(static_file_path, render_html)
+      self.class.logger.info("Generated static HTML for page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate static HTML for page #{@page.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
     end
 
     def delete_file
-      return true unless File.exist?(static_file_path)
+      slug_dir = File.join(STATIC_DIR, @page.full_slug_path)
+      return true unless Dir.exist?(slug_dir)
 
-      begin
-        File.delete(static_file_path)
-        cleanup_empty_directories
-        self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
-        true
-      rescue => e
-        self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: #{e.message}")
-        self.class.logger.error(e.backtrace.join("\n"))
-        false
+      unless safe_path?(slug_dir)
+        self.class.logger.error("Refusing to delete static HTML for page #{@page.slug}: path traversal detected")
+        return false
       end
+
+      remove_slug_directory(slug_dir)
     end
 
     private
 
+    def remove_slug_directory(slug_dir)
+      FileUtils.rm_rf(slug_dir)
+      if Dir.exist?(slug_dir)
+        self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: directory still exists at #{slug_dir}")
+        return false
+      end
+      cleanup_empty_directories
+      self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
+
+    def validate_write_path!(context = nil)
+      return if safe_path?(static_file_path)
+
+      detail = context ? " #{context}" : ''
+      raise "Refusing to write static HTML for page #{@page.slug}: path traversal detected#{detail}"
+    end
+
+    def safe_path?(path)
+      expanded = File.expand_path(path)
+      return false unless expanded.start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
+
+      # Resolve symlinks to catch symlink escapes
+      real_static_dir = File.realpath(STATIC_DIR) if Dir.exist?(STATIC_DIR)
+      if File.exist?(expanded)
+        real_path = File.realpath(expanded)
+        return false unless real_static_dir && real_path.start_with?(real_static_dir + File::SEPARATOR)
+      end
+
+      # Reject symlink components in the path
+      check = expanded
+      while check != File.expand_path(STATIC_DIR)
+        return false if File.symlink?(check)
+
+        check = File.dirname(check)
+      end
+
+      true
+    end
+
     def static_file_path
-      File.join(STATIC_DIR, "#{@page.full_slug_path}.html")
+      File.join(STATIC_DIR, @page.full_slug_path, 'index.html')
     end
 
     def ensure_directory_exists
-      # Get the directory path for the specific file
       dir_path = File.dirname(static_file_path)
       FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
     end
 
     def cleanup_empty_directories
-      # Start with the parent directory of the deleted file
-      dir_path = File.dirname(static_file_path)
+      # Start with the parent of the slug directory (which was already removed)
+      slug_dir = File.join(STATIC_DIR, @page.full_slug_path)
+      dir_path = File.dirname(slug_dir)
 
       # Walk up the directory tree, removing empty directories
       while dir_path != STATIC_DIR && Dir.exist?(dir_path)

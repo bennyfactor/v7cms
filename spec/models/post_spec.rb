@@ -147,7 +147,7 @@ RSpec.describe Post, type: :model do
   end
 
   describe 'static file generation' do
-    let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post.html') }
+    let(:static_file_path) { File.join(PostRenderer::STATIC_DIR, 'test-post', 'index.html') }
 
     before do
       # Clean up any generated files from previous tests
