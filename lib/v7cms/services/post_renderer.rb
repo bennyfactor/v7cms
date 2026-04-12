@@ -49,6 +49,10 @@ module V7CMS
           return false
         end
         ensure_directory_exists
+        unless safe_path?(static_file_path)
+          self.class.logger.error("Refusing to write static HTML for post #{@post.slug}: path traversal detected after directory creation")
+          return false
+        end
         File.write(static_file_path, render_html)
         self.class.logger.info("Generated static HTML for post: #{@post.slug}")
         true
@@ -82,7 +86,25 @@ module V7CMS
     private
 
     def safe_path?(path)
-      File.expand_path(path).start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
+      expanded = File.expand_path(path)
+      return false unless expanded.start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
+
+      # Resolve symlinks to catch symlink escapes
+      real_static_dir = File.realpath(STATIC_DIR) if Dir.exist?(STATIC_DIR)
+      if File.exist?(expanded)
+        real_path = File.realpath(expanded)
+        return false unless real_static_dir && real_path.start_with?(real_static_dir + File::SEPARATOR)
+      end
+
+      # Reject symlink components in the path
+      check = expanded
+      while check != File.expand_path(STATIC_DIR)
+        return false if File.symlink?(check)
+
+        check = File.dirname(check)
+      end
+
+      true
     end
 
     def static_file_path
