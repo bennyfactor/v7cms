@@ -44,6 +44,10 @@ module V7CMS
 
     def write_file
       begin
+        unless safe_path?(static_file_path)
+          self.class.logger.error("Refusing to write static HTML for post #{@post.slug}: path traversal detected")
+          return false
+        end
         ensure_directory_exists
         File.write(static_file_path, render_html)
         self.class.logger.info("Generated static HTML for post: #{@post.slug}")
@@ -58,9 +62,14 @@ module V7CMS
     def delete_file
       slug_dir = File.join(STATIC_DIR, @post.slug)
       return true unless Dir.exist?(slug_dir)
+      return false unless safe_path?(slug_dir)
 
       begin
         FileUtils.rm_rf(slug_dir)
+        if Dir.exist?(slug_dir)
+          self.class.logger.error("Failed to delete static HTML for post #{@post.slug}: directory still exists at #{slug_dir}")
+          return false
+        end
         self.class.logger.info("Deleted static HTML for post: #{@post.slug}")
         true
       rescue => e
@@ -71,6 +80,10 @@ module V7CMS
     end
 
     private
+
+    def safe_path?(path)
+      File.expand_path(path).start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
+    end
 
     def static_file_path
       File.join(STATIC_DIR, @post.slug, 'index.html')
