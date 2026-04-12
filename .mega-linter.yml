@@ -57,6 +57,9 @@ FILTER_REGEX_EXCLUDE: "(vendor|node_modules|tmp|db/.*\\.sqlite3)"
 
 # RuboCop already configured via .rubocop.yml
 RUBY_RUBOCOP_CONFIG_FILE: .rubocop.yml
+# Style/FileOpen not available in local rubocop but flagged by MegaLinter's version.
+# LocalAdapter#retrieve intentionally returns an open File for streaming; caller owns closing.
+RUBY_RUBOCOP_ARGUMENTS: "--except Style/FileOpen"
 
 # Brakeman configuration
 RUBY_BRAKEMAN_ARGUMENTS: "--force --no-pager"

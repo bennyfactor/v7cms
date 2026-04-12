@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'stringio'
 
 module V7CMS
   module Storage
@@ -27,11 +26,12 @@ module V7CMS
         key
       end
 
+      # Returns an open File object; caller is responsible for closing it.
       def retrieve(key)
         path = File.join(@base_path, key)
         return nil unless File.exist?(path)
 
-        StringIO.new(File.binread(path))
+        File.open(path, 'rb')
       end
 
       def delete(key)
