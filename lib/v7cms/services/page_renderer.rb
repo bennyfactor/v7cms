@@ -64,23 +64,25 @@ module V7CMS
       return true unless Dir.exist?(slug_dir)
       return false unless safe_path?(slug_dir)
 
-      begin
-        FileUtils.rm_rf(slug_dir)
-        if Dir.exist?(slug_dir)
-          self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: directory still exists at #{slug_dir}")
-          return false
-        end
-        cleanup_empty_directories
-        self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
-        true
-      rescue => e
-        self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: #{e.message}")
-        self.class.logger.error(e.backtrace.join("\n"))
-        false
-      end
+      remove_slug_directory(slug_dir)
     end
 
     private
+
+    def remove_slug_directory(slug_dir)
+      FileUtils.rm_rf(slug_dir)
+      if Dir.exist?(slug_dir)
+        self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: directory still exists at #{slug_dir}")
+        return false
+      end
+      cleanup_empty_directories
+      self.class.logger.info("Deleted static HTML for page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to delete static HTML for page #{@page.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
+    end
 
     def safe_path?(path)
       File.expand_path(path).start_with?(File.expand_path(STATIC_DIR) + File::SEPARATOR)
