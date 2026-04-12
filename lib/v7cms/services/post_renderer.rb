@@ -43,24 +43,16 @@ module V7CMS
     end
 
     def write_file
-      begin
-        unless safe_path?(static_file_path)
-          self.class.logger.error("Refusing to write static HTML for post #{@post.slug}: path traversal detected")
-          return false
-        end
-        ensure_directory_exists
-        unless safe_path?(static_file_path)
-          self.class.logger.error("Refusing to write static HTML for post #{@post.slug}: path traversal detected after directory creation")
-          return false
-        end
-        File.write(static_file_path, render_html)
-        self.class.logger.info("Generated static HTML for post: #{@post.slug}")
-        true
-      rescue => e
-        self.class.logger.error("Failed to generate static HTML for post #{@post.slug}: #{e.message}")
-        self.class.logger.error(e.backtrace.join("\n"))
-        false
-      end
+      validate_write_path!
+      ensure_directory_exists
+      validate_write_path!('after directory creation')
+      File.write(static_file_path, render_html)
+      self.class.logger.info("Generated static HTML for post: #{@post.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to generate static HTML for post #{@post.slug}: #{e.message}")
+      self.class.logger.error(e.backtrace.join("\n"))
+      false
     end
 
     def delete_file
@@ -84,6 +76,13 @@ module V7CMS
     end
 
     private
+
+    def validate_write_path!(context = nil)
+      return if safe_path?(static_file_path)
+
+      detail = context ? " #{context}" : ''
+      raise "Refusing to write static HTML for post #{@post.slug}: path traversal detected#{detail}"
+    end
 
     def safe_path?(path)
       expanded = File.expand_path(path)
