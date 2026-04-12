@@ -64,7 +64,7 @@ RSpec.describe HtaccessGenerator do
 
     it 'includes rewrite rules for pre-generated HTML directories' do
       expect(template).to include('RewriteRule ^posts/([^/.]+)/?$ /public/posts/$1/index.html [L]')
-      expect(template).to include('RewriteRule ^pages/(.+?)/?$ /public/pages/$1/index.html [L]')
+      expect(template).to include('RewriteRule ^pages/([a-z0-9-]+(/[a-z0-9-]+)*)/?$ /public/pages/$1/index.html [L]')
     end
 
     it 'sets long cache for static asset file types' do

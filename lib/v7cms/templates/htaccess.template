@@ -194,7 +194,7 @@ RewriteCond %{DOCUMENT_ROOT}/public/posts/$1/index.html -f
 RewriteRule ^posts/([^/.]+)/?$ /public/posts/$1/index.html [L]
 
 RewriteCond %{DOCUMENT_ROOT}/public/pages/$1/index.html -f
-RewriteRule ^pages/(.+?)/?$ /public/pages/$1/index.html [L]
+RewriteRule ^pages/([a-z0-9-]+(/[a-z0-9-]+)*)/?$ /public/pages/$1/index.html [L]
 
 # Root path must be explicitly rewritten so it gets the is_fcgi_request env var
 # (DirectoryIndex would serve index.fcgi without setting it)
