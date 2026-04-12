@@ -2,9 +2,9 @@
 
 ## Automated Tests
 
-- [ ] `bundle exec rspec` -- all 1,213 examples pass
-- [ ] `bundle exec brakeman` -- no new warnings
-- [ ] `bundle exec bundle-audit` -- no known vulnerabilities
+- [ ] `bundle exec rspec` -- all examples pass
+- [ ] `brakeman --force --no-pager` -- no new warnings
+- [ ] `bundle-audit check --update --config .bundler-audit.yml` -- no known vulnerabilities
 
 ## Manual Smoke Tests
 
@@ -27,7 +27,7 @@
 - [ ] Static files served directly by web server
 - [ ] OAuth callback redirects work with production URLs
 - [ ] `.htaccess` rules block access to `.env`, `.db`, `.rb` files
-- [ ] Uploaded assets accessible via `/uploads/` path
+- [ ] Uploaded assets accessible via `/upload/` path
 
 ## Pre-Release Checks
 
