@@ -26,12 +26,11 @@ module V7CMS
         key
       end
 
-      # Returns an open File object; caller is responsible for closing it.
       def retrieve(key)
         path = File.join(@base_path, key)
         return nil unless File.exist?(path)
 
-        File.open(path, 'rb')
+        File.binread(path)
       end
 
       def delete(key)
