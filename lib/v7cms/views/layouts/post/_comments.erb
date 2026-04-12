@@ -1,4 +1,5 @@
-<% if @post.comments_enabled && @settings&.allow_comments %>
+<% @settings ||= V7CMS::Setting.instance %>
+<% if @post.comments_enabled && @settings.allow_comments %>
 <!-- Comments Section -->
 <div class="max-w-3xl mx-auto mt-12 px-4">
   <h2 class="text-2xl font-bold mb-6">Comments (<span id="comment-count">0</span>)</h2>
