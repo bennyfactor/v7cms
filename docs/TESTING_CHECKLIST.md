@@ -11,11 +11,11 @@
 - [ ] Start server (`bundle exec rackup -p 9292` or `docker-compose up`)
 - [ ] Homepage loads with correct layout and theme
 - [ ] Admin login via OAuth (Google or GitHub)
-- [ ] Create a new post, verify it appears on homepage
+- [ ] Create a new post, publish it, verify it appears on homepage
 - [ ] Edit a post, verify changes persist
 - [ ] Delete a post, verify removal
 - [ ] Static HTML generated at `public/posts/<slug>/index.html`
-- [ ] Create/edit/delete a page, verify static HTML at `public/pages/<slug>/index.html`
+- [ ] Create/edit/delete a page, verify static HTML at `public/pages/<full_slug_path>/index.html` (nested pages use full path, e.g. `parent/child/index.html`)
 - [ ] RSS feed (`/feed/rss`) and Atom feed (`/feed/atom`) render correctly
 - [ ] Submit a comment, verify it appears in moderation queue
 - [ ] Theme changes apply to public site

@@ -80,7 +80,7 @@ See the [README.md OAuth Configuration section](../README.md#oauth-configuration
 3. Add your domains (localhost for dev, yourdomain.com for production)
 4. Copy Site Key and Secret Key to `.env`
 
-**Note:** v7cms supports both standard reCAPTCHA v3 and reCAPTCHA Enterprise. If your Google account has been migrated to Enterprise, see the [reCAPTCHA Setup section in the README](../README.md#recaptcha-setup) for Enterprise-specific configuration.
+**Note:** v7cms supports both standard reCAPTCHA v3 and reCAPTCHA Enterprise. If your Google account has been migrated to Enterprise, see the [reCAPTCHA Setup section in the Installation Guide](INSTALLATION.md#recaptcha-setup) for Enterprise-specific configuration.
 
 ---
 
@@ -241,7 +241,7 @@ RACK_ENV=production bundle exec rake db:migrate
 RACK_ENV=production bundle exec rake v7cms:regenerate
 ```
 
-Static files are generated at `public/posts/<slug>/index.html` and `public/pages/<slug>/index.html`.
+Static files are generated at `public/posts/<slug>/index.html` and `public/pages/<full_slug_path>/index.html` (pages support nesting, e.g. `public/pages/parent/child/index.html`).
 
 #### 8. Configure OAuth Redirect URLs
 
