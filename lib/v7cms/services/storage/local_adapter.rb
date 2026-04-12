@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'stringio'
 
 module V7CMS
   module Storage
@@ -28,7 +29,9 @@ module V7CMS
 
       def retrieve(key)
         path = File.join(@base_path, key)
-        File.exist?(path) ? File.open(path, 'rb') : nil
+        return nil unless File.exist?(path)
+
+        StringIO.new(File.binread(path))
       end
 
       def delete(key)
