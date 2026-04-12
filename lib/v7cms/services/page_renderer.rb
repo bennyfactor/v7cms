@@ -62,6 +62,7 @@ module V7CMS
     def delete_file
       slug_dir = File.join(STATIC_DIR, @page.full_slug_path)
       return true unless Dir.exist?(slug_dir)
+
       unless safe_path?(slug_dir)
         self.class.logger.error("Refusing to delete static HTML for page #{@page.slug}: path traversal detected")
         return false
