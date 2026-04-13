@@ -2563,14 +2563,20 @@ module V7CMS
     def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
+      # Skip verification when reCAPTCHA is not configured
+      unless (ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']) || ENV['RECAPTCHA_SECRET_KEY']
+        puts "reCAPTCHA not configured - skipping verification"
+        return 1.0
+      end
+
+      # Blank token means client-side reCAPTCHA failed or was blocked
+      return 0.0 if token.to_s.strip.empty?
+
       # Choose Enterprise or Standard based on env vars
       if ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']
         verify_recaptcha_enterprise(token, remote_ip, action: action)
       elsif ENV['RECAPTCHA_SECRET_KEY']
         verify_recaptcha_standard(token, remote_ip)
-      else
-        puts "reCAPTCHA not configured - skipping verification"
-        1.0
       end
     end
 
