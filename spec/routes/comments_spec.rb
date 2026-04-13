@@ -407,18 +407,26 @@ RSpec.describe 'Comments API' do
     before do
       allow(ENV).to receive(:[]).and_call_original
       allow(ENV).to receive(:[]).with('RACK_ENV').and_return('production')
+      allow(ENV).to receive(:[]).with('RECAPTCHA_SECRET_KEY').and_return('test-secret')
     end
 
-    it 'returns 0.0 for nil token' do
+    it 'returns 0.0 for nil token when reCAPTCHA is configured' do
       expect(app_instance.send(:verify_recaptcha_v3, nil, '127.0.0.1')).to eq(0.0)
     end
 
-    it 'returns 0.0 for empty string token' do
+    it 'returns 0.0 for empty string token when reCAPTCHA is configured' do
       expect(app_instance.send(:verify_recaptcha_v3, '', '127.0.0.1')).to eq(0.0)
     end
 
-    it 'returns 0.0 for whitespace-only token' do
+    it 'returns 0.0 for whitespace-only token when reCAPTCHA is configured' do
       expect(app_instance.send(:verify_recaptcha_v3, '   ', '127.0.0.1')).to eq(0.0)
+    end
+
+    it 'returns 1.0 for blank token when reCAPTCHA is not configured' do
+      allow(ENV).to receive(:[]).with('RECAPTCHA_SECRET_KEY').and_return(nil)
+      allow(ENV).to receive(:[]).with('RECAPTCHA_PROJECT_ID').and_return(nil)
+      allow(ENV).to receive(:[]).with('RECAPTCHA_API_KEY').and_return(nil)
+      expect(app_instance.send(:verify_recaptcha_v3, nil, '127.0.0.1')).to eq(1.0)
     end
   end
 end
