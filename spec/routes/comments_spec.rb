@@ -400,4 +400,25 @@ RSpec.describe 'Comments API' do
       end
     end
   end
+
+  describe 'verify_recaptcha_v3 blank token handling' do
+    let(:app_instance) { CMS.new! }
+
+    before do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('RACK_ENV').and_return('production')
+    end
+
+    it 'returns 0.0 for nil token' do
+      expect(app_instance.send(:verify_recaptcha_v3, nil, '127.0.0.1')).to eq(0.0)
+    end
+
+    it 'returns 0.0 for empty string token' do
+      expect(app_instance.send(:verify_recaptcha_v3, '', '127.0.0.1')).to eq(0.0)
+    end
+
+    it 'returns 0.0 for whitespace-only token' do
+      expect(app_instance.send(:verify_recaptcha_v3, '   ', '127.0.0.1')).to eq(0.0)
+    end
+  end
 end

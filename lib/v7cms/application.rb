@@ -2562,6 +2562,7 @@ module V7CMS
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
     def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
+      return 0.0 if token.to_s.strip.empty?
 
       # Choose Enterprise or Standard based on env vars
       if ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']
