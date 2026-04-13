@@ -28,7 +28,9 @@ module V7CMS
 
       def retrieve(key)
         path = File.join(@base_path, key)
-        File.exist?(path) ? File.open(path, 'rb') : nil
+        return nil unless File.exist?(path)
+
+        File.binread(path)
       end
 
       def delete(key)

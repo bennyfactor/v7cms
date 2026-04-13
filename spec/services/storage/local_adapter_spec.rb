@@ -42,9 +42,8 @@ RSpec.describe V7CMS::Storage::LocalAdapter do
       FileUtils.mkdir_p(File.join(temp_dir, '2025/12'))
       File.write(File.join(temp_dir, '2025/12/test.txt'), 'stored content')
 
-      file = adapter.retrieve('2025/12/test.txt')
-      expect(file.read).to eq('stored content')
-      file.close
+      data = adapter.retrieve('2025/12/test.txt')
+      expect(data).to eq('stored content')
     end
 
     it 'returns nil for non-existent key' do

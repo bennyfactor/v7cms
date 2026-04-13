@@ -3,11 +3,11 @@ require 'rake'
 require 'tmpdir'
 
 # Load rake tasks
-Rails = nil unless defined?(Rails) # Prevent double-load issues
+Rails = nil unless defined?(Rails) # rubocop:disable Naming/ConstantName
 rake_file = File.expand_path('../../lib/v7cms/tasks/v7cms.rake', __dir__)
 load rake_file unless Rake::Task.task_defined?('v7cms:assets')
 
-RSpec.describe 'v7cms:assets rake task' do
+RSpec.describe 'v7cms:assets rake task' do # rubocop:disable RSpec/DescribeClass
   let(:project_dir) { Dir.mktmpdir('v7cms_test_project') }
   let(:project_public) { File.join(project_dir, 'public') }
   let(:gem_public) { File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public') }
