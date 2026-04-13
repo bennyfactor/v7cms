@@ -2564,7 +2564,7 @@ module V7CMS
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
       # Skip verification when reCAPTCHA is not configured
-      unless ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY'] || ENV['RECAPTCHA_SECRET_KEY']
+      unless (ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']) || ENV['RECAPTCHA_SECRET_KEY']
         puts "reCAPTCHA not configured - skipping verification"
         return 1.0
       end
