@@ -440,6 +440,58 @@ RSpec.describe Page, type: :model do
     end
   end
 
+  describe 'full_slug_path persistence' do
+    it 'sets full_slug_path on create for top-level page' do
+      page = Page.create!(title: 'About', slug: 'about')
+      expect(page.reload.full_slug_path).to eq('about')
+    end
+
+    it 'sets full_slug_path on create for nested page' do
+      parent = Page.create!(title: 'Services', slug: 'services')
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent)
+      expect(child.reload.full_slug_path).to eq('services/web-dev')
+    end
+
+    it 'sets full_slug_path for deeply nested pages' do
+      grandparent = Page.create!(title: 'Company', slug: 'company')
+      parent = Page.create!(title: 'Team', slug: 'team', parent: grandparent)
+      child = Page.create!(title: 'Engineering', slug: 'engineering', parent: parent)
+      expect(child.reload.full_slug_path).to eq('company/team/engineering')
+    end
+  end
+
+  describe 'full_slug_path cascade' do
+    it 'updates children full_slug_path when parent slug changes' do
+      parent = Page.create!(title: 'Services', slug: 'services')
+      child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent)
+      grandchild = Page.create!(title: 'React', slug: 'react', parent: child)
+
+      parent.update!(slug: 'offerings')
+
+      expect(child.reload.full_slug_path).to eq('offerings/web-dev')
+      expect(grandchild.reload.full_slug_path).to eq('offerings/web-dev/react')
+    end
+
+    it 'updates children full_slug_path when parent_id changes' do
+      old_parent = Page.create!(title: 'Old', slug: 'old')
+      new_parent = Page.create!(title: 'New', slug: 'new')
+      child = Page.create!(title: 'Child', slug: 'child', parent: old_parent)
+
+      child.update!(parent: new_parent)
+
+      expect(child.reload.full_slug_path).to eq('new/child')
+    end
+
+    it 'updates full_slug_path when page becomes top-level' do
+      parent = Page.create!(title: 'Parent', slug: 'parent')
+      child = Page.create!(title: 'Child', slug: 'child', parent: parent)
+
+      child.update!(parent_id: nil)
+
+      expect(child.reload.full_slug_path).to eq('child')
+    end
+  end
+
   describe '#items_for_display' do
     let!(:parent_page) do
       page = Page.create!(title: 'Parent', slug: 'parent', page_type: 'blog_grid')

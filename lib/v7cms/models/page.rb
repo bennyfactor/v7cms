@@ -34,6 +34,8 @@ module V7CMS
     # Callbacks
     before_validation :generate_slug, if: -> { slug.blank? && title.present? }
     before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
+    before_save :compute_full_slug_path
+    after_save :cascade_full_slug_path, if: -> { saved_change_to_slug? || saved_change_to_parent_id? }
 
     # Static file generation callbacks
     after_commit :generate_static_file, if: :should_generate_static_file?
@@ -140,9 +142,20 @@ module V7CMS
       ancestors.count
     end
 
-    # Returns full slug path including ancestors (e.g., "grandparent/parent/child")
-    def full_slug_path
-      breadcrumb_trail.map(&:slug).join('/')
+    def self.backfill_full_slug_paths!
+      V7CMS::Page.where(parent_id: nil).find_each do |page|
+        path = page.breadcrumb_trail.map(&:slug).join('/')
+        page.update_columns(full_slug_path: path)
+        backfill_descendants!(page)
+      end
+    end
+
+    def self.backfill_descendants!(page)
+      page.children.find_each do |child|
+        path = child.breadcrumb_trail.map(&:slug).join('/')
+        child.update_columns(full_slug_path: path)
+        backfill_descendants!(child)
+      end
     end
 
     private
@@ -198,6 +211,27 @@ module V7CMS
 
     def flip_to_draft_on_content_change
       self.status = 'draft'
+    end
+
+    def compute_full_slug_path
+      if parent_id.present?
+        parent_page = self.class.find_by(id: parent_id)
+        if parent_page
+          self.full_slug_path = parent_page.full_slug_path.to_s + '/' + slug
+        else
+          self.full_slug_path = slug
+        end
+      else
+        self.full_slug_path = slug
+      end
+    end
+
+    def cascade_full_slug_path
+      self.class.where(parent_id: id).find_each do |child|
+        new_path = child.breadcrumb_trail.map(&:slug).join('/')
+        child.update_columns(full_slug_path: new_path)
+        child.send(:cascade_full_slug_path)
+      end
     end
   end
 end
