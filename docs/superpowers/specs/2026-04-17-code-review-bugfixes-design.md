@@ -63,9 +63,11 @@ def resolve_page(slug_path)
   page = V7CMS::Page.published.find_by(full_slug_path: slug_path)
   return page if page
 
-  # Fallback: leaf slug match, only if unique
-  leaf = slug_path.split('/').last
-  candidates = V7CMS::Page.published.where(slug: leaf)
+  # Only allow leaf-slug fallback for single-segment paths
+  # Multi-segment paths must match full_slug_path exactly
+  return nil if slug_path.include?('/')
+
+  candidates = V7CMS::Page.published.where(slug: slug_path)
   candidates.size == 1 ? candidates.first : nil
 end
 ```
@@ -96,20 +98,24 @@ end
 
 **Problem:** 5 `puts` calls in `verify_recaptcha_v3`, `verify_recaptcha_enterprise`, and `verify_recaptcha_standard` bypass structured logging.
 
-**Solution:** Add a class-level logger (matching existing `PostRenderer` pattern):
+**Solution:** Add a `recaptcha_log` instance helper that uses Sinatra's built-in `logger` when available (during request handling) and falls back to `warn` when called outside request context (e.g., in tests via `CMS.new!`):
 
 ```ruby
-def self.recaptcha_logger
-  @recaptcha_logger ||= Logger.new($stdout)
+def recaptcha_log(level, message)
+  if respond_to?(:logger) && (log = begin; logger; rescue; nil; end)
+    log.send(level, message)
+  else
+    warn "[#{level}] #{message}"
+  end
 end
 ```
 
-Replace `puts` calls:
-- `puts "reCAPTCHA not configured..."` -> `self.class.recaptcha_logger.info(...)`
-- `puts "reCAPTCHA Enterprise: invalid token..."` -> `self.class.recaptcha_logger.warn(...)`
-- `puts "reCAPTCHA Enterprise: action mismatch..."` -> `self.class.recaptcha_logger.warn(...)`
-- `puts "reCAPTCHA Enterprise verification error..."` -> `self.class.recaptcha_logger.error(...)`
-- `puts "reCAPTCHA verification error..."` -> `self.class.recaptcha_logger.error(...)`
+Replace `puts` calls with appropriate log levels:
+- `puts "reCAPTCHA not configured..."` -> `recaptcha_log(:info, ...)`
+- `puts "reCAPTCHA Enterprise: invalid token..."` -> `recaptcha_log(:warn, ...)`
+- `puts "reCAPTCHA Enterprise: action mismatch..."` -> `recaptcha_log(:warn, ...)`
+- `puts "reCAPTCHA Enterprise verification error..."` -> `recaptcha_log(:error, ...)`
+- `puts "reCAPTCHA verification error..."` -> `recaptcha_log(:error, ...)`
 
 ## 6. Integration Test for Blank reCAPTCHA Token (v7cms-igu)
 

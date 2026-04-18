@@ -25,6 +25,18 @@ module V7CMS
       new(page).delete_file
     end
 
+    def self.delete_static_file_at(slug_path)
+      dir = File.join(STATIC_DIR, slug_path)
+      return true unless Dir.exist?(dir)
+
+      FileUtils.rm_rf(dir)
+      logger.info("Deleted static HTML at old path: #{slug_path}")
+      true
+    rescue => e
+      logger.error("Failed to delete static HTML at #{slug_path}: #{e.message}")
+      false
+    end
+
     def initialize(page, header_html: nil, footer_html: nil)
       @page = page
       @settings = V7CMS::Setting.instance

@@ -224,8 +224,14 @@ module V7CMS
 
     def cascade_full_slug_path(parent_path = full_slug_path)
       self.class.where(parent_id: id).find_each do |child|
+        old_path = child.full_slug_path
         new_path = "#{parent_path}/#{child.slug}"
         child.update_columns(full_slug_path: new_path)
+        # Regenerate static files for published descendants since update_columns skips callbacks
+        if child.published_version_id.present?
+          PageRenderer.delete_static_file_at(old_path) if old_path.present?
+          PageRenderer.write_static_file(child)
+        end
         child.send(:cascade_full_slug_path, new_path)
       end
     end
