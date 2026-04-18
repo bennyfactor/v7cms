@@ -26,7 +26,17 @@ module V7CMS
     end
 
     def self.delete_static_file_at(slug_path)
+      return true if slug_path.to_s.strip.empty?
+
       dir = File.join(STATIC_DIR, slug_path)
+      expanded = File.expand_path(dir)
+      static_expanded = File.expand_path(STATIC_DIR)
+
+      unless expanded.start_with?("#{static_expanded}#{File::SEPARATOR}")
+        logger.error("Refusing to delete at #{slug_path}: path traversal detected")
+        return false
+      end
+
       return true unless Dir.exist?(dir)
 
       FileUtils.rm_rf(dir)

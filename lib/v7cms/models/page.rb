@@ -214,8 +214,10 @@ module V7CMS
     end
 
     def compute_full_slug_path
+      return unless new_record? || will_save_change_to_slug? || will_save_change_to_parent_id? || full_slug_path.blank?
+
       self.full_slug_path = if parent_id.present?
-                              parent_page = self.class.find_by(id: parent_id)
+                              parent_page = parent || self.class.find_by(id: parent_id)
                               parent_page ? "#{parent_page.full_slug_path}/#{slug}" : slug
                             else
                               slug
