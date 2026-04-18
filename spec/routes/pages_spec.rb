@@ -71,6 +71,11 @@ RSpec.describe 'Pages API', type: :request do
       expect(last_response.body).to include('Consulting')
     end
 
+    it 'does not resolve an invalid multi-segment path by leaf slug fallback' do
+      get '/foo/about'
+      expect(last_response.status).to eq(404)
+    end
+
     it 'does not override existing app routes' do
       get '/api/version'
       expect(last_response).to be_ok

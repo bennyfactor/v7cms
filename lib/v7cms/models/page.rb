@@ -226,11 +226,11 @@ module V7CMS
       end
     end
 
-    def cascade_full_slug_path
+    def cascade_full_slug_path(parent_path = full_slug_path)
       self.class.where(parent_id: id).find_each do |child|
-        new_path = child.breadcrumb_trail.map(&:slug).join('/')
+        new_path = "#{parent_path}/#{child.slug}"
         child.update_columns(full_slug_path: new_path)
-        child.send(:cascade_full_slug_path)
+        child.send(:cascade_full_slug_path, new_path)
       end
     end
   end

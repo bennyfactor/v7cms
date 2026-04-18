@@ -2740,8 +2740,11 @@ module V7CMS
       page = V7CMS::Page.published.find_by(full_slug_path: slug_path)
       return page if page
 
-      leaf = slug_path.split('/').last
-      candidates = V7CMS::Page.published.where(slug: leaf)
+      # Only allow leaf-slug fallback for single-segment paths
+      # Multi-segment paths must match full_slug_path exactly
+      return nil if slug_path.include?('/')
+
+      candidates = V7CMS::Page.published.where(slug: slug_path)
       candidates.size == 1 ? candidates.first : nil
     end
 
