@@ -2581,7 +2581,7 @@ module V7CMS
       if respond_to?(:logger) && (log = begin; logger; rescue; nil; end)
         log.send(level, message)
       else
-        $stderr.puts "[#{level}] #{message}"
+        warn "[#{level}] #{message}"
       end
     end
 

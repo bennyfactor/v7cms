@@ -417,9 +417,9 @@ RSpec.describe 'Comments API' do
 
     it 'rejects comment with blank reCAPTCHA token' do
       post "/api/posts/#{post_record.id}/comments",
-        { author_name: 'Test', author_email: 'test@example.com',
-          content: 'Hello', recaptcha_token: '' }.to_json,
-        { 'CONTENT_TYPE' => 'application/json' }
+           { author_name: 'Test', author_email: 'test@example.com',
+             content: 'Hello', recaptcha_token: '' }.to_json,
+           { 'CONTENT_TYPE' => 'application/json' }
 
       expect(last_response.status).to eq(400)
       data = JSON.parse(last_response.body)
@@ -428,9 +428,9 @@ RSpec.describe 'Comments API' do
 
     it 'rejects comment with missing reCAPTCHA token' do
       post "/api/posts/#{post_record.id}/comments",
-        { author_name: 'Test', author_email: 'test@example.com',
-          content: 'Hello' }.to_json,
-        { 'CONTENT_TYPE' => 'application/json' }
+           { author_name: 'Test', author_email: 'test@example.com',
+             content: 'Hello' }.to_json,
+           { 'CONTENT_TYPE' => 'application/json' }
 
       expect(last_response.status).to eq(400)
       data = JSON.parse(last_response.body)

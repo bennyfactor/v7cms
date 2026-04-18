@@ -214,16 +214,12 @@ module V7CMS
     end
 
     def compute_full_slug_path
-      if parent_id.present?
-        parent_page = self.class.find_by(id: parent_id)
-        if parent_page
-          self.full_slug_path = parent_page.full_slug_path.to_s + '/' + slug
-        else
-          self.full_slug_path = slug
-        end
-      else
-        self.full_slug_path = slug
-      end
+      self.full_slug_path = if parent_id.present?
+                              parent_page = self.class.find_by(id: parent_id)
+                              parent_page ? "#{parent_page.full_slug_path}/#{slug}" : slug
+                            else
+                              slug
+                            end
     end
 
     def cascade_full_slug_path(parent_path = full_slug_path)
