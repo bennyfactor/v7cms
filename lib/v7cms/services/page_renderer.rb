@@ -196,7 +196,7 @@ module V7CMS
                                             <% if index > 0 %>
                                                 <span class="mx-2">/</span>
                                             <% end %>
-                                            <a href="/pages/<%= parent.slug %>" class="text-blue-600 hover:text-blue-800 transition">
+                                            <a href="/<%= parent.full_slug_path %>" class="text-blue-600 hover:text-blue-800 transition">
                                                 <%= parent.title %>
                                             </a>
                                         </li>
@@ -228,7 +228,7 @@ module V7CMS
                                 <ul class="space-y-2">
                                     <% @page.children.published.ordered.each do |child| %>
                                         <li>
-                                            <a href="/pages/<%= child.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                                            <a href="/<%= child.full_slug_path %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
                                                 <%= child.title %>
                                             </a>
                                         </li>
@@ -239,7 +239,7 @@ module V7CMS
 
                             <footer class="mt-12 pt-6 border-t">
                                 <% if @page.parent %>
-                                    <a href="/pages/<%= @page.parent.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                                    <a href="/<%= @page.parent.full_slug_path %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
                                         ← Back to <%= @page.parent.title %>
                                     </a>
                                 <% else %>
