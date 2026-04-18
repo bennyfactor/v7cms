@@ -2576,13 +2576,22 @@ module V7CMS
       result
     end
 
+    # Logging helper for reCAPTCHA methods - falls back to $stderr when logger is unavailable
+    def recaptcha_log(level, message)
+      if respond_to?(:logger) && (log = begin; logger; rescue; nil; end)
+        log.send(level, message)
+      else
+        $stderr.puts "[#{level}] #{message}"
+      end
+    end
+
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
     def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
       # Skip verification when reCAPTCHA is not configured
       unless (ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']) || ENV['RECAPTCHA_SECRET_KEY']
-        puts "reCAPTCHA not configured - skipping verification"
+        recaptcha_log(:info, "reCAPTCHA not configured - skipping verification")
         return 1.0
       end
 
@@ -2594,6 +2603,8 @@ module V7CMS
         verify_recaptcha_enterprise(token, remote_ip, action: action)
       elsif ENV['RECAPTCHA_SECRET_KEY']
         verify_recaptcha_standard(token, remote_ip)
+      else
+        0.0
       end
     end
 
@@ -2631,19 +2642,19 @@ module V7CMS
       risk_analysis = result['riskAnalysis'] || {}
 
       unless token_props['valid']
-        puts "reCAPTCHA Enterprise: invalid token - #{token_props['invalidReason']}"
+        recaptcha_log(:warn, "reCAPTCHA Enterprise: invalid token - #{token_props['invalidReason']}")
         return 0.0
       end
 
       if token_props['action'] != action
-        puts "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}"
+        recaptcha_log(:warn, "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}")
         return 0.0
       end
 
       # Return score (0.0 = bot, 1.0 = human)
       risk_analysis['score'] || 0.0
     rescue => e
-      puts "reCAPTCHA Enterprise verification error: #{e.message}"
+      recaptcha_log(:error, "reCAPTCHA Enterprise verification error: #{e.message}")
       0.0
     end
 
@@ -2664,7 +2675,7 @@ module V7CMS
       # Return score (0.0 = bot, 1.0 = human)
       result['success'] ? result['score'] : 0.0
     rescue => e
-      puts "reCAPTCHA verification error: #{e.message}"
+      recaptcha_log(:error, "reCAPTCHA verification error: #{e.message}")
       0.0
     end
 
