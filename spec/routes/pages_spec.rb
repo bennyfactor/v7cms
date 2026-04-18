@@ -17,6 +17,78 @@ RSpec.describe 'Pages API', type: :request do
     end
   end
 
+  describe 'GET /pages/* hierarchical routing' do
+    before do
+      @parent = Page.create!(title: 'Services', slug: 'services')
+      @parent.publish!
+      @child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: @parent)
+      @child.publish!
+    end
+
+    it 'resolves page by full_slug_path' do
+      get '/pages/services/web-dev'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Web Dev')
+    end
+
+    it 'resolves top-level page by slug' do
+      get '/pages/services'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Services')
+    end
+
+    it 'resolves unique leaf slug without full path' do
+      get '/pages/web-dev'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Web Dev')
+    end
+
+    it 'returns 404 for non-existent page' do
+      get '/pages/nonexistent'
+      expect(last_response.status).to eq(404)
+    end
+  end
+
+  describe 'GET /* vanity page routes' do
+    before do
+      @page = Page.create!(title: 'About', slug: 'about')
+      @page.publish!
+      @parent = Page.create!(title: 'Services', slug: 'services')
+      @parent.publish!
+      @child = Page.create!(title: 'Consulting', slug: 'consulting', parent: @parent)
+      @child.publish!
+    end
+
+    it 'serves top-level page at vanity URL' do
+      get '/about'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('About')
+    end
+
+    it 'serves nested page at vanity URL' do
+      get '/services/consulting'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Consulting')
+    end
+
+    it 'does not override existing app routes' do
+      get '/api/version'
+      expect(last_response).to be_ok
+    end
+
+    it 'returns 404 for non-existent vanity URL' do
+      get '/nonexistent-page'
+      expect(last_response.status).to eq(404)
+    end
+
+    it 'does not interfere with API routes' do
+      get '/api/pages'
+      expect(last_response).to be_ok
+      data = JSON.parse(last_response.body)
+      expect(data).to have_key('pages')
+    end
+  end
+
   describe 'GET /api/pages' do
     before do
       @published1 = Page.create!(title: 'About', slug: 'about', position: 1)

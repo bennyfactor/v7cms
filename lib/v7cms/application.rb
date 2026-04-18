@@ -324,15 +324,7 @@ module V7CMS
     # View a page by slug (supports hierarchical paths like /parent/child)
     get '/pages/*' do
       slug_path = params[:splat].first
-
-      # Try to find page by exact slug match first
-      @page = V7CMS::Page.published.find_by(slug: slug_path)
-
-      # If not found, try matching the last segment (for hierarchical URLs)
-      if @page.nil?
-        slug = slug_path.split('/').last
-        @page = V7CMS::Page.published.find_by(slug: slug)
-      end
+      @page = resolve_page(slug_path)
 
       if @page.nil?
         status 404
@@ -2312,6 +2304,31 @@ module V7CMS
       json({ success: true, message: form.success_message })
     end
 
+    # Vanity page routes - serves published pages at their full_slug_path
+    # This catch-all is at the bottom of the route stack so all other routes
+    # (posts, API, admin, forms, etc.) take priority via Sinatra's top-down matching.
+    get '/*' do
+      slug_path = params[:splat].first
+
+      # Skip paths that look like file requests (have extensions)
+      pass if slug_path.include?('.')
+
+      @page = resolve_page(slug_path)
+      pass unless @page
+
+      @title = @page.title
+      @description = @page.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+
+      if @page.uses_layout_template?
+        @items = @page.items_for_display
+        @posts = @items
+        @settings = V7CMS::Setting.instance
+        erb :"layouts/homepage/_#{@page.page_type}", layout: :layout
+      else
+        erb :page
+      end
+    end
+
     # =========================================================================
     # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
     # =========================================================================
@@ -2707,6 +2724,15 @@ module V7CMS
     end
 
     private
+
+    def resolve_page(slug_path)
+      page = V7CMS::Page.published.find_by(full_slug_path: slug_path)
+      return page if page
+
+      leaf = slug_path.split('/').last
+      candidates = V7CMS::Page.published.where(slug: leaf)
+      candidates.size == 1 ? candidates.first : nil
+    end
 
     def extract_theme_from_model(theme)
       # Load theme config
