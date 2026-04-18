@@ -401,6 +401,43 @@ RSpec.describe 'Comments API' do
     end
   end
 
+  describe 'POST /api/posts/:id/comments with blank reCAPTCHA token (integration)' do
+    let(:post_record) do
+      p = Post.create!(title: 'Test Post', slug: 'test-post', content: 'Content')
+      p.publish!
+      p
+    end
+
+    before do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('RACK_ENV').and_return('production')
+      allow(ENV).to receive(:[]).with('RECAPTCHA_SECRET_KEY').and_return('test-secret')
+      allow(ENV).to receive(:[]).with('RECAPTCHA_SITE_KEY').and_return('test-site-key')
+    end
+
+    it 'rejects comment with blank reCAPTCHA token' do
+      post "/api/posts/#{post_record.id}/comments",
+        { author_name: 'Test', author_email: 'test@example.com',
+          content: 'Hello', recaptcha_token: '' }.to_json,
+        { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(last_response.status).to eq(400)
+      data = JSON.parse(last_response.body)
+      expect(data['error']).to include('reCAPTCHA')
+    end
+
+    it 'rejects comment with missing reCAPTCHA token' do
+      post "/api/posts/#{post_record.id}/comments",
+        { author_name: 'Test', author_email: 'test@example.com',
+          content: 'Hello' }.to_json,
+        { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(last_response.status).to eq(400)
+      data = JSON.parse(last_response.body)
+      expect(data['error']).to include('reCAPTCHA')
+    end
+  end
+
   describe 'verify_recaptcha_v3 blank token handling' do
     let(:app_instance) { CMS.new! }
 
