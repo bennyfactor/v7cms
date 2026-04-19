@@ -324,15 +324,7 @@ module V7CMS
     # View a page by slug (supports hierarchical paths like /parent/child)
     get '/pages/*' do
       slug_path = params[:splat].first
-
-      # Try to find page by exact slug match first
-      @page = V7CMS::Page.published.find_by(slug: slug_path)
-
-      # If not found, try matching the last segment (for hierarchical URLs)
-      if @page.nil?
-        slug = slug_path.split('/').last
-        @page = V7CMS::Page.published.find_by(slug: slug)
-      end
+      @page = resolve_page(slug_path)
 
       if @page.nil?
         status 404
@@ -2312,6 +2304,31 @@ module V7CMS
       json({ success: true, message: form.success_message })
     end
 
+    # Vanity page routes - serves published pages at their full_slug_path
+    # This catch-all is at the bottom of the route stack so all other routes
+    # (posts, API, admin, forms, etc.) take priority via Sinatra's top-down matching.
+    get '/*' do
+      slug_path = params[:splat].first
+
+      # Skip paths that look like file requests (have extensions)
+      pass if slug_path.include?('.')
+
+      @page = resolve_page(slug_path)
+      pass unless @page
+
+      @title = @page.title
+      @description = @page.content.to_s.gsub(/<[^>]*>/, '')[0..150]
+
+      if @page.uses_layout_template?
+        @items = @page.items_for_display
+        @posts = @items
+        @settings = V7CMS::Setting.instance
+        erb :"layouts/homepage/_#{@page.page_type}", layout: :layout
+      else
+        erb :page
+      end
+    end
+
     # =========================================================================
     # Redirect Handler (for Docker/Rack deployments without Apache .htaccess)
     # =========================================================================
@@ -2559,13 +2576,22 @@ module V7CMS
       result
     end
 
+    # Logging helper for reCAPTCHA methods - falls back to $stderr when logger is unavailable
+    def recaptcha_log(level, message)
+      if respond_to?(:logger) && (log = begin; logger; rescue; nil; end)
+        log.send(level, message)
+      else
+        warn "[#{level}] #{message}"
+      end
+    end
+
     # reCAPTCHA verification helper - supports both Enterprise and Standard v3
     def verify_recaptcha_v3(token, remote_ip, action: 'submit_comment')
       return 1.0 if ENV['RACK_ENV'] == 'test' # Bypass in tests
 
       # Skip verification when reCAPTCHA is not configured
       unless (ENV['RECAPTCHA_PROJECT_ID'] && ENV['RECAPTCHA_API_KEY']) || ENV['RECAPTCHA_SECRET_KEY']
-        puts "reCAPTCHA not configured - skipping verification"
+        recaptcha_log(:info, "reCAPTCHA not configured - skipping verification")
         return 1.0
       end
 
@@ -2577,6 +2603,8 @@ module V7CMS
         verify_recaptcha_enterprise(token, remote_ip, action: action)
       elsif ENV['RECAPTCHA_SECRET_KEY']
         verify_recaptcha_standard(token, remote_ip)
+      else
+        0.0
       end
     end
 
@@ -2614,19 +2642,19 @@ module V7CMS
       risk_analysis = result['riskAnalysis'] || {}
 
       unless token_props['valid']
-        puts "reCAPTCHA Enterprise: invalid token - #{token_props['invalidReason']}"
+        recaptcha_log(:warn, "reCAPTCHA Enterprise: invalid token - #{token_props['invalidReason']}")
         return 0.0
       end
 
       if token_props['action'] != action
-        puts "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}"
+        recaptcha_log(:warn, "reCAPTCHA Enterprise: action mismatch - expected #{action}, got #{token_props['action']}")
         return 0.0
       end
 
       # Return score (0.0 = bot, 1.0 = human)
       risk_analysis['score'] || 0.0
     rescue => e
-      puts "reCAPTCHA Enterprise verification error: #{e.message}"
+      recaptcha_log(:error, "reCAPTCHA Enterprise verification error: #{e.message}")
       0.0
     end
 
@@ -2647,7 +2675,7 @@ module V7CMS
       # Return score (0.0 = bot, 1.0 = human)
       result['success'] ? result['score'] : 0.0
     rescue => e
-      puts "reCAPTCHA verification error: #{e.message}"
+      recaptcha_log(:error, "reCAPTCHA verification error: #{e.message}")
       0.0
     end
 
@@ -2707,6 +2735,18 @@ module V7CMS
     end
 
     private
+
+    def resolve_page(slug_path)
+      page = V7CMS::Page.published.find_by(full_slug_path: slug_path)
+      return page if page
+
+      # Only allow leaf-slug fallback for single-segment paths
+      # Multi-segment paths must match full_slug_path exactly
+      return nil if slug_path.include?('/')
+
+      candidates = V7CMS::Page.published.where(slug: slug_path).limit(2).to_a
+      candidates.length == 1 ? candidates.first : nil
+    end
 
     def extract_theme_from_model(theme)
       # Load theme config

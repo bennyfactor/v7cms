@@ -25,6 +25,37 @@ module V7CMS
       new(page).delete_file
     end
 
+    def self.delete_static_file_at(slug_path)
+      return true if slug_path.to_s.strip.empty?
+
+      dir = File.join(STATIC_DIR, slug_path)
+      expanded = File.expand_path(dir)
+      static_expanded = File.expand_path(STATIC_DIR)
+
+      unless expanded.start_with?("#{static_expanded}#{File::SEPARATOR}")
+        logger.error("Refusing to delete at #{slug_path}: path traversal detected")
+        return false
+      end
+
+      return true unless Dir.exist?(dir)
+
+      FileUtils.rm_rf(dir)
+      cleanup_empty_ancestors(dir)
+      logger.info("Deleted static HTML at old path: #{slug_path}")
+      true
+    rescue => e
+      logger.error("Failed to delete static HTML at #{slug_path}: #{e.message}")
+      false
+    end
+
+    def self.cleanup_empty_ancestors(dir)
+      dir_path = File.dirname(dir)
+      while dir_path != STATIC_DIR && Dir.exist?(dir_path) && Dir.empty?(dir_path)
+        Dir.rmdir(dir_path)
+        dir_path = File.dirname(dir_path)
+      end
+    end
+
     def initialize(page, header_html: nil, footer_html: nil)
       @page = page
       @settings = V7CMS::Setting.instance
@@ -196,7 +227,7 @@ module V7CMS
                                             <% if index > 0 %>
                                                 <span class="mx-2">/</span>
                                             <% end %>
-                                            <a href="/pages/<%= parent.slug %>" class="text-blue-600 hover:text-blue-800 transition">
+                                            <a href="/<%= parent.full_slug_path %>" class="text-blue-600 hover:text-blue-800 transition">
                                                 <%= parent.title %>
                                             </a>
                                         </li>
@@ -228,7 +259,7 @@ module V7CMS
                                 <ul class="space-y-2">
                                     <% @page.children.published.ordered.each do |child| %>
                                         <li>
-                                            <a href="/pages/<%= child.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                                            <a href="/<%= child.full_slug_path %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
                                                 <%= child.title %>
                                             </a>
                                         </li>
@@ -239,7 +270,7 @@ module V7CMS
 
                             <footer class="mt-12 pt-6 border-t">
                                 <% if @page.parent %>
-                                    <a href="/pages/<%= @page.parent.slug %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
+                                    <a href="/<%= @page.parent.full_slug_path %>" class="text-blue-600 hover:text-blue-800 font-semibold transition">
                                         ← Back to <%= @page.parent.title %>
                                     </a>
                                 <% else %>

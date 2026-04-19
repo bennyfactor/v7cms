@@ -84,7 +84,7 @@ public/feed.xml
 public/atom.xml
 
 # Static HTML files (auto-generated)
-public/posts/*.html
+public/posts/**/*.html
 !public/posts/.gitkeep
 public/pages/**/*.html
 !public/pages/.gitkeep

@@ -34,8 +34,11 @@ module V7CMS
     # Callbacks
     before_validation :generate_slug, if: -> { slug.blank? && title.present? }
     before_save :flip_to_draft_on_content_change, if: :should_flip_to_draft?
+    before_save :compute_full_slug_path
+    after_save :cascade_full_slug_path, if: -> { saved_change_to_slug? || saved_change_to_parent_id? }
 
     # Static file generation callbacks
+    after_commit :cleanup_old_static_file, if: :should_cleanup_old_static_file?
     after_commit :generate_static_file, if: :should_generate_static_file?
     after_commit :remove_static_file, if: :should_remove_static_file?
     after_destroy :remove_static_file
@@ -140,9 +143,20 @@ module V7CMS
       ancestors.count
     end
 
-    # Returns full slug path including ancestors (e.g., "grandparent/parent/child")
-    def full_slug_path
-      breadcrumb_trail.map(&:slug).join('/')
+    def self.backfill_full_slug_paths!
+      V7CMS::Page.where(parent_id: nil).find_each do |page|
+        path = page.breadcrumb_trail.map(&:slug).join('/')
+        page.update_columns(full_slug_path: path)
+        backfill_descendants!(page)
+      end
+    end
+
+    def self.backfill_descendants!(page)
+      page.children.find_each do |child|
+        path = child.breadcrumb_trail.map(&:slug).join('/')
+        child.update_columns(full_slug_path: path)
+        backfill_descendants!(child)
+      end
     end
 
     private
@@ -161,6 +175,16 @@ module V7CMS
       if descendant_ids.include?(parent_id)
         errors.add(:parent_id, 'cannot be a circular reference')
       end
+    end
+
+    def should_cleanup_old_static_file?
+      !destroyed? && published_version_id.present? &&
+        previous_changes.key?('full_slug_path') && previous_changes['full_slug_path'].first.present?
+    end
+
+    def cleanup_old_static_file
+      old_path = previous_changes['full_slug_path'].first
+      PageRenderer.delete_static_file_at(old_path)
     end
 
     def should_generate_static_file?
@@ -198,6 +222,31 @@ module V7CMS
 
     def flip_to_draft_on_content_change
       self.status = 'draft'
+    end
+
+    def compute_full_slug_path
+      return unless new_record? || will_save_change_to_slug? || will_save_change_to_parent_id? || full_slug_path.blank?
+
+      self.full_slug_path = if parent_id.present?
+                              parent_page = parent || self.class.find_by(id: parent_id)
+                              parent_page ? "#{parent_page.full_slug_path}/#{slug}" : slug
+                            else
+                              slug
+                            end
+    end
+
+    def cascade_full_slug_path(parent_path = full_slug_path)
+      self.class.where(parent_id: id).find_each do |child|
+        old_path = child.full_slug_path
+        new_path = "#{parent_path}/#{child.slug}"
+        child.update_columns(full_slug_path: new_path)
+        # Regenerate static files for published descendants since update_columns skips callbacks
+        if child.published_version_id.present?
+          PageRenderer.delete_static_file_at(old_path) if old_path.present?
+          PageRenderer.write_static_file(child)
+        end
+        child.send(:cascade_full_slug_path, new_path)
+      end
     end
   end
 end
