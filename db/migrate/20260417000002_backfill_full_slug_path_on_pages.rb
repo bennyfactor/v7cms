@@ -23,7 +23,14 @@ class BackfillFullSlugPathOnPages < ActiveRecord::Migration[7.0]
       execute(update_sql)
 
       remaining_after = connection.select_value("SELECT COUNT(*) FROM pages WHERE full_slug_path IS NULL").to_i
-      break if remaining_after == 0 || remaining_after == remaining_before
+      break if remaining_after == 0
+
+      if remaining_after == remaining_before
+        # Orphaned rows with invalid parent_id — default to slug
+        say "#{remaining_after} pages have NULL full_slug_path with unresolvable parents, defaulting to slug"
+        execute "UPDATE pages SET full_slug_path = slug WHERE full_slug_path IS NULL"
+        break
+      end
     end
 
     change_column_null :pages, :full_slug_path, false
