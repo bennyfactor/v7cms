@@ -2744,8 +2744,8 @@ module V7CMS
       # Multi-segment paths must match full_slug_path exactly
       return nil if slug_path.include?('/')
 
-      candidates = V7CMS::Page.published.where(slug: slug_path)
-      candidates.size == 1 ? candidates.first : nil
+      candidates = V7CMS::Page.published.where(slug: slug_path).limit(2).to_a
+      candidates.length == 1 ? candidates.first : nil
     end
 
     def extract_theme_from_model(theme)

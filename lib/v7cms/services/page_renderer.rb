@@ -40,11 +40,20 @@ module V7CMS
       return true unless Dir.exist?(dir)
 
       FileUtils.rm_rf(dir)
+      cleanup_empty_ancestors(dir)
       logger.info("Deleted static HTML at old path: #{slug_path}")
       true
     rescue => e
       logger.error("Failed to delete static HTML at #{slug_path}: #{e.message}")
       false
+    end
+
+    def self.cleanup_empty_ancestors(dir)
+      dir_path = File.dirname(dir)
+      while dir_path != STATIC_DIR && Dir.exist?(dir_path) && Dir.empty?(dir_path)
+        Dir.rmdir(dir_path)
+        dir_path = File.dirname(dir_path)
+      end
     end
 
     def initialize(page, header_html: nil, footer_html: nil)

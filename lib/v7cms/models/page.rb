@@ -38,6 +38,7 @@ module V7CMS
     after_save :cascade_full_slug_path, if: -> { saved_change_to_slug? || saved_change_to_parent_id? }
 
     # Static file generation callbacks
+    after_commit :cleanup_old_static_file, if: :should_cleanup_old_static_file?
     after_commit :generate_static_file, if: :should_generate_static_file?
     after_commit :remove_static_file, if: :should_remove_static_file?
     after_destroy :remove_static_file
@@ -174,6 +175,16 @@ module V7CMS
       if descendant_ids.include?(parent_id)
         errors.add(:parent_id, 'cannot be a circular reference')
       end
+    end
+
+    def should_cleanup_old_static_file?
+      !destroyed? && published_version_id.present? &&
+        previous_changes.key?('full_slug_path') && previous_changes['full_slug_path'].first.present?
+    end
+
+    def cleanup_old_static_file
+      old_path = previous_changes['full_slug_path'].first
+      PageRenderer.delete_static_file_at(old_path)
     end
 
     def should_generate_static_file?
