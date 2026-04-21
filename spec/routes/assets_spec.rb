@@ -141,7 +141,7 @@ RSpec.describe 'Assets API', type: :request do
       tempfile.rewind
       file = Rack::Test::UploadedFile.new(tempfile.path, 'image/jpeg')
       post '/api/assets', file: file
-      expect([200, 201]).to include(last_response.status)
+      expect(last_response.status).to eq(201)
     ensure
       tempfile&.close!
     end

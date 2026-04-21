@@ -118,9 +118,7 @@ RSpec.describe 'Custom Error Pages' do
     end
 
     it 'preserves JSON body through 500 error handler' do
-      # Stub a route to raise an error, triggering the 500 handler
-      allow_any_instance_of(CMS).to receive(:settings).and_call_original
-      # Force an error in a JSON API route
+      # Force an error in a JSON API route to trigger the 500 handler
       allow(V7CMS::Setting).to receive(:instance).and_raise(StandardError, 'test error')
       get '/api/settings'
       expect(last_response.status).to eq(500)
