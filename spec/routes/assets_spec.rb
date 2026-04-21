@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tempfile'
 
 RSpec.describe 'Assets API', type: :request do
   let(:admin_user) { V7CMS::User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '123', admin: true) }
