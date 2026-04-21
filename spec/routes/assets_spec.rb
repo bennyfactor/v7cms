@@ -122,6 +122,16 @@ RSpec.describe 'Assets API', type: :request do
   end
 
   describe 'POST /api/assets (multipart upload)' do
+    let(:upload_dir) { Dir.mktmpdir('v7cms_test_uploads') }
+
+    before do
+      allow(V7CMS::Asset).to receive(:storage_adapter).and_return(
+        V7CMS::Storage::LocalAdapter.new(base_path: upload_dir)
+      )
+    end
+
+    after { FileUtils.rm_rf(upload_dir) }
+
     it 'requires authentication' do
       post '/api/assets'
       expect(last_response.status).to eq(401)
