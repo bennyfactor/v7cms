@@ -4,6 +4,7 @@ ruby '>= 3.4'
 
 # Core framework
 gem 'sinatra', '~> 4.0'
+gem 'rackup', '~> 2.1'
 gem 'sinatra-activerecord', '~> 2.0'
 gem 'sqlite3', '~> 2.1'
 gem 'rake', '~> 13.0'
