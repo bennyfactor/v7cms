@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'tempfile'
 
 RSpec.describe 'Assets API', type: :request do
   let(:admin_user) { V7CMS::User.create!(email: 'admin@example.com', name: 'Admin', provider: 'google_oauth2', uid: '123', admin: true) }
@@ -117,6 +118,43 @@ RSpec.describe 'Assets API', type: :request do
       expect(last_response).to be_ok
 
       expect(V7CMS::Asset.find_by(id: asset.id)).to be_nil
+    end
+  end
+
+  describe 'POST /api/assets (multipart upload)' do
+    let(:upload_dir) { Dir.mktmpdir('v7cms_test_uploads') }
+
+    before do
+      allow(V7CMS::Asset).to receive(:storage_adapter).and_return(
+        V7CMS::Storage::LocalAdapter.new(base_path: upload_dir)
+      )
+    end
+
+    after { FileUtils.rm_rf(upload_dir) }
+
+    it 'requires authentication' do
+      post '/api/assets'
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'rejects request without file' do
+      login_as(admin_user)
+      post '/api/assets'
+      expect(last_response.status).to eq(400)
+      expect(JSON.parse(last_response.body)['error']).to include('No file')
+    end
+
+    it 'accepts multipart file upload' do
+      login_as(admin_user)
+      tempfile = Tempfile.new(['test', '.jpg'])
+      tempfile.binmode
+      tempfile.write("\xFF\xD8\xFF\xE0") # minimal JPEG header
+      tempfile.rewind
+      file = Rack::Test::UploadedFile.new(tempfile.path, 'image/jpeg')
+      post '/api/assets', file: file
+      expect(last_response.status).to eq(201)
+    ensure
+      tempfile&.close!
     end
   end
 

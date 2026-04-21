@@ -3,7 +3,8 @@ source 'https://rubygems.org'
 ruby '>= 3.4'
 
 # Core framework
-gem 'sinatra', '~> 3.0'
+gem 'sinatra', '~> 4.0'
+gem 'rackup', '~> 2.1'
 gem 'sinatra-activerecord', '~> 2.0'
 gem 'sqlite3', '~> 2.1'
 gem 'rake', '~> 13.0'
@@ -18,7 +19,7 @@ end
 gem 'omniauth', '~> 2.1'
 gem 'omniauth-google-oauth2', '~> 1.1'
 gem 'omniauth-github', '~> 2.0'
-gem 'rack-protection', '~> 3.0'
+gem 'rack-protection', '~> 4.0'
 
 # Rate limiting
 gem 'rack-attack', '~> 6.7'

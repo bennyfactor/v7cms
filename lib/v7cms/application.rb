@@ -164,8 +164,9 @@ module V7CMS
 
     error 403 do
       # If response is already JSON (from API routes), don't override
-      if response['Content-Type']&.include?('application/json')
-        return response.body.join
+      if response.content_type&.include?('application/json')
+        body = response.body
+        return body.is_a?(Array) ? body.join : body.to_s
       end
 
       error_file = self.class.find_error_page(403)
@@ -179,8 +180,9 @@ module V7CMS
 
     error 500 do
       # If response is already JSON (from API routes), don't override
-      if response['Content-Type']&.include?('application/json')
-        return response.body.join
+      if response.content_type&.include?('application/json')
+        body = response.body
+        return body.is_a?(Array) ? body.join : body.to_s
       end
 
       error_file = self.class.find_error_page(500)
