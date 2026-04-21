@@ -120,6 +120,33 @@ RSpec.describe 'Assets API', type: :request do
     end
   end
 
+  describe 'POST /api/assets (multipart upload)' do
+    it 'requires authentication' do
+      post '/api/assets'
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'rejects request without file' do
+      login_as(admin_user)
+      post '/api/assets'
+      expect(last_response.status).to eq(400)
+      expect(JSON.parse(last_response.body)['error']).to include('No file')
+    end
+
+    it 'accepts multipart file upload' do
+      login_as(admin_user)
+      tempfile = Tempfile.new(['test', '.jpg'])
+      tempfile.binmode
+      tempfile.write("\xFF\xD8\xFF\xE0") # minimal JPEG header
+      tempfile.rewind
+      file = Rack::Test::UploadedFile.new(tempfile.path, 'image/jpeg')
+      post '/api/assets', file: file
+      expect([200, 201]).to include(last_response.status)
+    ensure
+      tempfile&.close!
+    end
+  end
+
   describe 'GET /upload/*' do
     let(:temp_dir) { Dir.mktmpdir('v7cms_test_uploads') }
 

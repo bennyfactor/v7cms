@@ -90,6 +90,29 @@ RSpec.describe 'Custom Error Pages' do
     end
   end
 
+  describe 'API error handlers preserve JSON responses' do
+    let(:admin_user) { V7CMS::User.create!(email: 'admin@test.com', name: 'Admin', provider: 'google_oauth2', uid: '999', admin: true) }
+
+    def login_as(user)
+      env 'rack.session', { user_id: user.id }
+    end
+
+    it 'returns JSON body for API 404 errors' do
+      get '/api/posts/99999'
+      expect(last_response.status).to eq(404)
+      data = JSON.parse(last_response.body)
+      expect(data['error']).to be_a(String)
+    end
+
+    it 'returns JSON error for unauthorized API access' do
+      # Unauthenticated request to protected endpoint
+      get '/api/users'
+      expect(last_response.status).to eq(401)
+      data = JSON.parse(last_response.body)
+      expect(data['error']).to be_a(String)
+    end
+  end
+
   describe 'error handler functionality' do
     it 'defines ERROR_PAGE_EXTENSIONS constant with correct extensions' do
       expect(CMS::ERROR_PAGE_EXTENSIONS).to eq(%w[.html .shtml .php])
