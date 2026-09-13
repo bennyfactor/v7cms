@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2026-09-13
+
+### Fixed
+- Removing the stale static file of a layout-template page now deletes only that page's `index.html` and prunes empty directories, instead of removing the whole slug directory (which also held the static files of child pages)
+
+---
+
 ## [0.3.6] - 2026-09-13
 
 ### Fixed
