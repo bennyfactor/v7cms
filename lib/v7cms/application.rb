@@ -35,8 +35,10 @@ module V7CMS
     # Enable sessions for authentication
     enable :sessions
     set :session_secret, ENV.fetch('SESSION_SECRET', SecureRandom.hex(32))
-    # Use simple session config - SameSite/Secure might be breaking session persistence
-    set :sessions, true unless ENV['RACK_ENV'] == 'test'
+    # SameSite=Lax keeps the admin session off cross-site POSTs while still
+    # sending the cookie on the OAuth callback (a top-level GET navigation).
+    # Secure is only enforced in production so local HTTP development works.
+    set :sessions, secure: ENV['RACK_ENV'] == 'production', same_site: :lax, httponly: true
 
     # Serve static files from public directory
     # Priority: 1. User's project (public/), 2. Gem public (lib/v7cms/public/), 3. Fallback (public/ for backward compatibility)

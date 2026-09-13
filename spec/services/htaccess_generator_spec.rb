@@ -93,6 +93,16 @@ RSpec.describe HtaccessGenerator do
       expect(template).not_to match(/FilesMatch.*html\|js\|css.*\n.*no-cache/)
     end
 
+    it 'sends HSTS only on HTTPS responses' do
+      expect(template).to match(/Header always set Strict-Transport-Security "max-age=\d+" env=HTTPS/)
+    end
+
+    it 'sets baseline security headers for static responses' do
+      expect(template).to include('Header set X-Content-Type-Options "nosniff"')
+      expect(template).to include('Header set X-Frame-Options "SAMEORIGIN"')
+      expect(template).to include('Header always set Referrer-Policy "strict-origin-when-cross-origin"')
+    end
+
     it 'includes gzip compression rules' do
       expect(template).to include('mod_deflate')
       expect(template).to include('AddOutputFilterByType DEFLATE')

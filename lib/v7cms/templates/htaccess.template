@@ -161,6 +161,20 @@ Header always set Pragma "no-cache" env=REDIRECT_is_fcgi_request
 Header always set Expires "0" env=REDIRECT_is_fcgi_request
 
 # ============================================================================
+# SECURITY HEADERS
+# ============================================================================
+
+# HSTS on HTTPS responses only (mod_ssl sets the HTTPS env var). 180 days,
+# without includeSubDomains/preload so other subdomains are unaffected.
+Header always set Strict-Transport-Security "max-age=15552000" env=HTTPS
+
+# The app (rack-protection) already sends these on FastCGI responses; plain
+# "Header set" replaces rather than duplicates them and also covers static files.
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# ============================================================================
 # GZIP COMPRESSION
 # ============================================================================
 <IfModule mod_deflate.c>
