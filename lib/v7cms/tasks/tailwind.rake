@@ -27,42 +27,36 @@ namespace :v7cms do
     FileUtils.mkdir_p(output_dir)
     output = File.join(output_dir, 'output.css')
 
-    # Content paths: gem views and public assets
-    content_paths = [
-      File.join(gem_root, 'lib', 'v7cms', 'views', '**', '*.erb'),
-      File.join(gem_root, 'lib', 'v7cms', 'public', '**', '*.html'),
-      File.join(gem_root, 'lib', 'v7cms', 'public', '**', '*.js')
-    ]
-
-    # Add project paths if running from a project context
-    if defined?(V7CMS) && V7CMS.respond_to?(:project_root)
+    # The gem's input.css registers the gem views/public with @source and
+    # disables automatic source detection. The Tailwind v4 CLI has no
+    # --content flag, so a consuming project's views/ and public/ are added
+    # through a generated wrapper entry file that imports input.css.
+    project_sources = []
+    if defined?(V7CMS) && V7CMS.respond_to?(:project_root) && V7CMS.project_root != gem_root
       project_root = V7CMS.project_root
-      content_paths += [
+      project_sources = [
         File.join(project_root, 'views', '**', '*.erb'),
         File.join(project_root, 'public', '**', '*.html'),
-        File.join(project_root, 'public', '**', '*.js')
+        File.join(project_root, 'public', '**', '*.js'),
       ]
     end
 
     exe = Tailwindcss::Ruby.executable
 
-    cmd = [
-      exe,
-      '-i', input,
-      '-o', output,
-      '--content', content_paths.join(','),
-      '--minify'
-    ]
-
-    puts "Building Tailwind CSS..."
+    puts 'Building Tailwind CSS...'
     puts "  Input:   #{input}"
     puts "  Output:  #{output}"
-    puts "  Content: #{content_paths.length} paths"
+    puts "  Project sources: #{project_sources.length}"
 
     # Use unique subdir under .tmp to avoid noexec /tmp on shared hosting
     tmpdir = File.join(Dir.pwd, '.tmp', "tailwind-#{Process.pid}")
     FileUtils.mkdir_p(tmpdir)
     env = { 'TMPDIR' => tmpdir }
+
+    entry = File.join(tmpdir, 'entry.css')
+    File.write(entry, [%(@import "#{input}";), *project_sources.map { |g| %(@source "#{g}";) }, ''].join("\n"))
+
+    cmd = [exe, '-i', entry, '-o', output, '--minify']
 
     begin
       success = system(env, *cmd)
@@ -70,7 +64,7 @@ namespace :v7cms do
         size = File.size(output)
         puts "  Done! #{size} bytes (#{(size / 1024.0).round(1)} KB)"
       else
-        abort "Tailwind CSS build failed!"
+        abort 'Tailwind CSS build failed!'
       end
     ensure
       FileUtils.rm_rf(tmpdir)
