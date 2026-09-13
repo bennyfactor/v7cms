@@ -256,6 +256,32 @@ RSpec.describe PageRenderer do
       expect(File.exist?(stale)).to be false
     end
 
+    it 'keeps static files of child pages when removing a layout parent' do
+      parent = Page.create!(title: 'Wish List', slug: 'wish-list', page_type: 'portfolio')
+      parent.publish!
+      child = Page.create!(title: 'Item', slug: 'item', parent: parent, page_type: 'standard')
+      child.publish!
+      child_file = File.join(static_dir, 'wish-list', 'item', 'index.html')
+      expect(File.exist?(child_file)).to be true
+      stale_parent = File.join(static_dir, 'wish-list', 'index.html')
+      File.write(stale_parent, '<html>stale</html>')
+
+      expect(PageRenderer.write_static_file(parent)).to be true
+      expect(File.exist?(stale_parent)).to be false
+      expect(File.exist?(child_file)).to be true
+    end
+
+    it 'prunes the empty directory left behind by a layout page' do
+      page = Page.create!(title: 'Blog', slug: 'blog', page_type: 'blog_list', content_source: 'posts')
+      page.publish!
+      stale = File.join(static_dir, 'blog', 'index.html')
+      FileUtils.mkdir_p(File.dirname(stale))
+      File.write(stale, '<html>stale</html>')
+
+      PageRenderer.write_static_file(page)
+      expect(Dir.exist?(File.join(static_dir, 'blog'))).to be false
+    end
+
     it 'still writes static files for standard pages' do
       page = Page.create!(title: 'About', slug: 'about', page_type: 'standard')
       page.publish!
