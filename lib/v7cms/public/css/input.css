@@ -1,4 +1,14 @@
-@import "tailwindcss";
+/*
+ * Sources are registered explicitly (relative to this file) and automatic
+ * detection is disabled: the Tailwind v4 CLI otherwise scans the working
+ * directory and honours .gitignore, which drops the gem's own views when a
+ * consuming project ignores vendor/bundle. The v7cms:tailwind rake task
+ * adds the consuming project's views/ and public/ the same way.
+ */
+@import "tailwindcss" source(none);
+@source "../../views/**/*.erb";
+@source "../../public/**/*.html";
+@source "../../public/**/*.js";
 
 /*
  * Theme Configuration
