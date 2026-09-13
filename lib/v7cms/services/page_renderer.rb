@@ -74,6 +74,12 @@ module V7CMS
     end
 
     def write_file
+      # Layout-template pages (blog_list, portfolio, ...) list other content
+      # that changes independently of the page itself, so a pre-baked copy
+      # goes stale the moment a post is published. Serve them dynamically:
+      # remove any previously generated file so Apache falls through to the app.
+      return skip_layout_page if @page.uses_layout_template?
+
       validate_write_path!
       ensure_directory_exists
       validate_write_path!('after directory creation')
@@ -99,6 +105,11 @@ module V7CMS
     end
 
     private
+
+    def skip_layout_page
+      self.class.logger.info("Skipping static HTML for layout page: #{@page.slug} (#{@page.page_type})")
+      delete_file
+    end
 
     def remove_slug_directory(slug_dir)
       FileUtils.rm_rf(slug_dir)

@@ -24,7 +24,7 @@ If you receive "redirect_uri_mismatch" errors during OAuth login:
 
 ## Static HTML Not Generating
 
-Published posts are rendered to static HTML at `public/posts/<slug>/index.html`, and pages are rendered at `public/pages/<full_slug_path>/index.html`. If files aren't being created:
+Published posts are rendered to static HTML at `public/posts/<slug>/index.html`, and pages are rendered at `public/pages/<full_slug_path>/index.html`. Pages that use a layout template (`blog_list`, `blog_grid`, `portfolio`, etc.) are intentionally **not** pre-rendered: they list other content that changes independently, so they are always served dynamically through the app. If files aren't being created for standard pages or posts:
 
 - Verify the `public/` directory is writable by the web server process
 - Run `bundle exec rake v7cms:regenerate` to manually regenerate all static files

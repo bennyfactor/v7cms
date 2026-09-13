@@ -229,4 +229,38 @@ RSpec.describe PageRenderer do
       expect(path).to include('parent/child/index.html')
     end
   end
+
+  describe 'layout-template pages' do
+    let(:static_dir) { File.join(Dir.pwd, 'public', 'pages') }
+
+    after do
+      FileUtils.rm_rf(static_dir) if Dir.exist?(static_dir)
+    end
+
+    it 'does not write a static file for a page that uses a layout template' do
+      page = Page.create!(title: 'Blog', slug: 'blog', page_type: 'blog_list', content_source: 'posts')
+      page.publish!
+
+      expect(PageRenderer.write_static_file(page)).to be true
+      expect(File.exist?(File.join(static_dir, 'blog', 'index.html'))).to be false
+    end
+
+    it 'removes a stale static file when a page uses a layout template' do
+      page = Page.create!(title: 'Blog', slug: 'blog', page_type: 'blog_list', content_source: 'posts')
+      page.publish!
+      stale = File.join(static_dir, 'blog', 'index.html')
+      FileUtils.mkdir_p(File.dirname(stale))
+      File.write(stale, '<html>stale</html>')
+
+      expect(PageRenderer.write_static_file(page)).to be true
+      expect(File.exist?(stale)).to be false
+    end
+
+    it 'still writes static files for standard pages' do
+      page = Page.create!(title: 'About', slug: 'about', page_type: 'standard')
+      page.publish!
+
+      expect(File.exist?(File.join(static_dir, 'about', 'index.html'))).to be true
+    end
+  end
 end
