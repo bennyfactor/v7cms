@@ -94,7 +94,7 @@ Built-in layout templates selectable via admin Settings:
 | `portfolio` | Visual portfolio grid |
 | `landing` | Marketing landing page |
 
-Custom layouts can be added at `views/layouts/homepage/_name.erb`.
+Custom layouts can be added at `views/layouts/homepage/_name.erb`. A layout that sets `@full_page = true` is rendered without the site header, main wrapper, and footer.
 
 ## Request Flow
 
