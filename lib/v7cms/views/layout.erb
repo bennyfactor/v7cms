@@ -76,6 +76,11 @@
     <%= erb :'partials/_head_custom', layout: false %>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+    <% if @full_page %>
+    <%# A layout template that sets @full_page = true owns the whole viewport
+        (e.g. a fixed-position landing page); skip the site header/main/footer. %>
+    <%= yield %>
+    <% else %>
     <%
       # Get header/footer styles (support preview mode via params)
       # Use respond_to? for backward compatibility with databases missing these columns
@@ -148,6 +153,7 @@
             </p>
         </div>
     </footer>
+    <% end %>
 
     <!-- Auth-based UI injection -->
     <script>

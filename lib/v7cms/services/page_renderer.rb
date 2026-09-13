@@ -4,9 +4,12 @@ require 'erb'
 require 'fileutils'
 require 'logger'
 require_relative '../helpers/menu_helper'
+require_relative 'static_html_helper'
 
 module V7CMS
   class PageRenderer
+    include V7CMS::StaticHtmlHelper
+
     STATIC_DIR = File.join(Dir.pwd, 'public', 'pages')
 
     def self.logger
@@ -74,6 +77,12 @@ module V7CMS
     end
 
     def write_file
+      # Layout-template pages (blog_list, portfolio, ...) list other content
+      # that changes independently of the page itself, so a pre-baked copy
+      # goes stale the moment a post is published. Serve them dynamically:
+      # remove any previously generated file so Apache falls through to the app.
+      return skip_layout_page if @page.uses_layout_template?
+
       validate_write_path!
       ensure_directory_exists
       validate_write_path!('after directory creation')
@@ -99,6 +108,11 @@ module V7CMS
     end
 
     private
+
+    def skip_layout_page
+      self.class.logger.info("Skipping static HTML for layout page: #{@page.slug} (#{@page.page_type})")
+      delete_file
+    end
 
     def remove_slug_directory(slug_dir)
       FileUtils.rm_rf(slug_dir)
@@ -180,7 +194,7 @@ module V7CMS
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title><%= @title %> - <%= @settings.site_title %></title>
-            <script src="https://cdn.tailwindcss.com"></script>
+            <%= static_head_assets %>
 
             <meta name="description" content="<%= @content.to_s.gsub(/<[^>]*>/, '')[0..150] %>">
 
@@ -191,6 +205,9 @@ module V7CMS
             <% if @settings.site_author.present? %>
             <meta name="author" content="<%= @settings.site_author %>">
             <% end %>
+
+            <%= static_feed_links %>
+            <%= custom_partial('_head_custom') %>
 
             <!-- Static generation timestamp -->
             <!-- Generated: <%= Time.now.utc.iso8601 %> -->
@@ -319,6 +336,8 @@ module V7CMS
                     }
                 })();
             </script>
+
+            <%= custom_partial('_body_scripts_custom') %>
         </body>
         </html>
       HTML

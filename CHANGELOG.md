@@ -5,6 +5,63 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-09-13
+
+### Fixed
+- **Layout-template pages went stale**: pages using a layout template (`blog_list`, `blog_grid`, `portfolio`, ...) were pre-rendered with the plain "standard page" template and then served by Apache ahead of the app, so a blog index page never showed its posts. These pages are no longer pre-rendered; any existing static copy is removed on the next publish or `rake v7cms:regenerate`, and Apache falls through to the dynamic route
+- **Trailing slashes**: `/blog/` now behaves like `/blog` for database redirects, `/pages/*`, and vanity page URLs. Generated `.htaccess` redirect rules accept an optional trailing slash
+- **Static HTML parity**: pre-rendered posts and pages now link the compiled `output.css` and `theme.css` (matching the dynamic layout) instead of loading the Tailwind browser JIT from `cdn.tailwindcss.com`, include feed discovery links, and render the client's `_head_custom` / `_body_scripts_custom` hook partials
+
+### Added
+- **Full-page layouts**: a homepage or page layout template can set `@full_page = true` to render without the site header, main wrapper, and footer (for fixed-position landing pages)
+
+### Security
+- Session cookie is now `SameSite=Lax` and `HttpOnly`, and `Secure` in production
+- Generated `.htaccess` sends `Strict-Transport-Security` on HTTPS responses, plus `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` on static files
+
+---
+
+## [0.3.5] - 2026-04-21
+
+### Changed
+- Development/test environment upgraded to Sinatra 4.2 and Rack 3.2 (`rackup` added). The gemspec still allows Sinatra 3 for consumers
+- Error handlers made compatible with Rack 3 response access
+
+---
+
+## [0.3.4] - 2026-04-18
+
+### Added
+- `full_slug_path` column on pages with cascade updates, `resolve_page` helper, and vanity URLs for hierarchical pages (`/parent/child`)
+
+### Fixed
+- reCAPTCHA verification short-circuits on blank tokens and checks configuration first
+- Backfill migration handles orphaned rows by defaulting to the slug
+- Gitignore pattern for nested post HTML files
+
+---
+
+## [0.3.3] - 2026-04-12
+
+### Changed
+- README rewritten and documentation split into focused files under `docs/`
+
+### Fixed
+- `LocalAdapter#retrieve` uses `File.binread` to avoid a descriptor leak
+
+---
+
+## [0.3.2] - 2026-04-12
+
+### Changed
+- Static HTML moved to `slug/index.html` directory structure; `.htaccess` rewrite rules updated for nested slugs
+- reCAPTCHA and the comment form only load when comments are enabled
+
+### Security
+- Path traversal guard and symlink-escape detection in static renderers
+
+---
+
 ## [0.3.1] - 2026-04-10
 
 ### Fixed

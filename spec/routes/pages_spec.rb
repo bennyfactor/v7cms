@@ -43,6 +43,12 @@ RSpec.describe 'Pages API', type: :request do
       expect(last_response.body).to include('Web Dev')
     end
 
+    it 'tolerates a trailing slash on hierarchical page paths' do
+      get '/pages/services/web-dev/'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Web Dev')
+    end
+
     it 'returns 404 for non-existent page' do
       get '/pages/nonexistent'
       expect(last_response.status).to eq(404)
@@ -61,6 +67,12 @@ RSpec.describe 'Pages API', type: :request do
 
     it 'serves top-level page at vanity URL' do
       get '/about'
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('About')
+    end
+
+    it 'tolerates a trailing slash on vanity URLs' do
+      get '/about/'
       expect(last_response).to be_ok
       expect(last_response.body).to include('About')
     end

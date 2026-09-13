@@ -63,7 +63,7 @@ end
 
 group :development do
   gem 'rerun', '~> 0.14'
-  gem 'puma', '~> 6.0'
+  gem 'puma', '>= 7.2.1'
   gem 'gem-release', '~> 2.2'
 
   # Linting and security analysis

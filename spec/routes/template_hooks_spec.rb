@@ -73,4 +73,48 @@ RSpec.describe 'Template Hook Partials' do
       expect(script_pos).to be < body_close_pos
     end
   end
+
+  describe 'full-page homepage layouts' do
+    around do |example|
+      override_dir = Dir.mktmpdir('v7cms_test_views')
+      layouts_dir = File.join(override_dir, 'layouts', 'homepage')
+      FileUtils.mkdir_p(layouts_dir)
+      File.write(File.join(layouts_dir, '_fullpage.erb'), '<% @full_page = true %><div id="FULLPAGE_HOOK">hi</div>')
+
+      original_paths = app.settings.views_paths.dup
+      app.settings.set :views_paths, [override_dir] + original_paths
+      app.settings.set :views, override_dir
+      # Layout discovery reads the file resolver, not the overridden view paths,
+      # so bypass validation here and reset the cached singleton afterwards.
+      Setting.instance.update_column(:layout_homepage, 'fullpage')
+      Setting.clear_cache!
+
+      example.run
+    ensure
+      app.settings.set :views_paths, original_paths
+      app.settings.set :views, original_paths.first
+      Setting.clear_cache!
+      FileUtils.remove_entry(override_dir)
+    end
+
+    it 'omits the site header, main wrapper, and footer when the layout sets @full_page' do
+      get '/'
+
+      body = last_response.body
+      expect(body).to include('FULLPAGE_HOOK')
+      expect(body).not_to include('id="main-nav"')
+      expect(body).not_to include('<main class="flex-1">')
+      expect(body).not_to include('<footer class="bg-white')
+      # The document shell still renders around the layout
+      expect(body).to include('</body>')
+    end
+  end
+
+  describe 'standard homepage layouts' do
+    it 'renders the site header and footer by default' do
+      get '/'
+      expect(last_response.body).to include('id="main-nav"')
+      expect(last_response.body).to include('<footer class="bg-white')
+    end
+  end
 end

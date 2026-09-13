@@ -149,4 +149,20 @@ RSpec.describe 'Custom Error Pages' do
       cleanup_error_dir
     end
   end
+
+  describe 'database redirects' do
+    before { Redirect.create!(short_path: '/old-blog', target_path: '/pages/blog') }
+
+    it 'redirects an exact short_path match' do
+      get '/old-blog'
+      expect(last_response.status).to eq(301)
+      expect(last_response.headers['Location']).to end_with('/pages/blog')
+    end
+
+    it 'redirects when the request has a trailing slash' do
+      get '/old-blog/'
+      expect(last_response.status).to eq(301)
+      expect(last_response.headers['Location']).to end_with('/pages/blog')
+    end
+  end
 end

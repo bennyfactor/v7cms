@@ -602,7 +602,7 @@ ls -lh db/cms.db
 
 ### Static File Generation Performance
 
-The CMS pre-renders all published posts and pages as static HTML. Apache serves these files directly, bypassing the Ruby application entirely for maximum performance.
+The CMS pre-renders all published posts and standard pages as static HTML. Apache serves these files directly, bypassing the Ruby application entirely for maximum performance. Layout-template pages (blog lists, portfolios, and so on) are served dynamically so they always reflect the current posts and child pages.
 
 Regenerate static files after:
 - Theme changes

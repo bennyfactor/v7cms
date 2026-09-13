@@ -189,3 +189,14 @@ EOF
 ```
 
 Then set `layout_homepage` to `my_custom` in admin Settings. Files in your project take priority over gem defaults.
+
+### Full-page layouts
+
+By default every layout is wrapped in the site header, a centered `<main>` container, and the footer. A layout that owns the whole viewport (a fixed-position landing page, for example) can opt out by setting `@full_page` at the top of the template:
+
+```erb
+<% @full_page = true %>
+<div class="fixed inset-0">...</div>
+```
+
+The document `<head>`, the `_head_custom` / `_body_scripts_custom` hook partials, and the admin-link script still render; only the header, main wrapper, and footer are skipped.

@@ -37,8 +37,8 @@ RSpec.describe HtaccessGenerator do
       HtaccessGenerator.generate
       content = File.read(output_path)
 
-      expect(content).to include('RewriteRule ^test$ /posts/test-post [R=301,L]')
-      expect(content).to include('RewriteRule ^foo$ /pages/foo-page [R=301,L]')
+      expect(content).to include('RewriteRule ^test/?$ /posts/test-post [R=301,L]')
+      expect(content).to include('RewriteRule ^foo/?$ /pages/foo-page [R=301,L]')
       expect(content).not_to include('{{REDIRECTS}}')
     end
 
@@ -91,6 +91,16 @@ RSpec.describe HtaccessGenerator do
       # The old template had a FilesMatch for .html|js|css with no-cache
       # This should no longer exist
       expect(template).not_to match(/FilesMatch.*html\|js\|css.*\n.*no-cache/)
+    end
+
+    it 'sends HSTS only on HTTPS responses' do
+      expect(template).to match(/Header always set Strict-Transport-Security "max-age=\d+" env=HTTPS/)
+    end
+
+    it 'sets baseline security headers for static responses' do
+      expect(template).to include('Header set X-Content-Type-Options "nosniff"')
+      expect(template).to include('Header set X-Frame-Options "SAMEORIGIN"')
+      expect(template).to include('Header always set Referrer-Policy "strict-origin-when-cross-origin"')
     end
 
     it 'includes gzip compression rules' do
@@ -146,7 +156,14 @@ RSpec.describe HtaccessGenerator do
       Redirect.create!(short_path: '/pricing', target_path: '/posts/pricing-page')
 
       result = generator.send(:build_redirects_block)
-      expect(result).to eq('RewriteRule ^pricing$ /posts/pricing-page [R=301,L]')
+      expect(result).to eq('RewriteRule ^pricing/?$ /posts/pricing-page [R=301,L]')
+    end
+
+    it 'does not double the optional trailing slash when short_path already ends with one' do
+      Redirect.create!(short_path: '/legacy/', target_path: '/pages/legacy')
+
+      result = generator.send(:build_redirects_block)
+      expect(result).to eq('RewriteRule ^legacy/?$ /pages/legacy [R=301,L]')
     end
   end
 end
