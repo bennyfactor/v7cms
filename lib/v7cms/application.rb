@@ -203,7 +203,7 @@ module V7CMS
       return if request.path_info.include?('.')  # Skip static files
 
       # Check for redirect
-      redirect_record = V7CMS::Redirect.find_by(short_path: request.path_info)
+      redirect_record = find_redirect(request.path_info)
       if redirect_record
         redirect redirect_record.target_path, 301
       end
@@ -325,7 +325,7 @@ module V7CMS
 
     # View a page by slug (supports hierarchical paths like /parent/child)
     get '/pages/*' do
-      slug_path = params[:splat].first
+      slug_path = strip_trailing_slash(params[:splat].first)
       @page = resolve_page(slug_path)
 
       if @page.nil?
@@ -2310,7 +2310,7 @@ module V7CMS
     # This catch-all is at the bottom of the route stack so all other routes
     # (posts, API, admin, forms, etc.) take priority via Sinatra's top-down matching.
     get '/*' do
-      slug_path = params[:splat].first
+      slug_path = strip_trailing_slash(params[:splat].first)
 
       # Skip paths that look like file requests (have extensions)
       pass if slug_path.include?('.')
@@ -2344,7 +2344,7 @@ module V7CMS
       request_path = request.path_info
 
       # Look for a matching redirect in the database
-      redirect_record = V7CMS::Redirect.find_by(short_path: request_path)
+      redirect_record = find_redirect(request_path)
 
       if redirect_record
         # Perform 301 redirect to target path
@@ -2737,6 +2737,19 @@ module V7CMS
     end
 
     private
+
+    # "/blog/" and "/blog" should behave the same for pages and redirects.
+    def strip_trailing_slash(path)
+      path = path.to_s
+      path.length > 1 ? path.chomp('/') : path
+    end
+
+    # Match a redirect by its stored short_path, tolerating a trailing slash
+    # in either the request or the stored path.
+    def find_redirect(request_path)
+      candidates = [request_path, strip_trailing_slash(request_path)].uniq
+      V7CMS::Redirect.find_by(short_path: candidates)
+    end
 
     def resolve_page(slug_path)
       page = V7CMS::Page.published.find_by(full_slug_path: slug_path)

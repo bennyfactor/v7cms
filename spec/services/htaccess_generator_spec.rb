@@ -37,8 +37,8 @@ RSpec.describe HtaccessGenerator do
       HtaccessGenerator.generate
       content = File.read(output_path)
 
-      expect(content).to include('RewriteRule ^test$ /posts/test-post [R=301,L]')
-      expect(content).to include('RewriteRule ^foo$ /pages/foo-page [R=301,L]')
+      expect(content).to include('RewriteRule ^test/?$ /posts/test-post [R=301,L]')
+      expect(content).to include('RewriteRule ^foo/?$ /pages/foo-page [R=301,L]')
       expect(content).not_to include('{{REDIRECTS}}')
     end
 
@@ -146,7 +146,14 @@ RSpec.describe HtaccessGenerator do
       Redirect.create!(short_path: '/pricing', target_path: '/posts/pricing-page')
 
       result = generator.send(:build_redirects_block)
-      expect(result).to eq('RewriteRule ^pricing$ /posts/pricing-page [R=301,L]')
+      expect(result).to eq('RewriteRule ^pricing/?$ /posts/pricing-page [R=301,L]')
+    end
+
+    it 'does not double the optional trailing slash when short_path already ends with one' do
+      Redirect.create!(short_path: '/legacy/', target_path: '/pages/legacy')
+
+      result = generator.send(:build_redirects_block)
+      expect(result).to eq('RewriteRule ^legacy/?$ /pages/legacy [R=301,L]')
     end
   end
 end
