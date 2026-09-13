@@ -104,7 +104,7 @@ RSpec.describe 'Template Hook Partials' do
       expect(body).to include('FULLPAGE_HOOK')
       expect(body).not_to include('id="main-nav"')
       expect(body).not_to include('<main class="flex-1">')
-      expect(body).not_to match(/<footer class="bg-white/)
+      expect(body).not_to include('<footer class="bg-white')
       # The document shell still renders around the layout
       expect(body).to include('</body>')
     end
@@ -114,7 +114,7 @@ RSpec.describe 'Template Hook Partials' do
     it 'renders the site header and footer by default' do
       get '/'
       expect(last_response.body).to include('id="main-nav"')
-      expect(last_response.body).to match(/<footer class="bg-white/)
+      expect(last_response.body).to include('<footer class="bg-white')
     end
   end
 end
