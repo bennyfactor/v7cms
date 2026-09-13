@@ -77,7 +77,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'database_cleaner-active_record', '~> 2.1'
   spec.add_development_dependency 'factory_bot', '~> 6.2'
   spec.add_development_dependency 'pry', '~> 0.14'
-  spec.add_development_dependency 'puma', '~> 6.0'
+  spec.add_development_dependency 'puma', '>= 7.2.1'
   spec.add_development_dependency 'rack-test', '~> 2.1'
   spec.add_development_dependency 'rerun', '~> 0.14'
   spec.add_development_dependency 'rspec', '~> 3.12'
