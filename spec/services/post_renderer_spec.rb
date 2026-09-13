@@ -310,4 +310,64 @@ RSpec.describe PostRenderer do
       end
     end
   end
+
+  describe 'parity with the dynamic layout' do
+    it 'links the compiled stylesheet and theme instead of the Tailwind CDN' do
+      html = renderer.render_html
+      expect(html).to include('<link rel="stylesheet" href="/css/output.css">')
+      expect(html).to include('<link rel="stylesheet" href="/css/theme.css">')
+      expect(html).not_to include('cdn.tailwindcss.com')
+    end
+
+    it 'includes feed discovery links' do
+      html = renderer.render_html
+      expect(html).to include('href="/feed/rss"')
+      expect(html).to include('href="/feed/atom"')
+    end
+
+    context 'with client template hook partials' do
+      around do |example|
+        project_dir = Dir.mktmpdir('v7cms_static_project')
+        partials_dir = File.join(project_dir, 'views', 'partials')
+        FileUtils.mkdir_p(partials_dir)
+        File.write(File.join(partials_dir, '_head_custom.erb'), '<meta name="static-head-hook" content="<%= @settings.site_title %>">')
+        File.write(File.join(partials_dir, '_body_scripts_custom.erb'), '<script src="/js/static-body-hook.js"></script>')
+
+        original_root = V7CMS.project_root
+        V7CMS.configure { |c| c.project_root = project_dir }
+        example.run
+      ensure
+        V7CMS.configure { |c| c.project_root = original_root }
+        FileUtils.remove_entry(project_dir)
+      end
+
+      it 'renders the client head and body partials with settings available' do
+        html = renderer.render_html
+        expect(html).to include(%(<meta name="static-head-hook" content="#{Setting.instance.site_title}">))
+        expect(html).to include('<script src="/js/static-body-hook.js"></script>')
+      end
+    end
+
+    context 'when a partial cannot be rendered outside a request' do
+      around do |example|
+        project_dir = Dir.mktmpdir('v7cms_static_project')
+        partials_dir = File.join(project_dir, 'views', 'partials')
+        FileUtils.mkdir_p(partials_dir)
+        File.write(File.join(partials_dir, '_head_custom.erb'), '<%= request.path %>')
+
+        original_root = V7CMS.project_root
+        V7CMS.configure { |c| c.project_root = project_dir }
+        example.run
+      ensure
+        V7CMS.configure { |c| c.project_root = original_root }
+        FileUtils.remove_entry(project_dir)
+      end
+
+      it 'skips the partial and still renders the document' do
+        expect(described_class.logger).to receive(:warn).with(/Skipping partial _head_custom/)
+        html = renderer.render_html
+        expect(html).to include('</html>')
+      end
+    end
+  end
 end

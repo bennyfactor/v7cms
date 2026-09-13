@@ -4,9 +4,12 @@ require 'erb'
 require 'fileutils'
 require 'logger'
 require_relative '../helpers/menu_helper'
+require_relative 'static_html_helper'
 
 module V7CMS
   class PageRenderer
+    include V7CMS::StaticHtmlHelper
+
     STATIC_DIR = File.join(Dir.pwd, 'public', 'pages')
 
     def self.logger
@@ -191,7 +194,7 @@ module V7CMS
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title><%= @title %> - <%= @settings.site_title %></title>
-            <script src="https://cdn.tailwindcss.com"></script>
+            <%= static_head_assets %>
 
             <meta name="description" content="<%= @content.to_s.gsub(/<[^>]*>/, '')[0..150] %>">
 
@@ -202,6 +205,9 @@ module V7CMS
             <% if @settings.site_author.present? %>
             <meta name="author" content="<%= @settings.site_author %>">
             <% end %>
+
+            <%= static_feed_links %>
+            <%= custom_partial('_head_custom') %>
 
             <!-- Static generation timestamp -->
             <!-- Generated: <%= Time.now.utc.iso8601 %> -->
@@ -330,6 +336,8 @@ module V7CMS
                     }
                 })();
             </script>
+
+            <%= custom_partial('_body_scripts_custom') %>
         </body>
         </html>
       HTML
