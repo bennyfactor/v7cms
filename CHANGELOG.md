@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8] - 2026-09-13
+
+### Fixed
+- **`rake v7cms:tailwind` built an empty-ish stylesheet when `vendor/bundle` was gitignored**: the Tailwind v4 CLI has no `--content` flag (it was silently ignored) and auto-detects sources from the working directory while honouring `.gitignore`, so the gem's views were only picked up by accident. `input.css` now registers the gem's views/public with explicit `@source` directives and disables auto-detection; the rake task adds the consuming project's `views/` and `public/` through a generated entry file
+
+---
+
 ## [0.3.7] - 2026-09-13
 
 ### Fixed
