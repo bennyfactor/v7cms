@@ -109,9 +109,30 @@ module V7CMS
 
     private
 
+    # Remove only this page's index.html (never the whole slug directory,
+    # which also holds the static files of child pages), then prune any
+    # directories left empty.
     def skip_layout_page
       self.class.logger.info("Skipping static HTML for layout page: #{@page.slug} (#{@page.page_type})")
-      delete_file
+      path = static_file_path
+      return true unless File.exist?(path)
+      return false unless safe_path?(path)
+
+      File.delete(path)
+      prune_empty_directories(File.dirname(path))
+      self.class.logger.info("Deleted stale static HTML for layout page: #{@page.slug}")
+      true
+    rescue => e
+      self.class.logger.error("Failed to delete static HTML for layout page #{@page.slug}: #{e.message}")
+      false
+    end
+
+    def prune_empty_directories(dir_path)
+      static_root = File.expand_path(STATIC_DIR)
+      while File.expand_path(dir_path) != static_root && Dir.exist?(dir_path) && Dir.empty?(dir_path)
+        Dir.rmdir(dir_path)
+        dir_path = File.dirname(dir_path)
+      end
     end
 
     def remove_slug_directory(slug_dir)
