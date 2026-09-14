@@ -115,14 +115,16 @@ module V7CMS
     OmniAuth.config.silence_get_warning = true
 
     use OmniAuth::Builder do
-      # Google OAuth - only request email to avoid ModSecurity blocking 'profile' keyword
+      # Google OAuth - only request email to avoid ModSecurity blocking 'profile' keyword.
+      # The OAuth state parameter is enforced on callback (login CSRF protection),
+      # same as GitHub; it relies on the session cookie surviving the round trip,
+      # which SameSite=Lax allows for the top-level GET callback.
       provider :google_oauth2,
         ENV['GOOGLE_CLIENT_ID'],
         ENV['GOOGLE_CLIENT_SECRET'],
         {
           scope: 'email',
-          prompt: 'select_account',
-          provider_ignores_state: true  # Disable CSRF state parameter check
+          prompt: 'select_account'
         }
 
       # GitHub OAuth
