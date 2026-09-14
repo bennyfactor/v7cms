@@ -69,6 +69,7 @@ build-iPhoneSimulator/
 # Database files
 db/*.db
 db/*.db-*
+db/*.sqlite3*
 db/schema.rb
 
 # Tailwind CSS output (built by CI or rake v7cms:tailwind)
