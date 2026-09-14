@@ -88,12 +88,31 @@ RSpec.describe 'v7cms:assets rake task' do # rubocop:disable RSpec/DescribeClass
     end
   end
 
-  describe 'file symlink for api-docs.html' do
-    it 'symlinks api-docs.html as a single file' do
+  describe 'api-docs.html' do
+    it 'does not create a public api-docs.html symlink' do
       run_assets_task
       api_docs = File.join(project_public, 'api-docs.html')
-      expect(File.symlink?(api_docs)).to be true
-      expect(File.readlink(api_docs)).to eq(File.join(gem_public, 'api-docs.html'))
+      expect(File.exist?(api_docs)).to be false
+      expect(File.symlink?(api_docs)).to be false
+    end
+
+    it 'removes a stale api-docs.html symlink from an earlier deploy' do
+      api_docs = File.join(project_public, 'api-docs.html')
+      File.symlink(File.join(gem_public, 'api-docs.html'), api_docs)
+
+      run_assets_task
+
+      expect(File.symlink?(api_docs)).to be false
+      expect(File.exist?(api_docs)).to be false
+    end
+
+    it 'leaves a client-owned api-docs.html file alone' do
+      api_docs = File.join(project_public, 'api-docs.html')
+      File.write(api_docs, '<html>custom</html>')
+
+      run_assets_task
+
+      expect(File.read(api_docs)).to eq('<html>custom</html>')
     end
   end
 
