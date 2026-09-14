@@ -255,10 +255,11 @@ module V7CMS
       end
     end
 
-    # Serve API docs from gem's public directory (admins only)
+    # Serve API docs (admins only). The file lives outside the static public
+    # directory so the static file middleware can never serve it anonymously.
     get '/api-docs.html' do
       require_login
-      api_docs = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'public', 'api-docs.html')
+      api_docs = File.join(V7CMS.gem_root, 'lib', 'v7cms', 'docs', 'api-docs.html')
       if File.exist?(api_docs)
         content_type 'text/html'
         File.read(api_docs)

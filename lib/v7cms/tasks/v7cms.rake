@@ -589,6 +589,7 @@ namespace :v7cms do
     require_relative '../config/cdn_versions'
 
     gem_public = File.expand_path('../../v7cms/public', __dir__)
+    gem_docs = File.expand_path('../../v7cms/docs', __dir__)
 
     # Map of files to their CDN URL patterns
     replacements = {
@@ -606,7 +607,7 @@ namespace :v7cms do
         %r{cdnjs\.cloudflare\.com/ajax/libs/font-awesome/[\w.]+/css/all\.min\.css} =>
           V7CMS.cdn_url(:font_awesome, :css).sub('https://', '')
       },
-      File.join(gem_public, 'api-docs.html') => {
+      File.join(gem_docs, 'api-docs.html') => {
         # Swagger UI CSS
         %r{unpkg\.com/swagger-ui-dist@[\w.]+/swagger-ui\.css} =>
           V7CMS.cdn_url(:swagger_ui, :css).sub('https://', ''),
