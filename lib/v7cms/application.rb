@@ -31,6 +31,7 @@ module V7CMS
     helpers V7CMS::CdnHelper
     helpers V7CMS::MenuHelper
     helpers V7CMS::FormHelper
+    helpers V7CMS::ThemeStyleHelper
 
     # Enable sessions for authentication
     enable :sessions

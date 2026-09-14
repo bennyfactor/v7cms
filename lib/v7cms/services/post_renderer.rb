@@ -38,6 +38,13 @@ module V7CMS
       @content = V7CMS::FormHelper.process_form_shortcodes(@content) if defined?(V7CMS::FormHelper)
       @header_menu_html = header_html || V7CMS::MenuHelper.render_menu('header')
       @footer_menu_html = footer_html || V7CMS::MenuHelper.render_menu('footer')
+      theme = begin
+        V7CMS::Theme.instance
+      rescue StandardError
+        nil
+      end
+      @header_style = theme_header_style(theme)
+      @footer_style = theme_footer_style(theme)
     end
 
     def render_html
@@ -146,12 +153,12 @@ module V7CMS
         </head>
         <body class="bg-gray-50 min-h-screen flex flex-col">
             <!-- Header -->
-            <header class="bg-white shadow-sm">
-                <div class="max-w-4xl mx-auto px-4 py-6">
+            <header class="<%= header_classes(@header_style) %>">
+                <div class="max-w-4xl mx-auto px-4 <%= header_padding(@header_style) %>">
                     <div class="flex justify-between items-center">
                         <div>
-                            <a href="/" class="text-2xl font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
-                            <% if @settings.site_tagline.present? %>
+                            <a href="/" class="<%= header_title_size(@header_style) %> font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
+                            <% if @settings.site_tagline.present? && show_tagline?(@header_style) %>
                             <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                             <% end %>
                         </div>
@@ -196,8 +203,8 @@ module V7CMS
             </main>
 
             <!-- Footer -->
-            <footer class="bg-white border-t mt-auto">
-                <div class="max-w-4xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
+            <footer class="<%= footer_classes(@footer_style) %> mt-auto">
+                <div class="max-w-4xl mx-auto px-4 <%= footer_padding(@footer_style) %> text-center text-gray-600 <%= footer_text_size(@footer_style) %>">
                     <%= @footer_menu_html %>
                     <p>
                         <% if @settings.show_copyright_year %>

@@ -370,4 +370,56 @@ RSpec.describe PostRenderer do
       end
     end
   end
+
+  describe 'theme header and footer styles' do
+    before do
+      Setting.instance.update_columns(site_tagline: 'A test tagline')
+    end
+
+    context 'with a minimal header and footer' do
+      before do
+        Theme.instance.update_columns(header_style: 'minimal', footer_style: 'minimal')
+      end
+
+      it 'renders the minimal header classes and hides the tagline' do
+        html = renderer.render_html
+        expect(html).to include('<header class="bg-white border-b">')
+        expect(html).to include('px-4 py-3')
+        expect(html).not_to include('A test tagline')
+      end
+
+      it 'renders the minimal footer classes' do
+        html = renderer.render_html
+        expect(html).to match(/<footer class="bg-white border-t mt-auto">\s*<div class="max-w-4xl mx-auto px-4 py-3 text-center text-gray-600 text-xs">/)
+      end
+    end
+
+    context 'with a prominent header and centered footer' do
+      before do
+        Theme.instance.update_columns(header_style: 'prominent', footer_style: 'centered')
+      end
+
+      it 'renders the prominent header classes and shows the tagline' do
+        html = renderer.render_html
+        expect(html).to include('<header class="bg-white shadow-lg">')
+        expect(html).to include('px-4 py-8')
+        expect(html).to include('text-3xl')
+        expect(html).to include('A test tagline')
+      end
+
+      it 'renders the centered footer padding' do
+        html = renderer.render_html
+        expect(html).to include('<div class="max-w-4xl mx-auto px-4 py-4 text-center text-gray-600 text-sm">')
+      end
+    end
+
+    context 'with the default styles' do
+      it 'renders the default header and footer classes' do
+        html = renderer.render_html
+        expect(html).to include('<header class="bg-white shadow-sm">')
+        expect(html).to include('px-4 py-6')
+        expect(html).to include('A test tagline')
+      end
+    end
+  end
 end

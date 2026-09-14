@@ -2,12 +2,16 @@
 
 require 'erb'
 require 'logger'
+require_relative '../helpers/theme_style_helper'
 
 module V7CMS
   # Shared pieces for the pre-baked post/page HTML so static files match the
   # dynamic layout.erb: the compiled Tailwind build plus theme.css (instead of
-  # the Tailwind browser JIT CDN), and the client's template hook partials.
+  # the Tailwind browser JIT CDN), the theme's header/footer style classes,
+  # and the client's template hook partials.
   module StaticHtmlHelper
+    include V7CMS::ThemeStyleHelper
+
     HEAD_ASSETS = <<~HTML
       <!-- Compiled Tailwind CSS utilities -->
       <link rel="stylesheet" href="/css/output.css">

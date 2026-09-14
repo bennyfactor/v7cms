@@ -82,33 +82,21 @@
     <%= yield %>
     <% else %>
     <%
-      # Get header/footer styles (support preview mode via params)
-      # Use respond_to? for backward compatibility with databases missing these columns
-      default_header = @theme.respond_to?(:header_style) ? @theme.header_style : 'default'
-      default_footer = @theme.respond_to?(:footer_style) ? @theme.footer_style : 'default'
+      # Get header/footer styles (support preview mode via params); the class
+      # and padding lookups live in ThemeStyleHelper, shared with the static
+      # renderers so pre-baked HTML matches this layout.
+      default_header = theme_header_style(@theme)
+      default_footer = theme_footer_style(@theme)
       header_style = params[:theme_preview] ? (params[:header_style] || default_header) : default_header
       footer_style = params[:theme_preview] ? (params[:footer_style] || default_footer) : default_footer
-
-      # Header style classes
-      header_classes = case header_style
-        when 'minimal' then 'bg-white border-b'
-        when 'prominent' then 'bg-white shadow-lg'
-        else 'bg-white shadow-sm'
-      end
-      header_padding = case header_style
-        when 'minimal' then 'py-3'
-        when 'prominent' then 'py-8'
-        else 'py-6'
-      end
-      title_size = header_style == 'prominent' ? 'text-3xl' : 'text-2xl'
     %>
     <!-- Header -->
-    <header class="<%= header_classes %>">
-        <div class="max-w-4xl mx-auto px-4 <%= header_padding %>">
+    <header class="<%= header_classes(header_style) %>">
+        <div class="max-w-4xl mx-auto px-4 <%= header_padding(header_style) %>">
             <div class="flex justify-between items-center">
                 <div>
-                    <a href="/" class="<%= title_size %> font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
-                    <% if @settings.site_tagline.present? && header_style != 'minimal' %>
+                    <a href="/" class="<%= header_title_size(header_style) %> font-bold text-gray-800 hover:text-blue-600 transition"><%= @settings.site_title %></a>
+                    <% if @settings.site_tagline.present? && show_tagline?(header_style) %>
                     <p class="text-sm text-gray-600 mt-1"><%= @settings.site_tagline %></p>
                     <% end %>
                 </div>
@@ -128,22 +116,8 @@
     </main>
 
     <!-- Footer -->
-    <%
-      # Footer style classes
-      footer_classes = case footer_style
-        when 'minimal' then 'bg-white border-t'
-        when 'centered' then 'bg-white border-t'
-        else 'bg-white border-t'
-      end
-      footer_padding = case footer_style
-        when 'minimal' then 'py-3'
-        when 'centered' then 'py-4'
-        else 'py-6'
-      end
-      footer_text_size = footer_style == 'minimal' ? 'text-xs' : 'text-sm'
-    %>
-    <footer class="<%= footer_classes %> mt-auto">
-        <div class="max-w-4xl mx-auto px-4 <%= footer_padding %> text-center text-gray-600 <%= footer_text_size %>">
+    <footer class="<%= footer_classes(footer_style) %> mt-auto">
+        <div class="max-w-4xl mx-auto px-4 <%= footer_padding(footer_style) %> text-center text-gray-600 <%= footer_text_size(footer_style) %>">
             <%= render_menu('footer') %>
             <p>
                 <% if @settings.show_copyright_year %>
