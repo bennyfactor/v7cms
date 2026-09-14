@@ -37,7 +37,8 @@ v7cms/
 │       │   ├── auth_helper.rb      # Authentication (current_user, require_login)
 │       │   ├── cdn_helper.rb       # CDN asset URL helpers
 │       │   ├── form_helper.rb      # Form rendering helpers
-│       │   └── menu_helper.rb      # Menu rendering helpers
+│       │   ├── menu_helper.rb      # Menu rendering helpers
+│       │   └── theme_style_helper.rb # Theme header/footer style classes
 │       ├── services/
 │       │   ├── feed_generator.rb   # RSS/Atom feed generation
 │       │   ├── form_mailer.rb      # Form submission email notifications

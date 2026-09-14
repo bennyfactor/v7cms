@@ -9,6 +9,11 @@
 @source "../../views/**/*.erb";
 @source "../../public/**/*.html";
 @source "../../public/**/*.js";
+/* Ruby files that embed Tailwind classes: the shared theme style helper and
+   the static HTML templates inside the renderers. */
+@source "../../helpers/theme_style_helper.rb";
+@source "../../services/post_renderer.rb";
+@source "../../services/page_renderer.rb";
 
 /*
  * Theme Configuration
