@@ -1,6 +1,6 @@
 # API Reference
 
-Interactive API documentation is also available at `/api/docs` (Swagger UI).
+Interactive API documentation is also available at `/api/docs` (Swagger UI, admins only).
 
 All authenticated endpoints require an active session (via OAuth login).
 
@@ -10,8 +10,8 @@ All authenticated endpoints require an active session (via OAuth login).
 |--------|------|------|-------------|
 | `GET` | `/health` | No | Health check with database status |
 | `GET` | `/api/version` | No | Current v7cms version |
-| `GET` | `/api/docs` | No | Swagger UI documentation |
-| `GET` | `/api-spec.json` | No | OpenAPI spec (JSON) |
+| `GET` | `/api/docs` | Yes (admin) | Swagger UI documentation |
+| `GET` | `/api-spec.json` | Yes (admin) | OpenAPI spec (JSON) |
 
 ## Authentication
 

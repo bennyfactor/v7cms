@@ -379,8 +379,9 @@ namespace :v7cms do
     merge_dirs = %w[js css]
     # Directories that are gem-only — symlink the whole directory
     dir_symlinks = %w[admin]
-    # Individual files to symlink
-    file_symlinks = %w[api-docs.html]
+    # Files earlier versions symlinked into public/ but that are now served
+    # only through the app (api-docs.html is admin-only) — remove stale symlinks
+    legacy_symlinks = %w[api-docs.html]
 
     linked = 0
     skipped = 0
@@ -449,28 +450,13 @@ namespace :v7cms do
       end
     end
 
-    # File symlinks: individual files
-    file_symlinks.each do |file|
-      source = File.join(gem_public, file)
+    # Legacy symlinks: only remove symlinks, never a client's own file
+    legacy_symlinks.each do |file|
       target = File.join(project_public, file)
-      next unless File.exist?(source)
+      next unless File.symlink?(target)
 
-      if File.symlink?(target) && File.readlink(target) == source
-        skipped += 1
-        next
-      end
-
-      FileUtils.rm_f(target) if File.exist?(target) || File.symlink?(target)
-
-      begin
-        File.symlink(source, target)
-        linked += 1
-        puts "  Linked: #{file} -> #{source}"
-      rescue NotImplementedError, Errno::EACCES
-        FileUtils.cp(source, target)
-        linked += 1
-        puts "  Copied: #{file}"
-      end
+      FileUtils.rm_f(target)
+      puts "  Removed stale symlink: #{file}"
     end
 
     puts
@@ -603,6 +589,7 @@ namespace :v7cms do
     require_relative '../config/cdn_versions'
 
     gem_public = File.expand_path('../../v7cms/public', __dir__)
+    gem_docs = File.expand_path('../../v7cms/docs', __dir__)
 
     # Map of files to their CDN URL patterns
     replacements = {
@@ -620,7 +607,7 @@ namespace :v7cms do
         %r{cdnjs\.cloudflare\.com/ajax/libs/font-awesome/[\w.]+/css/all\.min\.css} =>
           V7CMS.cdn_url(:font_awesome, :css).sub('https://', '')
       },
-      File.join(gem_public, 'api-docs.html') => {
+      File.join(gem_docs, 'api-docs.html') => {
         # Swagger UI CSS
         %r{unpkg\.com/swagger-ui-dist@[\w.]+/swagger-ui\.css} =>
           V7CMS.cdn_url(:swagger_ui, :css).sub('https://', ''),
