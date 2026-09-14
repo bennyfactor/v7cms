@@ -98,9 +98,17 @@ RSpec.describe HtaccessGenerator do
     end
 
     it 'sets baseline security headers for static responses' do
-      expect(template).to include('Header set X-Content-Type-Options "nosniff"')
-      expect(template).to include('Header set X-Frame-Options "SAMEORIGIN"')
+      expect(template).to include('Header always set X-Content-Type-Options "nosniff"')
+      expect(template).to include('Header always set X-Frame-Options "SAMEORIGIN"')
       expect(template).to include('Header always set Referrer-Policy "strict-origin-when-cross-origin"')
+    end
+
+    it 'unsets app-provided security headers in both tables before setting them, to avoid duplicates' do
+      %w[X-Content-Type-Options X-Frame-Options].each do |name|
+        expect(template).to include("Header always unset #{name}")
+        expect(template).to include("Header unset #{name}")
+        expect(template.index("Header always unset #{name}")).to be < template.index("Header always set #{name}")
+      end
     end
 
     it 'includes gzip compression rules' do
@@ -157,6 +165,15 @@ RSpec.describe HtaccessGenerator do
 
       result = generator.send(:build_redirects_block)
       expect(result).to eq('RewriteRule ^pricing/?$ /posts/pricing-page [R=301,L]')
+    end
+
+    it 'emits one rule when legacy rows exist for both /foo and /foo/' do
+      Redirect.create!(short_path: '/dup', target_path: '/pages/dup')
+      legacy = Redirect.create!(short_path: '/dup-tmp', target_path: '/pages/dup')
+      legacy.update_column(:short_path, '/dup/')
+
+      result = generator.send(:build_redirects_block)
+      expect(result.lines.grep(/\^dup/).length).to eq(1)
     end
 
     it 'does not double the optional trailing slash when short_path already ends with one' do

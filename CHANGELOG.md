@@ -5,6 +5,17 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.9] - 2026-09-13
+
+### Fixed
+- Deleting a page's static HTML (unpublish, destroy, or layout-page cleanup) now removes only that page's `index.html` and prunes empty directories; previously the whole slug directory went, taking child pages' static files with it
+- Database redirect lookup is symmetric for trailing slashes: rows saved as `/foo/` now also match a request for `/foo`
+- Redirect `short_path` is normalized without a trailing slash, so `/foo/` is rejected as a duplicate of `/foo`; the `.htaccess` generator emits one rule for legacy rows that exist in both forms
+- Generated `.htaccess` no longer duplicates `X-Content-Type-Options` and `X-Frame-Options` on FastCGI responses (the app's headers land in Apache's `always` table, so they are unset in both tables before being set once)
+- `rake v7cms:tailwind` cleans up its temporary directory even if writing the entry file fails; the integration spec now also covers project `public/**/*.html` and `public/**/*.js` sources
+
+---
+
 ## [0.3.8] - 2026-09-13
 
 ### Fixed

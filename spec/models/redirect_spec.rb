@@ -38,6 +38,19 @@ RSpec.describe Redirect, type: :model do
       expect(redirect.short_path).to eq('/test')
     end
 
+    it 'strips a trailing slash from short_path so /foo and /foo/ are one redirect' do
+      redirect = Redirect.new(short_path: '/foo/', target_path: '/posts/foo')
+      redirect.valid?
+      expect(redirect.short_path).to eq('/foo')
+    end
+
+    it 'treats /foo/ as a duplicate of an existing /foo' do
+      Redirect.create!(short_path: '/foo', target_path: '/posts/foo')
+      redirect = Redirect.new(short_path: '/foo/', target_path: '/posts/other')
+      expect(redirect).not_to be_valid
+      expect(redirect.errors[:short_path]).to include('has already been taken')
+    end
+
     it 'does not modify paths that already start with /' do
       redirect = Redirect.create!(short_path: '/test', target_path: '/posts/test')
       expect(redirect.short_path).to eq('/test')

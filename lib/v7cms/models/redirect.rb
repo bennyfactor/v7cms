@@ -14,7 +14,9 @@ module V7CMS
     private
 
     def normalize_paths
-      self.short_path = "/#{short_path.to_s.gsub(/^\/+/, '')}" if short_path.present?
+      # One canonical form: leading slash, no trailing slash ("/foo" and
+      # "/foo/" are the same redirect and generate the same Apache rule).
+      self.short_path = "/#{short_path.to_s.gsub(/^\/+/, '').chomp('/')}" if short_path.present?
       self.target_path = "/#{target_path.to_s.gsub(/^\/+/, '')}" if target_path.present?
     end
 

@@ -2747,9 +2747,11 @@ module V7CMS
     end
 
     # Match a redirect by its stored short_path, tolerating a trailing slash
-    # in either the request or the stored path.
+    # in either the request or the stored path (rows saved before 0.3.9 may
+    # still carry one).
     def find_redirect(request_path)
-      candidates = [request_path, strip_trailing_slash(request_path)].uniq
+      base = strip_trailing_slash(request_path)
+      candidates = [request_path, base, "#{base}/"].uniq
       V7CMS::Redirect.find_by(short_path: candidates)
     end
 

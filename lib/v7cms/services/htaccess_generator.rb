@@ -33,8 +33,9 @@ module V7CMS
       redirects = V7CMS::Redirect.order(:short_path)
       return "# No custom redirects configured" if redirects.empty?
 
-      # "/?" lets "/blog" and "/blog/" both hit the redirect.
-      redirects.map do |r|
+      # "/?" lets "/blog" and "/blog/" both hit the redirect. Rows saved before
+      # trailing slashes were normalized may still exist in both forms; keep one.
+      redirects.uniq { |r| r.short_path.chomp('/') }.map do |r|
         "RewriteRule ^#{escape_path(r.short_path.chomp('/'))}/?$ #{r.target_path} [R=301,L]"
       end.join("\n")
     end

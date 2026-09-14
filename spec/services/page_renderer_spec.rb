@@ -63,7 +63,7 @@ RSpec.describe PageRenderer do
         allow(PageRenderer).to receive(:logger).and_return(logger)
         allow(logger).to receive(:info)
         expect(logger).to receive(:error).with(/Permission denied/)
-        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
+        expect(logger).to receive(:error).with(kind_of(String)) # backtrace
         allow(File).to receive(:write).and_raise(Errno::EACCES, 'Permission denied')
 
         renderer.write_file
@@ -83,33 +83,30 @@ RSpec.describe PageRenderer do
         expect(result).to be true
       end
 
-      it 'returns false when directory deletion fails' do
+      it 'returns false when file deletion fails' do
         renderer.write_file
-        slug_dir = File.join(PageRenderer::STATIC_DIR, page.full_slug_path)
         logger = instance_double(Logger)
         allow(PageRenderer).to receive(:logger).and_return(logger)
         allow(logger).to receive(:info)
         expect(logger).to receive(:error).with(/Permission denied/)
-        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
-        allow(FileUtils).to receive(:rm_rf).and_call_original
-        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
+        expect(logger).to receive(:error).with(kind_of(String)) # backtrace
+        allow(File).to receive(:delete).and_raise(Errno::EACCES, 'Permission denied')
 
         result = renderer.delete_file
         expect(result).to be false
       end
 
-      it 'logs error when directory deletion fails' do
-        renderer.write_file
-        slug_dir = File.join(PageRenderer::STATIC_DIR, page.full_slug_path)
-        logger = instance_double(Logger)
-        allow(PageRenderer).to receive(:logger).and_return(logger)
-        allow(logger).to receive(:info)
-        expect(logger).to receive(:error).with(/Permission denied/)
-        expect(logger).to receive(:error).with(kind_of(String))  # backtrace
-        allow(FileUtils).to receive(:rm_rf).and_call_original
-        allow(FileUtils).to receive(:rm_rf).with(slug_dir).and_raise(Errno::EACCES, 'Permission denied')
+      it 'keeps child page files when deleting a parent page file' do
+        parent = Page.create!(title: 'Services', slug: 'services', status: 'published')
+        child = Page.create!(title: 'Web Dev', slug: 'web-dev', parent: parent, status: 'published')
+        PageRenderer.new(parent).write_file
+        PageRenderer.new(child).write_file
+        child_file = File.join(PageRenderer::STATIC_DIR, 'services', 'web-dev', 'index.html')
 
-        renderer.delete_file
+        expect(PageRenderer.new(parent).delete_file).to be true
+
+        expect(File.exist?(File.join(PageRenderer::STATIC_DIR, 'services', 'index.html'))).to be false
+        expect(File.exist?(child_file)).to be true
       end
 
       it 'cleans up empty parent directories when deleting files' do
@@ -280,6 +277,19 @@ RSpec.describe PageRenderer do
 
       PageRenderer.write_static_file(page)
       expect(Dir.exist?(File.join(static_dir, 'blog'))).to be false
+    end
+
+    it 'keeps published child static files when a parent is unpublished' do
+      parent = Page.create!(title: 'Wish List', slug: 'wish-list', page_type: 'portfolio')
+      parent.publish!
+      child = Page.create!(title: 'Item', slug: 'item', parent: parent, page_type: 'standard')
+      child.publish!
+      child_file = File.join(static_dir, 'wish-list', 'item', 'index.html')
+      expect(File.exist?(child_file)).to be true
+
+      parent.unpublish!
+
+      expect(File.exist?(child_file)).to be true
     end
 
     it 'still writes static files for standard pages' do
