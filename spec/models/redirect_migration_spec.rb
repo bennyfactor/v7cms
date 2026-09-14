@@ -32,4 +32,17 @@ RSpec.describe NormalizeRedirectTrailingSlashes do
     Redirect.create!(short_path: '/fine', target_path: '/pages/fine')
     expect { run_up }.not_to(change { Redirect.find_by(short_path: '/fine').updated_at })
   end
+
+  it 'keeps the shortest variant when several legacy variants exist without a canonical twin' do
+    longer = legacy('/multi//', '/pages/longer')
+    shorter = legacy('/multi/', '/pages/shorter')
+    run_up
+    expect(Redirect.where(id: longer.id)).not_to exist
+    expect(shorter.reload.short_path).to eq('/multi')
+    expect(shorter.target_path).to eq('/pages/shorter')
+  end
+
+  it 'is irreversible' do
+    expect { described_class.new.down }.to raise_error(ActiveRecord::IrreversibleMigration)
+  end
 end
