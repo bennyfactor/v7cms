@@ -110,9 +110,11 @@ module V7CMS
       end
     end
 
-    # OmniAuth configuration - allow GET requests (required for OAuth links)
-    OmniAuth.config.allowed_request_methods = [:get, :post]
-    OmniAuth.config.silence_get_warning = true
+    # OmniAuth configuration - POST only, so a link prefetcher cannot start
+    # the flow (and regenerate the OAuth state) behind the user's back. The
+    # default request_validation_phase (AuthenticityTokenProtection) checks
+    # the authenticity_token the login forms fetch from /api/auth/csrf.
+    OmniAuth.config.allowed_request_methods = [:post]
 
     use OmniAuth::Builder do
       # Google OAuth - only request email to avoid ModSecurity blocking 'profile' keyword.
@@ -452,6 +454,12 @@ module V7CMS
     get '/auth/failure' do
       error_message = params[:message] || 'Authentication failed'
       halt 401, json({ error: error_message })
+    end
+
+    # CSRF token for the login forms: the OmniAuth request phase only accepts
+    # a POST carrying the session's authenticity token
+    get '/api/auth/csrf' do
+      json({ token: Rack::Protection::AuthenticityToken.token(session) })
     end
 
     # Logout

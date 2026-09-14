@@ -17,8 +17,9 @@ All authenticated endpoints require an active session (via OAuth login).
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `GET` | `/auth/google_oauth2` | No | Initiate Google OAuth flow |
-| `GET` | `/auth/github` | No | Initiate GitHub OAuth flow |
+| `GET` | `/api/auth/csrf` | No | Authenticity token for the login forms |
+| `POST` | `/auth/google_oauth2` | No (requires `authenticity_token`) | Initiate Google OAuth flow |
+| `POST` | `/auth/github` | No (requires `authenticity_token`) | Initiate GitHub OAuth flow |
 | `GET` | `/auth/:provider/callback` | No | OAuth callback handler |
 | `GET` | `/auth/failure` | No | OAuth failure handler |
 | `GET` | `/api/auth/me` | No | Current user info (returns `logged_in: false` if unauthenticated) |

@@ -2,7 +2,9 @@ require 'spec_helper'
 require 'cgi'
 
 # Drives the real OmniAuth strategies (test mode off) to prove the OAuth
-# state parameter is issued on the request phase and enforced on callback.
+# state parameter is issued on the request phase and enforced on callback,
+# and that the request phase itself only starts from a POST carrying the
+# session's authenticity token.
 RSpec.describe 'OAuth state (CSRF) protection' do
   around do |example|
     original_admins = ENV.fetch('ADMIN_EMAILS', nil)
@@ -14,8 +16,14 @@ RSpec.describe 'OAuth state (CSRF) protection' do
     ENV['ADMIN_EMAILS'] = original_admins
   end
 
+  def csrf_token
+    get '/api/auth/csrf'
+    expect(last_response).to be_ok
+    JSON.parse(last_response.body)['token']
+  end
+
   def start_and_capture_state(provider)
-    get "/auth/#{provider}"
+    post "/auth/#{provider}", authenticity_token: csrf_token
     expect(last_response.status).to eq(302)
     CGI.parse(URI(last_response.headers['Location']).query)['state'].first
   end
@@ -53,10 +61,35 @@ RSpec.describe 'OAuth state (CSRF) protection' do
     end
   end
 
+  describe 'GET /api/auth/csrf' do
+    it 'returns an authenticity token for the login forms' do
+      get '/api/auth/csrf'
+
+      expect(last_response).to be_ok
+      expect(last_response.content_type).to include('application/json')
+      token = JSON.parse(last_response.body)['token']
+      expect(token).to be_a(String)
+      expect(token).not_to be_empty
+    end
+  end
+
   %w[google_oauth2 github].each do |provider|
     describe provider do
       it 'issues a state parameter on the request phase' do
         expect(start_and_capture_state(provider)).to match(/\A[0-9a-f]{48}\z/)
+      end
+
+      it 'rejects a POST without an authenticity token' do
+        post "/auth/#{provider}"
+
+        expect(last_response.status).to eq(302)
+        expect(last_response.headers['Location']).to include('message=authenticity_error')
+      end
+
+      it 'does not start the flow from a GET request' do
+        get "/auth/#{provider}"
+
+        expect(last_response.status).to eq(404)
       end
 
       it 'rejects a callback whose state does not match the session' do
