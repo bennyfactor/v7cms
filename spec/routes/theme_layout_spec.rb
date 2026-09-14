@@ -19,6 +19,24 @@ RSpec.describe 'Dynamic layout theme styles' do
     expect(last_response.body).to include('<header class="bg-white border-b">')
     expect(last_response.body).to include('px-4 py-3')
     expect(last_response.body).not_to include('A test tagline')
+    expect(last_response.body).to include('<footer class="bg-white border-t mt-auto">')
+    expect(last_response.body).to include('py-3 text-center text-gray-600 text-xs')
+  end
+
+  it 'renders the persisted centered footer style' do
+    Theme.instance.update_columns(footer_style: 'centered')
+
+    get '/'
+
+    expect(last_response.body).to include('py-4 text-center text-gray-600 text-sm')
+  end
+
+  it 'renders the default footer style' do
+    Theme.instance.update_columns(footer_style: 'default')
+
+    get '/'
+
+    expect(last_response.body).to include('py-6 text-center text-gray-600 text-sm')
   end
 
   it 'renders the persisted prominent header style' do
