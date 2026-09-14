@@ -210,13 +210,19 @@ Examples:
 Understanding the codebase:
 
 ```
-app/
-  cms.rb                  # Main Sinatra application
+lib/v7cms/
+  application.rb          # Main Sinatra application (all routes)
   models/                 # ActiveRecord models
   services/               # Business logic (renderers, generators)
   config/                 # Configuration modules
   helpers/                # Helper modules
-  views/                  # ERB templates
+  views/                  # Default ERB templates
+  public/                 # Default static assets (admin SPA, JS, CSS)
+  tasks/                  # Rake tasks
+
+app/
+  cms.rb                  # Backward compatibility aliases
+  docs/                   # OpenAPI/Swagger documentation
 
 spec/                     # RSpec tests
   models/                 # Model tests
@@ -229,14 +235,9 @@ db/
   migrate/                # Database migrations
   seed.rb                 # Sample data
 
-public/                   # Static assets
+public/                   # Development static assets
   posts/                  # Generated post HTML
   pages/                  # Generated page HTML
-  css/                    # Stylesheets
-  js/                     # JavaScript
-
-admin/                    # Admin SPA
-  index.html              # Admin interface
 ```
 
 ## Testing Your Changes
