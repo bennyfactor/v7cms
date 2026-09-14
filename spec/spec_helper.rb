@@ -21,6 +21,12 @@ OmniAuth.config.test_mode = true
 # Configure WebMock to disable real HTTP requests except localhost
 WebMock.disable_net_connect!(allow_localhost: true)
 
+# OAuth strategies capture these at load time; give them stable test values so
+# specs can build matching provider responses (real values come from .env locally,
+# nothing on CI).
+ENV['GOOGLE_CLIENT_ID'] ||= 'test-google-client-id'
+ENV['GITHUB_CLIENT_ID'] ||= 'test-github-client-id'
+
 # Load the gem (which loads all models, helpers, services, and the application)
 # This provides both V7CMS:: namespaced classes and backward-compatible aliases
 require_relative '../app/cms'

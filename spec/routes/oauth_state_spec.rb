@@ -20,12 +20,20 @@ RSpec.describe 'OAuth state (CSRF) protection' do
     CGI.parse(URI(last_response.headers['Location']).query)['state'].first
   end
 
+  # Google verifies the id_token's issuer, audience, and expiry claims (unsigned
+  # decode), so the stub must return a well-formed token for the configured client.
+  def google_id_token
+    payload = { iss: 'accounts.google.com', aud: ENV.fetch('GOOGLE_CLIENT_ID'), sub: '123',
+                email: 'test@example.com', email_verified: true, exp: Time.now.to_i + 3600, iat: Time.now.to_i }
+    JWT.encode(payload, nil, 'none')
+  end
+
   def stub_provider(provider)
     case provider
     when 'google_oauth2'
       stub_request(:post, 'https://oauth2.googleapis.com/token')
         .to_return(status: 200, headers: { 'Content-Type' => 'application/json' },
-                   body: { access_token: 'tok', token_type: 'Bearer', expires_in: 3600 }.to_json)
+                   body: { access_token: 'tok', token_type: 'Bearer', expires_in: 3600, id_token: google_id_token }.to_json)
       stub_request(:post, 'https://www.googleapis.com/oauth2/v3/tokeninfo')
         .to_return(status: 200, headers: { 'Content-Type' => 'application/json' },
                    body: { sub: '123', email: 'test@example.com', email_verified: 'true', aud: 'client' }.to_json)
