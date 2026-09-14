@@ -2751,8 +2751,10 @@ module V7CMS
     # still carry one).
     def find_redirect(request_path)
       base = strip_trailing_slash(request_path)
-      candidates = [request_path, base, "#{base}/"].uniq
-      V7CMS::Redirect.find_by(short_path: candidates)
+      # Canonical form wins over a legacy "/foo/" row, then anything else.
+      candidates = [base, "#{base}/", request_path].uniq
+      rows = V7CMS::Redirect.where(short_path: candidates).to_a
+      candidates.lazy.map { |c| rows.find { |r| r.short_path == c } }.find(&:itself)
     end
 
     def resolve_page(slug_path)

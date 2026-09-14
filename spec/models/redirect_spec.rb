@@ -44,6 +44,20 @@ RSpec.describe Redirect, type: :model do
       expect(redirect.short_path).to eq('/foo')
     end
 
+    it 'strips a run of trailing slashes' do
+      redirect = Redirect.new(short_path: '/foo//', target_path: '/posts/foo')
+      redirect.valid?
+      expect(redirect.short_path).to eq('/foo')
+    end
+
+    it 'treats /foo as a duplicate of a legacy row stored as /foo/' do
+      legacy = Redirect.create!(short_path: '/foo-tmp', target_path: '/posts/foo')
+      legacy.update_column(:short_path, '/foo/')
+      redirect = Redirect.new(short_path: '/foo', target_path: '/posts/other')
+      expect(redirect).not_to be_valid
+      expect(redirect.errors[:short_path]).to include('has already been taken')
+    end
+
     it 'treats /foo/ as a duplicate of an existing /foo' do
       Redirect.create!(short_path: '/foo', target_path: '/posts/foo')
       redirect = Redirect.new(short_path: '/foo/', target_path: '/posts/other')
