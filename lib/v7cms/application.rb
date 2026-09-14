@@ -61,8 +61,8 @@ module V7CMS
     configure do
       views_paths = V7CMS.file_resolver.resolve_all('views')
       if views_paths.empty?
-        # Fallback to app/views for backward compatibility during migration
-        views_paths = [File.join(V7CMS.gem_root, 'app', 'views')]
+        # Fall back to the gem's bundled views
+        views_paths = [File.join(V7CMS.gem_root, 'lib', 'v7cms', 'views')]
       end
       # Store all paths for multi-path template lookup
       set :views_paths, views_paths
