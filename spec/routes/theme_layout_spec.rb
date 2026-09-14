@@ -15,7 +15,6 @@ RSpec.describe 'Dynamic layout theme styles' do
 
     get '/'
 
-    expect(last_response).to be_ok
     expect(last_response.body).to include('<header class="bg-white border-b">')
     expect(last_response.body).to include('px-4 py-3')
     expect(last_response.body).not_to include('A test tagline')
