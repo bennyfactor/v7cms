@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.10] - 2026-09-13
+
+### Security
+- Google OAuth now enforces the OAuth `state` parameter on callback (login CSRF protection), matching the GitHub provider. The `provider_ignores_state` bypass dated from November 2025 session-cookie problems that no longer apply. The state flow for both providers is covered by specs that run the real strategies
+
+---
+
 ## [0.3.9] - 2026-09-13
 
 ### Fixed
