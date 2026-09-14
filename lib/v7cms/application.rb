@@ -459,6 +459,8 @@ module V7CMS
     # CSRF token for the login forms: the OmniAuth request phase only accepts
     # a POST carrying the session's authenticity token
     get '/api/auth/csrf' do
+      # Session-bound: a cached copy from an old session would fail validation
+      cache_control :no_store
       json({ token: Rack::Protection::AuthenticityToken.token(session) })
     end
 

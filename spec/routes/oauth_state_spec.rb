@@ -71,6 +71,11 @@ RSpec.describe 'OAuth state (CSRF) protection' do
       expect(token).to be_a(String)
       expect(token).not_to be_empty
     end
+
+    it 'is not cacheable' do
+      get '/api/auth/csrf'
+      expect(last_response.headers['Cache-Control']).to include('no-store')
+    end
   end
 
   %w[google_oauth2 github].each do |provider|

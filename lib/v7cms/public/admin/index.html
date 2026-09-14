@@ -48,8 +48,14 @@
                 <script>
                     async function loginWith(provider) {
                         try {
-                            const response = await fetch('/api/auth/csrf');
+                            const response = await fetch('/api/auth/csrf', { cache: 'no-store' });
+                            if (!response.ok) {
+                                throw new Error('CSRF token request failed with status ' + response.status);
+                            }
                             const data = await response.json();
+                            if (typeof data.token !== 'string' || data.token.length === 0) {
+                                throw new Error('CSRF token response did not include a token');
+                            }
                             const form = document.createElement('form');
                             form.method = 'POST';
                             form.action = '/auth/' + provider;
