@@ -159,6 +159,25 @@ RSpec.describe 'Custom Error Pages' do
       expect(last_response.headers['Location']).to end_with('/pages/blog')
     end
 
+    it 'redirects a legacy record stored with a trailing slash when requested without one' do
+      legacy = Redirect.create!(short_path: '/old-wiki', target_path: '/pages/wiki')
+      legacy.update_column(:short_path, '/old-wiki/') # bypass normalization, as pre-0.3.9 rows did
+
+      get '/old-wiki'
+      expect(last_response.status).to eq(301)
+      expect(last_response.headers['Location']).to end_with('/pages/wiki')
+    end
+
+    it 'prefers the canonical row when legacy rows exist in both forms with different targets' do
+      Redirect.create!(short_path: '/both', target_path: '/pages/canonical')
+      legacy = Redirect.create!(short_path: '/both-tmp', target_path: '/pages/legacy')
+      legacy.update_column(:short_path, '/both/')
+
+      get '/both/'
+      expect(last_response.status).to eq(301)
+      expect(last_response.headers['Location']).to end_with('/pages/canonical')
+    end
+
     it 'redirects when the request has a trailing slash' do
       get '/old-blog/'
       expect(last_response.status).to eq(301)

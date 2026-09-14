@@ -168,10 +168,16 @@ Header always set Expires "0" env=REDIRECT_is_fcgi_request
 # without includeSubDomains/preload so other subdomains are unaffected.
 Header always set Strict-Transport-Security "max-age=15552000" env=HTTPS
 
-# The app (rack-protection) already sends these on FastCGI responses; plain
-# "Header set" replaces rather than duplicates them and also covers static files.
-Header set X-Content-Type-Options "nosniff"
-Header set X-Frame-Options "SAMEORIGIN"
+# The app (rack-protection) also sends these on FastCGI responses, and with
+# mod_fcgid they land in the "always" table, so a plain "Header set" produced
+# duplicates. Clear both tables first, then set once for every response
+# (static files included).
+Header always unset X-Content-Type-Options
+Header unset X-Content-Type-Options
+Header always set X-Content-Type-Options "nosniff"
+Header always unset X-Frame-Options
+Header unset X-Frame-Options
+Header always set X-Frame-Options "SAMEORIGIN"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
 # ============================================================================

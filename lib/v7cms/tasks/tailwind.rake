@@ -53,12 +53,12 @@ namespace :v7cms do
     FileUtils.mkdir_p(tmpdir)
     env = { 'TMPDIR' => tmpdir }
 
-    entry = File.join(tmpdir, 'entry.css')
-    File.write(entry, [%(@import "#{input}";), *project_sources.map { |g| %(@source "#{g}";) }, ''].join("\n"))
-
-    cmd = [exe, '-i', entry, '-o', output, '--minify']
-
     begin
+      entry = File.join(tmpdir, 'entry.css')
+      File.write(entry, [%(@import "#{input}";), *project_sources.map { |g| %(@source "#{g}";) }, ''].join("\n"))
+
+      cmd = [exe, '-i', entry, '-o', output, '--minify']
+
       success = system(env, *cmd)
       if success
         size = File.size(output)

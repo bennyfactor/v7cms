@@ -1,7 +1,8 @@
 module V7CMS
   class Redirect < ActiveRecord::Base
-    validates :short_path, presence: true, uniqueness: true
+    validates :short_path, presence: true
     validates :target_path, presence: true
+    validate :short_path_unique_across_trailing_slash_forms
 
     before_validation :normalize_paths
     validate :short_path_not_reserved
@@ -14,8 +15,20 @@ module V7CMS
     private
 
     def normalize_paths
-      self.short_path = "/#{short_path.to_s.gsub(/^\/+/, '')}" if short_path.present?
+      # One canonical form: leading slash, no trailing slash ("/foo" and
+      # "/foo/" are the same redirect and generate the same Apache rule).
+      self.short_path = "/#{short_path.to_s.gsub(/^\/+/, '').sub(%r{/+\z}, '')}" if short_path.present?
       self.target_path = "/#{target_path.to_s.gsub(/^\/+/, '')}" if target_path.present?
+    end
+
+    # Rows saved before trailing slashes were normalized may still be stored
+    # as "/foo/"; treat them as the same redirect as "/foo".
+    def short_path_unique_across_trailing_slash_forms
+      return if short_path.blank?
+
+      scope = self.class.where(short_path: [short_path, "#{short_path}/"])
+      scope = scope.where.not(id: id) if persisted?
+      errors.add(:short_path, 'has already been taken') if scope.exists?
     end
 
     def short_path_not_reserved

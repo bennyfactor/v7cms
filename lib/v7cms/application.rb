@@ -2747,10 +2747,14 @@ module V7CMS
     end
 
     # Match a redirect by its stored short_path, tolerating a trailing slash
-    # in either the request or the stored path.
+    # in either the request or the stored path (rows saved before 0.3.9 may
+    # still carry one).
     def find_redirect(request_path)
-      candidates = [request_path, strip_trailing_slash(request_path)].uniq
-      V7CMS::Redirect.find_by(short_path: candidates)
+      base = strip_trailing_slash(request_path)
+      # Canonical form wins over a legacy "/foo/" row, then anything else.
+      candidates = [base, "#{base}/", request_path].uniq
+      rows = V7CMS::Redirect.where(short_path: candidates).to_a
+      candidates.lazy.map { |c| rows.find { |r| r.short_path == c } }.find(&:itself)
     end
 
     def resolve_page(slug_path)
