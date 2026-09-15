@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.12] - 2026-09-15
+
+### Fixed
+- The admin API docs page loads its OpenAPI spec from `/api/spec` instead of `/api-spec.json`. The generated `.htaccess` returns 404 for every `*.json` path before the app runs, so on Apache deployments the docs page could never load the spec. `/api-spec.json` remains as an alias for Rack/Puma deployments
+
+---
+
 ## [0.3.11] - 2026-09-15
 
 ### Changed

@@ -41,6 +41,28 @@ RSpec.describe 'API Docs Routes' do
     end
   end
 
+  describe 'GET /api/spec' do
+    it 'rejects anonymous requests' do
+      get '/api/spec'
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'serves the same OpenAPI spec as /api-spec.json to a logged-in admin' do
+      get '/api/spec', {}, login_as(admin)
+      expect(last_response).to be_ok
+      expect(last_response.content_type).to include('application/json')
+      expect(JSON.parse(last_response.body)).to include('openapi', 'paths')
+    end
+  end
+
+  describe 'docs page spec URL' do
+    it 'loads the spec from an extension-less path so Apache .htaccess rules do not block it' do
+      get '/api-docs.html', {}, login_as(admin)
+      expect(last_response.body).to include("url: '/api/spec'")
+      expect(last_response.body).not_to include('/api-spec.json')
+    end
+  end
+
   describe 'GET /api/docs' do
     it 'redirects to the docs page' do
       get '/api/docs', {}, login_as(admin)
