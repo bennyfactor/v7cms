@@ -110,14 +110,22 @@ RSpec.describe HtaccessGenerator do
         expect(blocked?('/docs/robots.txt.bak')).to be true
       end
 
-      it 'lets .well-known (ACME challenges) through while still blocking other dotfiles' do
+      it 'lets the root .well-known through while still blocking other dotfiles' do
         expect(blocked?('/.well-known/acme-challenge/abc123')).to be false
+        expect(blocked?('/.well-known/security.txt')).to be false
+        expect(blocked?('/uploads/.well-known/acme-challenge/x')).to be true
         expect(blocked?('/.env')).to be true
         expect(blocked?('/.git/HEAD')).to be true
       end
 
-      it 'excludes robots.txt from the FilesMatch text-file deny block' do
-        expect(template).to match(/<FilesMatch "\^\(\?!robots\\\.txt\$\)/)
+      it 'exempts the robots.txt basename from the FilesMatch text-file deny block' do
+        # FilesMatch is evaluated against the basename only
+        pattern = template[/<FilesMatch "([^"]*txt[^"]*)">\s*<IfModule mod_authz_core\.c>\s*Require all denied/, 1]
+        expect(pattern).not_to be_nil
+        deny = Regexp.new(pattern)
+        expect(deny.match?('robots.txt')).to be false
+        expect(deny.match?('notes.txt')).to be true
+        expect(deny.match?('README.md')).to be true
       end
     end
 
