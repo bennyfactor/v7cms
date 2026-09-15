@@ -5,6 +5,13 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.13] - 2026-09-15
+
+### Fixed
+- Generated `.htaccess` no longer blocks `robots.txt` (the text-file rules returned 404 for it, so crawlers ignored the site's disallow list) or `.well-known/` (ACME challenges and other RFC 8615 files). All other dotfiles and text files stay blocked
+
+---
+
 ## [0.3.12] - 2026-09-15
 
 ### Fixed
