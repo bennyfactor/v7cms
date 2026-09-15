@@ -93,6 +93,42 @@ RSpec.describe HtaccessGenerator do
       expect(template).not_to match(/FilesMatch.*html\|js\|css.*\n.*no-cache/)
     end
 
+    describe 'well-known public files are not blocked' do
+      # Pull every RedirectMatch 404 pattern out of the template and evaluate it
+      # the way Apache would (PCRE, matched against the URL path).
+      let(:blocked_patterns) do
+        template.scan(/^RedirectMatch 404 (\S+)$/).flatten.map { |pat| Regexp.new(pat) }
+      end
+
+      def blocked?(path)
+        blocked_patterns.any? { |re| re.match?(path) }
+      end
+
+      it 'lets robots.txt through while still blocking other text files' do
+        expect(blocked?('/robots.txt')).to be false
+        expect(blocked?('/notes.txt')).to be true
+        expect(blocked?('/docs/robots.txt.bak')).to be true
+      end
+
+      it 'lets the root .well-known through while still blocking other dotfiles' do
+        expect(blocked?('/.well-known/acme-challenge/abc123')).to be false
+        expect(blocked?('/.well-known/security.txt')).to be false
+        expect(blocked?('/uploads/.well-known/acme-challenge/x')).to be true
+        expect(blocked?('/.env')).to be true
+        expect(blocked?('/.git/HEAD')).to be true
+      end
+
+      it 'exempts the robots.txt basename from the FilesMatch text-file deny block' do
+        # FilesMatch is evaluated against the basename only
+        pattern = template[/<FilesMatch "([^"]*txt[^"]*)">\s*<IfModule mod_authz_core\.c>\s*Require all denied/, 1]
+        expect(pattern).not_to be_nil
+        deny = Regexp.new(pattern)
+        expect(deny.match?('robots.txt')).to be false
+        expect(deny.match?('notes.txt')).to be true
+        expect(deny.match?('README.md')).to be true
+      end
+    end
+
     it 'sends HSTS only on HTTPS responses' do
       expect(template).to match(/Header always set Strict-Transport-Security "max-age=\d+" env=HTTPS/)
     end

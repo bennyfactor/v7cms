@@ -17,8 +17,10 @@ RewriteRule .* - [L]
 # ============================================================================
 
 # Block ALL dotfiles and dot-directories (.env, .git, .gitignore, .htaccess, etc.)
-# This is the primary defense against config/secret leaks
-RedirectMatch 404 /\.
+# This is the primary defense against config/secret leaks.
+# The root /.well-known/ is exempt: ACME (Let's Encrypt) challenges and other
+# RFC 8615 files live there. Nested dot-directories stay blocked.
+RedirectMatch 404 ^(?!/\.well-known/).*/\.
 
 # Block access to any potential secrets/credential files by name pattern
 # This matches files like secrets.txt, credentials.json but NOT /auth/ paths
@@ -43,8 +45,9 @@ RedirectMatch 404 (\.(bak|backup|swp|swo|orig|tmp|old|save)|~)$
 # Block log files
 RedirectMatch 404 \.(log|logs)$
 
-# Block common non-compiled source files
-RedirectMatch 404 \.(md|markdown|txt|rst)$
+# Block common non-compiled source files. Exempt: /robots.txt (crawlers must
+# read it) and the root /.well-known/ (e.g. security.txt).
+RedirectMatch 404 ^(?!/robots\.txt$|/\.well-known/).*\.(md|markdown|txt|rst)$
 
 # Block lock files
 RedirectMatch 404 \.(lock)$
@@ -103,8 +106,10 @@ RedirectMatch 404 \.(sublime-project|sublime-workspace|code-workspace|iml|idea)$
 # the application, not as static files. Config XML files in subdirectories
 # are still blocked by RedirectMatch rules above.
 
-# Protect documentation and source files
-<FilesMatch "\.(md|markdown|txt|rst)$">
+# Protect documentation and source files. FilesMatch only sees the basename,
+# so robots.txt is exempted by name; the path-aware RedirectMatch above still
+# blocks a nested file with that name.
+<FilesMatch "^(?!robots\.txt$).*\.(md|markdown|txt|rst)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
