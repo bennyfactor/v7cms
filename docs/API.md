@@ -11,7 +11,7 @@ All authenticated endpoints require an active session (via OAuth login).
 | `GET` | `/health` | No | Health check with database status |
 | `GET` | `/api/version` | No | Current v7cms version |
 | `GET` | `/api/docs` | Yes (admin) | Swagger UI documentation |
-| `GET` | `/api-spec.json` | Yes (admin) | OpenAPI spec (JSON) |
+| `GET` | `/api/spec` | Yes (admin) | OpenAPI spec (JSON); `/api-spec.json` is an alias that Apache deployments block |
 
 ## Authentication
 

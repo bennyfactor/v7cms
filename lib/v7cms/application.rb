@@ -400,13 +400,18 @@ module V7CMS
       redirect '/api-docs.html'
     end
 
+    # The OpenAPI spec. /api/spec is what the docs page loads: the generated
+    # Apache .htaccess returns 404 for any *.json path before the app runs, so
+    # an extension-less route is the one that works on shared hosting.
+    # /api-spec.json is kept for existing callers on Rack/Puma deployments.
+    get '/api/spec' do
+      require_login
+      openapi_spec_json
+    end
+
     get '/api-spec.json' do
       require_login
-      # Try to load from app/docs first, then fall back to lib/v7cms/docs
-      docs_path = File.join(V7CMS.gem_root, 'app', 'docs', 'api_docs.rb')
-      require docs_path if File.exist?(docs_path)
-      content_type :json
-      ApiDocs.generate_spec.to_json
+      openapi_spec_json
     end
 
     # =========================================================================
@@ -2394,6 +2399,13 @@ module V7CMS
     # =========================================================================
     # Helper Methods
     # =========================================================================
+
+    def openapi_spec_json
+      docs_path = File.join(V7CMS.gem_root, 'app', 'docs', 'api_docs.rb')
+      require docs_path if File.exist?(docs_path)
+      content_type :json
+      ApiDocs.generate_spec.to_json
+    end
 
     # JSON helper
     def json(data)
