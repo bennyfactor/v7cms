@@ -93,6 +93,34 @@ RSpec.describe HtaccessGenerator do
       expect(template).not_to match(/FilesMatch.*html\|js\|css.*\n.*no-cache/)
     end
 
+    describe 'well-known public files are not blocked' do
+      # Pull every RedirectMatch 404 pattern out of the template and evaluate it
+      # the way Apache would (PCRE, matched against the URL path).
+      let(:blocked_patterns) do
+        template.scan(/^RedirectMatch 404 (\S+)$/).flatten.map { |pat| Regexp.new(pat) }
+      end
+
+      def blocked?(path)
+        blocked_patterns.any? { |re| re.match?(path) }
+      end
+
+      it 'lets robots.txt through while still blocking other text files' do
+        expect(blocked?('/robots.txt')).to be false
+        expect(blocked?('/notes.txt')).to be true
+        expect(blocked?('/docs/robots.txt.bak')).to be true
+      end
+
+      it 'lets .well-known (ACME challenges) through while still blocking other dotfiles' do
+        expect(blocked?('/.well-known/acme-challenge/abc123')).to be false
+        expect(blocked?('/.env')).to be true
+        expect(blocked?('/.git/HEAD')).to be true
+      end
+
+      it 'excludes robots.txt from the FilesMatch text-file deny block' do
+        expect(template).to match(/<FilesMatch "\^\(\?!robots\\\.txt\$\)/)
+      end
+    end
+
     it 'sends HSTS only on HTTPS responses' do
       expect(template).to match(/Header always set Strict-Transport-Security "max-age=\d+" env=HTTPS/)
     end
