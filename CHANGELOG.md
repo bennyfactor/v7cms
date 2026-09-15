@@ -5,6 +5,24 @@ All notable changes to v7cms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.11] - 2026-09-15
+
+### Changed
+- **OAuth logins start with a POST** (#100): `allowed_request_methods` is POST only, so a link prefetcher cannot hit the request phase and regenerate the OAuth state. The admin login buttons fetch the session's authenticity token from the new `GET /api/auth/csrf` (marked `no-store`) and submit a form; OmniAuth's default request validation checks it. OpenAPI definitions updated
+- **API docs are admin-only** (#98): `/api-docs.html` and `/api-spec.json` require a logged-in admin. The docs page moved out of the gem's static directory, and `rake v7cms:assets` no longer symlinks it into the project's `public/` (an existing symlink is removed on the next run)
+- **Static HTML follows the theme's header and footer styles** (#99): pre-rendered posts and pages now use the same `ThemeStyleHelper` as the dynamic layout for default/minimal/prominent headers and default/minimal/centered footers, so a theme change regenerates matching files
+
+### Removed
+- Stale `app/views/` duplicate of `lib/v7cms/views/` and the unused Tailwind v3 `tailwind.config.js` (#97); the layout fallback now points at the gem views
+
+### Fixed
+- `db/development.sqlite3` and `db/test.sqlite3` are no longer tracked in the repository (#97)
+
+### Upgrade notes
+- After deploying, test a real Google and GitHub sign-in: the login flow changed from GET links to POST forms
+
+---
+
 ## [0.3.10] - 2026-09-13
 
 ### Security
